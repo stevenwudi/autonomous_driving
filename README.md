@@ -1,10 +1,9 @@
 # Visual Recognition for Autonomous Driving
-
 _Abstract ..._
 
 ## Authors
 Team name: **{COOL_NAME}**
-- _A. Casadevall, [aRWorld90](https://github.com/aRWorld90)_
+- _A. Casadevall, arnau.casadevall.saiz@gmail.com | [aRWorld90](https://github.com/aRWorld90)_
 - _S. Castro, [SCLSCL](https://github.com/SCLSCL)_
 - _T. Pérez, [tpereztorres](https://github.com/tpereztorres)_
 - _A. Salvador | [-](#)_
