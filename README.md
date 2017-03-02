@@ -5,7 +5,7 @@ The motivation of this project is to learn and develop a fully capable algorithm
 Team name: **{COOL_NAME}**
 - _A. Casadevall, arnau.casadevall.saiz@gmail.com - [acasadevall](https://github.com/acasadevall)_
 - _S. Castro, sergio.castro.latorre@gmail.com - [SCLSCL](https://github.com/SCLSCL)_
-- _T. Pérez, [tpereztorres](https://github.com/tpereztorres)_
+- _T. Pérez, tonipereztorres@gmail.com - [tpereztorres](https://github.com/tpereztorres)_
 - _A. Salvador | [-](#)_
 
 ## Report
