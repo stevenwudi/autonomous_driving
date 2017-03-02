@@ -4,7 +4,7 @@ _Abstract ..._
 ## Authors
 Team name: **{COOL_NAME}**
 - _A. Casadevall, arnau.casadevall.saiz@gmail.com - [acasadevall](https://github.com/acasadevall)_
-- _S. Castro, [SCLSCL](https://github.com/SCLSCL)_
+- _S. Castro, sergio.castro.latorre@gmail.com - [SCLSCL](https://github.com/SCLSCL)_
 - _T. Pérez, [tpereztorres](https://github.com/tpereztorres)_
 - _A. Salvador | [-](#)_
 
