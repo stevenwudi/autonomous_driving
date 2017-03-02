@@ -9,7 +9,7 @@ Team name: **{COOL_NAME}**
 - _A. Salvador | [-](#)_
 
 ## Report
-The report can be found in the following Overleaf project: [Visual Recognition for Autonomous Driving](#)
+The report can be found in the following Overleaf project: [Visual Recognition for Autonomous Driving](https://www.overleaf.com/read/rdhqqspzqjrx)
 
 ## Weekly Project Slides
 - Google slides for [Week 1](#)
