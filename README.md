@@ -9,7 +9,7 @@ Team name: **{COOL_NAME}**
 - _A. Salvador, adrisalva122@gmail.com - [AdrianSalvador](https://github.com/AdrianSalvador)_
 
 ## Report
-The report can be found in the following Overleaf project: [Visual Recognition for Autonomous Driving](https://www.overleaf.com/read/rdhqqspzqjrx)
+The report can be found in the following Overleaf project: [Visual Recognition for Autonomous Driving](https://www.overleaf.com/read/hxzqzgjzfjzs)
 
 ## Weekly Project Slides
 - Google slides for [Week 1](#)
