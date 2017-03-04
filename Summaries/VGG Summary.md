@@ -42,6 +42,3 @@ Where the classification class winner was GoogLeNet with a 6.7% of error.
 
 As final conclusions, it can be said that a very deep convolutional network (up to 19 weigth layers) has demonstrated that the representation depth is beneficial for the classification accuracy, reaching and improving the state of the art. 
 
-
-### References
-[1] Krizhevsky, A., Sutskever, I., & Hinton, G. E. (2012). Imagenet classification with deep convolutional neural networks. In Advances in neural information processing systems (pp. 1097-1105).
