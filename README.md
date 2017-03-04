@@ -11,7 +11,7 @@ Team name: **{COOL_NAME}**
 ## Report
 The report can be found in the following Overleaf project: [Visual Recognition for Autonomous Driving](https://www.overleaf.com/read/hxzqzgjzfjzs)
 
-Moreover, Google Slides presentation can be found in this [link.] (https://docs.google.com/presentation/d/1pATMrlv-86Eotm-Z1qS7ohpkkS3RFFPdB2qlYrZ8-4Y/edit?usp=sharing) 
+Moreover, Google Slides presentation can be found in this [link] (https://docs.google.com/presentation/d/1pATMrlv-86Eotm-Z1qS7ohpkkS3RFFPdB2qlYrZ8-4Y/edit?usp=sharing). 
 
 ## Weekly Project Slides
 - Google slides for [Week 1](#)
