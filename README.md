@@ -15,7 +15,7 @@ The report can be found in the following Overleaf project: [Visual Recognition f
 The project presentation can be found in this [link] (https://docs.google.com/presentation/d/1pATMrlv-86Eotm-Z1qS7ohpkkS3RFFPdB2qlYrZ8-4Y/edit?usp=sharing). 
 
 ## Weekly Project Slides
-- Google slides for [Week 1](#)
+- Google slides for [Week 1](https://docs.google.com/presentation/d/1pATMrlv-86Eotm-Z1qS7ohpkkS3RFFPdB2qlYrZ8-4Y/edit)
 - Google slides for Week 2 (T.B.A.)
 - Google slides for Week 3 (T.B.A.)
 - Google slides for Week 4 (T.B.A.)
