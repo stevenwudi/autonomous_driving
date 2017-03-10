@@ -12,7 +12,11 @@ Team name: **Deep4Learning**
 The report can be found in the following Overleaf project: [Visual Recognition for Autonomous Driving](https://www.overleaf.com/read/wwstzqxkjcxb)
 
 ## Presentation
-The project presentation can be found in this [link] (https://docs.google.com/presentation/d/1pATMrlv-86Eotm-Z1qS7ohpkkS3RFFPdB2qlYrZ8-4Y/edit?usp=sharing). 
+The project presentation can be found in this [link] (https://docs.google.com/presentation/d/1pATMrlv-86Eotm-Z1qS7ohpkkS3RFFPdB2qlYrZ8-4Y/edit?usp=sharing).
+
+## Weights
+
+The weights of the different models can be [here] (https://drive.google.com/drive/folders/0B3z5gWH7cHJiWm1pUVRoOFd3dTQ?usp=sharing).
 
 ## Weekly Project Slides
 - Google slides for [Week 1](https://docs.google.com/presentation/d/1A6hgbNn8N-Iq8MhSa_RPIyf87DBL6PCtoDzy1zqS5Xs/edit)
