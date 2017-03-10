@@ -16,7 +16,7 @@ The project presentation can be found in this [link] (https://docs.google.com/pr
 
 ## Weights
 
-The weights of the different models can be found [here] (https://drive.google.com/drive/folders/0B3z5gWH7cHJiWm1pUVRoOFd3dTQ?usp=sharing).
+The weights of the different models can be found [here] (https://drive.google.com/open?id=0B3z5gWH7cHJiWm1pUVRoOFd3dTQ).
 
 ## Weekly Project Slides
 - Google slides for [Week 1](https://docs.google.com/presentation/d/1A6hgbNn8N-Iq8MhSa_RPIyf87DBL6PCtoDzy1zqS5Xs/edit)
