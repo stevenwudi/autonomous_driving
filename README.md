@@ -19,9 +19,11 @@ The project presentation can be found in this [link] (https://docs.google.com/pr
 The weights of the different models can be found [here] (https://drive.google.com/open?id=0B3z5gWH7cHJiWm1pUVRoOFd3dTQ).
 
 ## Object Recognition
-**Code Explanation**
+**Introduction**
 
-**Test results**
+**Instructions & Code Explanation**
+
+**Results**
 
 ## Weekly Project Slides
 - Google slides for [Week 1](https://docs.google.com/presentation/d/1A6hgbNn8N-Iq8MhSa_RPIyf87DBL6PCtoDzy1zqS5Xs/edit)
