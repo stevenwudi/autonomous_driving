@@ -21,9 +21,12 @@ The weights of the different models can be found [here] (https://drive.google.co
 ## Object Recognition
 **Introduction**
 
-The goal of this part is to classify images using the some of the state of the art deep neural networks (VGG, ResNet and InceptionV3). These architectures have been trained on different datasets (TT100k and KITTI). 
+The goal of this part is to classify images using some of the state of the art deep neural networks (VGG, ResNet and InceptionV3). These architectures have been trained on different datasets (TT100k and KITTI). 
 
 **Instructions & Code Explanation**
+
+Firstly, the performance of a pretrained VGG model is evaluated for traffic sign classification with the database TT100k. 
+After that, the VGG network is also trained from scratch on another dataset, KITTI which consists of pedestrians, cyclists and vehciles images.Finally, the performance of our network has been boosted applying data augmentation with Horizontal Flip, Vertical Flip and zoom of 1.5, tunning the hyperparameters like learning rate and optimizer, adding layer in the classification block such as Batch Normalization, Dropout and Gaussian Noise.
 
 **Results**
 
