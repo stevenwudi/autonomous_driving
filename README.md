@@ -23,7 +23,7 @@ The weights of the different models can be found [here] (https://drive.google.co
 
 The goal of this part is to classify images using some of the state of the art deep neural networks (VGG, ResNet and InceptionV3). These architectures have been trained on different datasets (TT100k and KITTI). Belgium dataset has been also used.
 
-**Instructions & Code Explanation**
+**Implementation**
 
 Firstly, the performance of a pretrained VGG model is evaluated for traffic sign classification with the database TT100k calculating the accuracy on train and test sets. Some changes in the configuration have been also done applying a crop and a resize to the images and an ImageNet and mean normalization. After that, the VGG network is also trained from scratch on another dataset, KITTI which consists of pedestrians, cyclists and vehciles images. 
 The performance of two more models, ResNet and InceptionV3, has been also tested using the TT100k dataset from scratch and fine-tuning. 
