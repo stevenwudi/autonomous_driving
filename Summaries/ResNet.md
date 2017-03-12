@@ -27,4 +27,4 @@ In this part of the paper different ResNet are defined with the difference that 
 until 152) and each 2-layer block is substituted with this 3-layer bottleneck block.
 
 Different depths are tested (50-layer, 101-layer and 152-layer) and the results are compared with the state-of-the-art
-architectures, and the results are improved, the best training/validation error rate is obtained with 152 layers are improved, the best training/validation error rate are obtained with 152 layers.
+architectures, and the results are improved, the best training/validation error rate is obtained with 152 layers is improved.
