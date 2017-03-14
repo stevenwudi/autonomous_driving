@@ -12,7 +12,7 @@ Team name: **Deep4Learning**
 The report can be found in the following Overleaf project: [Visual Recognition for Autonomous Driving](https://www.overleaf.com/read/wwstzqxkjcxb)
 
 ## Presentation
-The project presentation can be found in this [link](https://docs.google.com/presentation/d/1pATMrlv-86Eotm-Z1qS7ohpkkS3RFFPdB2qlYrZ8-4Y/edit?usp=sharing).
+The project presentation can be found in this [link](https://docs.google.com/presentation/d/1pATMrlv-86Eotm-Z1qS7ohpkkS3RFFPdB2qlYrZ8-4Y).
 
 ## Weights
 The weights of the different models can be found [here](https://drive.google.com/open?id=0B3z5gWH7cHJiWm1pUVRoOFd3dTQ).
@@ -24,16 +24,34 @@ The goal of this part is to classify images using some of the state of the art d
 
 **Implementation**
 
-Firstly, the performance of a pretrained VGG model is evaluated for traffic sign classification with the database TT100k calculating the accuracy on train and test sets. Some changes in the configuration have been also done applying a crop and a resize to the images and an ImageNet and mean normalization. After that, the VGG network is also trained from scratch on another dataset, KITTI which consists of pedestrians, cyclists and vehciles images. 
+Firstly, the performance of a pretrained VGG model is evaluated for traffic sign classification with the database TT100k calculating the accuracy on train and test sets. Some changes in the configuration have been also done applying a crop and a resize to the images and an ImageNet and mean normalization. After that, the VGG network is also trained from scratch on another dataset, KITTI which consists in pedestrians, cyclists and vehciles images. 
 The performance of two more models, ResNet and InceptionV3, has been also tested using the TT100k dataset from scratch and fine-tuning. 
 Finally, the performance of our network has been boosted applying data augmentation with Horizontal Flip, Vertical Flip and zoom of 1.5, tuning the hyperparameters like learning rate and optimizer, adding layers in the classification block such as Batch Normalization, Dropout and Gaussian Noise.
 
-## How to Use
-Go to the `VR-Team4/code`
+All the results can be followed in our [Overleaf project](https://www.overleaf.com/read/wwstzqxkjcxb) or in [these slides](https://docs.google.com/presentation/d/1pATMrlv-86Eotm-Z1qS7ohpkkS3RFFPdB2qlYrZ8-4Y).
+
+## How to Execute the Code
+Go to the folder `VR-Team4/code` 
 ```
     python train.py -c config/CONF_FILE.py -e EXT_NAME
 ```
 where the `CONF_FILE.py` will be one of the _configurations file_ located in `code/config` and the `EXT_FOLDER` the name of the experimental folder where all the results will be saved.
+
+**Configurations File**
+
+Classification:
+- tt100k_classif.py (TT100K traffic signs dataset)
+- belgium_classif.py: (Belgium traffic signs dataset)
+- kitti_classif.py (KITTI dataset)
+
+Object Detecion (not implemented yet):
+- [···]
+
+Segmentation (not implemented yet):
+- [···]
+
+**Modules Used**
+- VGG, ResNet, InceptionV3
 
 ## References (Summary)
 Simonyan, K., & Zisserman, A. (2014). Very deep convolutional networks for large-scale image recognition. arXiv preprint arXiv:1409.1556. **[Paper summary](https://github.com/acasadevall/VR-Team4/blob/master/Summaries/VGG%20Summary.md)**
