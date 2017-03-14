@@ -33,7 +33,7 @@ Go to the `VR-Team4/code`
 ```
     python train.py -c config/CONF_FILE.py -e EXT_NAME
 ```
-where the CONF_FILE.py will be one of the _configurations file_ located in code/config and the EXT_FOLDER the name of the experimental folder where all the results will be saved.
+where the `CONF_FILE.py` will be one of the _configurations file_ located in `code/config` and the `EXT_FOLDER` the name of the experimental folder where all the results will be saved.
 
 ## References (Summary)
 Simonyan, K., & Zisserman, A. (2014). Very deep convolutional networks for large-scale image recognition. arXiv preprint arXiv:1409.1556. **[Paper summary](https://github.com/acasadevall/VR-Team4/blob/master/Summaries/VGG%20Summary.md)**
