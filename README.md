@@ -40,9 +40,9 @@ where the `CONF_FILE.py` will be one of the _configurations file_ located in `co
 **Configurations File**
 
 Classification:
-- tt100k_classif.py (TT100K traffic signs dataset)
-- belgium_classif.py: (Belgium traffic signs dataset)
-- kitti_classif.py (KITTI dataset)
+- `tt100k_classif.py` using TT100K traffic signs dataset
+- `belgium_classif.py` using Belgium traffic signs dataset
+- `kitti_classif.py` using KITTI dataset
 
 Object Detecion (not implemented yet):
 - [···]
