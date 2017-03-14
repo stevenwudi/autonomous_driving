@@ -29,15 +29,6 @@ Firstly, the performance of a pretrained VGG model is evaluated for traffic sign
 The performance of two more models, ResNet and InceptionV3, has been also tested using the TT100k dataset from scratch and fine-tuning. 
 Finally, the performance of our network has been boosted applying data augmentation with Horizontal Flip, Vertical Flip and zoom of 1.5, tuning the hyperparameters like learning rate and optimizer, adding layers in the classification block such as Batch Normalization, Dropout and Gaussian Noise.
 
-## Weekly Project Slides
-- Google slides for [Week 1](https://docs.google.com/presentation/d/1A6hgbNn8N-Iq8MhSa_RPIyf87DBL6PCtoDzy1zqS5Xs/edit?usp=sharing)
-- Google slides for [Week 2](https://docs.google.com/presentation/d/1Q69lmzPzgtc4lDw8dr9yyFY_T9JXhjJgL4ShyxFJk3M/edit?usp=sharing)
-- Google slides for [Week 3](https://docs.google.com/presentation/d/1WuzVeTwUL65Dnki3vsBJgHXwKffrFanwXbmR_URkLQQ/edit?usp=sharing)
-- Google slides for Week 4 (T.B.A.)
-- Google slides for Week 5 (T.B.A.)
-- Google slides for Week 6 (T.B.A.)
-- Google slides for Week 7 (T.B.A.)
-
 ## References (Summary)
 Simonyan, K., & Zisserman, A. (2014). Very deep convolutional networks for large-scale image recognition. arXiv preprint arXiv:1409.1556. **[Paper summary](https://github.com/acasadevall/VR-Team4/blob/master/Summaries/VGG%20Summary.md)**
 
