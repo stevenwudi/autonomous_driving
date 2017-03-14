@@ -29,7 +29,7 @@ The performance of two more models, ResNet and InceptionV3, has been also tested
 Finally, the performance of our network has been boosted applying data augmentation with Horizontal Flip, Vertical Flip and zoom of 1.5, tuning the hyperparameters like learning rate and optimizer, adding layers in the classification block such as Batch Normalization, Dropout and Gaussian Noise.
 
 ## How to Use
-Go to the VR-Team4/code
+Go to the `VR-Team4/code`
 ```
     python train.py -c config/CONF_FILE.py -e EXT_NAME
 ```
