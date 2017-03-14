@@ -4,6 +4,7 @@ import os
 import sys
 from getpass import getuser
 import matplotlib
+import time
 matplotlib.use('Agg')  # Faster plot
 
 # Import tools
@@ -13,6 +14,33 @@ from tools.dataset_generators import Dataset_Generators
 from tools.optimizer_factory import Optimizer_Factory
 from callbacks.callbacks_factory import Callbacks_Factory
 from models.model_factory import Model_Factory
+from datetime import datetime
+
+
+def HMS(sec):
+    '''
+    :param sec: seconds
+    :return: print of H:M:S
+    '''
+
+    m, s = divmod(sec, 60)
+    h, m = divmod(m, 60)
+
+    return "%dh:%02dm:%02ds" % (h, m, s)
+
+
+def configurationPATH(cf, dataset_path):
+    '''
+    :param cf: config file
+    :param dataset_path: path where the datased is located
+    :return: Print some paths
+    '''
+
+    print "\n###########################"
+    print (' > Conf File Path = "%s"' % (cf.config_path))
+    print (' > Save Path = "%s"' % (cf.savepath))
+    print (' > Dataset PATH = "%s"' % (os.path.join(dataset_path, cf.problem_type, cf.dataset_name)))
+    print ("###########################\n")
 
 
 # Train the network
@@ -96,25 +124,39 @@ def main():
                                            'experiment using -e name in the '\
                                            'command line'
 
+    # Start Time
+    print ('\n > Start Time:')
+    print ('   '+ datetime.now().strftime('%a, %d %b %Y-%m-%d %H:%M:%S'))
+    start_time = time.time()
+
     # Define the user paths
     shared_path = arguments.shared_path
     local_path = arguments.local_path
     dataset_path = os.path.join(local_path, 'Datasets')
     shared_dataset_path = os.path.join(shared_path, 'Datasets')
-    experiments_path = os.path.join(local_path, getuser(), 'Experiments')
-    shared_experiments_path = os.path.join(shared_path, getuser(), 'Experiments')
+    experiments_path = os.path.join(local_path, 'Experiments')
+    shared_experiments_path = os.path.join(shared_path, 'Experiments')
 
     # Load configuration files
     configuration = Configuration(arguments.config_path, arguments.exp_name,
                                   dataset_path, shared_dataset_path,
                                   experiments_path, shared_experiments_path)
+
     cf = configuration.load()
+
+    configurationPATH(cf, dataset_path)
 
     # Train /test/predict with the network, depending on the configuration
     process(cf)
 
     # Copy result to shared directory
-    configuration.copy_to_shared()
+    #configuration.copy_to_shared()
+
+    # End Time
+    end_time = time.time()
+    print ('\n > End Time:')
+    print ('   '+ datetime.now().strftime('%a, %d %b %Y-%m-%d %H:%M:%S'))
+    print ('\n   ET: '+ HMS(end_time - start_time)) # -> H:M:S
 
 
 # Entry point of the script
