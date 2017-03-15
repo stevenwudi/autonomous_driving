@@ -58,5 +58,5 @@ Simonyan, K., & Zisserman, A. (2014). Very deep convolutional networks for large
 
 He, K., Zhang, X., Ren, S., & Sun, J. (2016). Deep residual learning for image recognition. In Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition (pp. 770-778). **[Paper summary](https://github.com/acasadevall/VR-Team4/blob/master/Summaries/ResNet.md)**
 
-Joseph	Redmon,	Santosh	Kumar	Divvala,	Ross	B.	Girshick,	Ali	Farhadi;	You	Only	Look	Once:	
-Unified,	Real-Time	Object	Detection. **[Paper summary](https://github.com/acasadevall/VR-Team4/blob/master/Summaries/YOLO.md)**
+J. Redmon, S. Divvala, R. Girshick, and A. Farhadi. You only look once: Unified, real-time object detection. arXiv
+preprint arXiv:1506.02640, 2015. **[Paper summary](https://github.com/acasadevall/VR-Team4/blob/master/Summaries/YOLO.md)**
