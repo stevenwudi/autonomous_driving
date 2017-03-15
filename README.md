@@ -57,3 +57,6 @@ Segmentation (not implemented yet):
 Simonyan, K., & Zisserman, A. (2014). Very deep convolutional networks for large-scale image recognition. arXiv preprint arXiv:1409.1556. **[Paper summary](https://github.com/acasadevall/VR-Team4/blob/master/Summaries/VGG%20Summary.md)**
 
 He, K., Zhang, X., Ren, S., & Sun, J. (2016). Deep residual learning for image recognition. In Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition (pp. 770-778). **[Paper summary](https://github.com/acasadevall/VR-Team4/blob/master/Summaries/ResNet.md)**
+
+Joseph	Redmon,	Santosh	Kumar	Divvala,	Ross	B.	Girshick,	Ali	Farhadi;	You	Only	Look	Once:	
+Unified,	Real-Time	Object	Detection. **[Paper summary](https://github.com/acasadevall/VR-Team4/blob/master/Summaries/YOLO.md)**
