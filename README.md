@@ -60,3 +60,6 @@ He, K., Zhang, X., Ren, S., & Sun, J. (2016). Deep residual learning for image r
 
 J. Redmon, S. Divvala, R. Girshick, and A. Farhadi. You only look once: Unified, real-time object detection. arXiv
 preprint arXiv:1506.02640, 2015. **[Paper summary](https://github.com/acasadevall/VR-Team4/blob/master/Summaries/YOLO.md)**
+
+W. Liu, D. Anguelov, D. Erhan, C. Szegedy, and S. Reed, “SSD: Single shot multibox detector,” arXiv:1512.02325, 2015. **[Paper summary](https://github.com/acasadevall/VR-Team4/blob/master/Summaries/SSD.md)**
+
