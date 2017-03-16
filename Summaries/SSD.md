@@ -1,3 +1,3 @@
-# SSD Single Shot Multibox Detector
+# SSD: Single Shot Multibox Detector
 
 
