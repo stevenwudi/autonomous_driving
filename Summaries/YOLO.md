@@ -6,7 +6,7 @@ The methodology is simple:
 2) Running a single convolutional network. It predicts bounding boxes and class probabilites for the boxes.
 3) Thresholding the resulting detections by the model's confidence (non-max supression).
 
-YOLO trains and tests on full images but it is fast (base network runs at 45 frames per second and fast version 150 fps). In fact, it achieves more than twice the mean average precision of other real-time systems and makes less than half the number of background error comparted to Fast R-CNN.
+YOLO trains and tests on full images and even it is fast (base network runs at 45 frames per second and fast version 150 fps). In fact, it achieves more than twice the mean average precision of other real-time systems and makes less than half the number of background error comparted to Fast R-CNN.
 
 
 
