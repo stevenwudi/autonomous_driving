@@ -9,7 +9,7 @@ Team name: **Deep4Learning**
 - _A. Salvador, adrisalva122@gmail.com - [AdrianSalvador](https://github.com/AdrianSalvador)_
 
 ## Report
-The report can be found in the following Overleaf project: [Visual Recognition for Autonomous Driving](https://www.overleaf.com/8650877pvtmwxnzcygm)
+The report can be found in the following Overleaf project: [Visual Recognition for Autonomous Driving](https://www.overleaf.com/read/jttxgmksgkjm)
 
 ## Presentation
 The project presentation can be found in this [link](https://docs.google.com/presentation/d/1pATMrlv-86Eotm-Z1qS7ohpkkS3RFFPdB2qlYrZ8-4Y).
