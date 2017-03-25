@@ -77,9 +77,9 @@ Segmentation:
 
 To calculate the f-score and FPS on train, validation and test sets, go to the folder `VR-Team4/code` 
 ```
-    python eval_detection_fscore.py -c config/CONF_FILE.py -e EXT_NAME -s DATASET_FOLDER
+    python eval_detection_fscore.py -c config/CONF_FILE.py -e EXT_NAME -s SET_DATASET_FOLDER
 ```
-where the `CONF_FILE.py` will be one of the _configurations file_ located in `code/config`, the `EXT_FOLDER` the name of the experimental folder where all the results will be saved and the `DATASET_FOLDER` the path of the specified set (train, validation or test).
+where the `CONF_FILE.py` will be one of the _configurations file_ located in `code/config`, the `EXT_FOLDER` the name of the experimental folder where all the results will be saved and the `SET_DATASET_FOLDER` the path of the specified set (train, validation or test).
 
 
 ## References (Summary)
