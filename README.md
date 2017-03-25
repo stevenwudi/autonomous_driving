@@ -30,6 +30,12 @@ Finally, the performance of our network has been boosted applying data augmentat
 
 All the results can be followed in our [Overleaf project](https://www.overleaf.com/read/wwstzqxkjcxb) or in [these slides](https://docs.google.com/presentation/d/1pATMrlv-86Eotm-Z1qS7ohpkkS3RFFPdB2qlYrZ8-4Y).
 
+## Object Detection
+**Introduction**
+
+**Implementation**
+
+
 ## How to Execute the Code
 Go to the folder `VR-Team4/code` 
 ```
