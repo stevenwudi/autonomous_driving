@@ -20,7 +20,7 @@ The weights of the different models can be found [here](https://drive.google.com
 ## Object Recognition
 **Introduction**
 
-The goal of this part is to classify images using some of the state of the art deep neural networks (VGG, ResNet and InceptionV3). These architectures have been trained on different datasets (TT100k and KITTI). Belgium dataset has been also used.
+The goal of this part is to classify images using some of the state of the art Deep Neural Networks (VGG, ResNet and InceptionV3). These architectures have been trained on different datasets (TT100k and KITTI). Belgium dataset has been also used.
 
 **Implementation**
 
@@ -33,8 +33,11 @@ All the results can be followed in our [Overleaf project](https://www.overleaf.c
 ## Object Detection
 **Introduction**
 
+The goal of this part is to detect objects in the images using some of the state of the art Deep Neural Networks (YOLO, Tiny-YOLO and SSD) trained on different datasets (TT110K and Udacity).
+
 **Implementation**
 
+During these weeks the performance of different networks as YOLO, Tiny-YOLO and SSD is evaluated for detection with the database TT100k and Udacity. The f-score and the frame per second (fps) is calculated separately in train, validation and test sets.
 
 ## How to Execute the Code
 Go to the folder `VR-Team4/code` 
