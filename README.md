@@ -44,8 +44,10 @@ Classification:
 - `belgium_classif.py` using Belgium traffic signs dataset
 - `kitti_classif.py` using KITTI dataset
 
-Object Detecion (not implemented yet):
-- [···]
+Object Detecion:
+- `tt100k_detection.py` using TT100K traffic signs dataset
+- `udacity_detection.py` using Udacity dataset
+- `ssd_detection.py` (Implementing...)
 
 Segmentation (not implemented yet):
 - [···]
