@@ -39,12 +39,12 @@ where the `CONF_FILE.py` will be one of the _configurations file_ located in `co
 
 **Configurations File**
 
-Classification:
+Object Recognition:
 - `tt100k_classif.py` using TT100K traffic signs dataset
 - `belgium_classif.py` using Belgium traffic signs dataset
 - `kitti_classif.py` using KITTI dataset
 
-Object Detecion:
+Object Detection:
 - `tt100k_detection.py` using TT100K traffic signs dataset
 - `udacity_detection.py` using Udacity dataset
 - `ssd_detection.py` (Implementing...)
@@ -53,7 +53,15 @@ Segmentation (not implemented yet):
 - [···]
 
 **Modules Used**
+
+Object Recognition:
 - VGG, ResNet, InceptionV3
+
+Object Detection:
+- YOLO, Tiny-YOLO, SSD
+
+Segmentation (not implemented yet):
+
 
 ## References (Summary)
 Simonyan, K., & Zisserman, A. (2014). Very deep convolutional networks for large-scale image recognition. arXiv preprint arXiv:1409.1556. **[Paper summary](https://github.com/acasadevall/VR-Team4/blob/master/Summaries/VGG%20Summary.md)**
