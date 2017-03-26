@@ -41,10 +41,10 @@ VGG:
 - Boosting the performance of the network.
 
 ResNet:
-- 
+-  Evaluating the model on TT100k comparing the training from scratch and using fine-tuning.
 
 InceptionV3:
-
+- Evaluating the model on TT100k comparing the training from scratch and using fine-tuning.
 
 
 ## Object Detection
