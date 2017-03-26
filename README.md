@@ -35,7 +35,16 @@ All the results can be followed in our [Overleaf project](https://www.overleaf.c
 
 VGG:
 - Training from scratch on TT100K dataset.
+- Evaluating the techniques of cropping and resizing and pre-processing such as Imagenet normalization and mean normalization.
+- Transfering the learning to the BelgiumTS dataset.
+- Training from scratch and using fine-tuning on the KITTI dataset (comparing them).
+- Boosting the performance of the network.
+
+ResNet:
 - 
+
+InceptionV3:
+
 
 
 ## Object Detection
