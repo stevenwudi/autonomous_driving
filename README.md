@@ -39,7 +39,7 @@ The goal of this part is to detect objects in the images using some of the state
 
 During these weeks the performance of different networks as YOLO, Tiny-YOLO and SSD is evaluated for detection with the database TT100k and Udacity. The f-score and the frame per second (fps) is calculated separately in train, validation and test sets in order to analyze the results.
 Finally, the performance of our network has been boosted applying data agumentation with Horizontal Flip and tuning 
-hyperparameters like the optimizer (RMSprop and SGD) and the learning rate (from 0.00001 to 0.0001) following the configuration of the best results in the boosting part in Object Recognition.
+hyperparameters like the optimizer (RMSprop and SGD) and the learning rate (from 0.00001 to 0.0001) following the configuration of the best results in the boosting part of Object Recognition.
 
 ## How to Execute the Code
 Go to the folder `VR-Team4/code` 
