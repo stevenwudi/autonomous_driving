@@ -65,11 +65,11 @@ YOLO and Tiny-YOLO:
 - Analyzing the dataset
 - Calculating the f-score and FPS on train, validation and test sets.
 - Training the network on Udacity dataset.
-- Boosting the performance of the both networs.
+- Boosting the performance of the both networks.
 
 SSD: 
-- Implementing the SSD network (not yet).
-- Evaluating it on TT100K and Udacity (not yet).
+- Implementing the SSD network.
+- Evaluating it on TT100K and Udacity.
 
 ## How to Execute the Code
 Go to the folder `VR-Team4/code` 
@@ -88,7 +88,7 @@ Object Recognition:
 Object Detection:
 - `tt100k_detection.py` using TT100K traffic signs dataset
 - `udacity_detection.py` using Udacity dataset
-- `ssd_detection.py` (Implementing...)
+- `ssd_detection.py` using both datasets (TT100K and Udacity)
 
 Segmentation (not implemented yet):
 - [···]
