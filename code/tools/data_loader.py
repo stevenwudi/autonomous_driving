@@ -22,8 +22,10 @@ from keras.preprocessing.image import (Iterator,
                                        NumpyArrayIterator,
                                        random_channel_shift)
 
+import pickle
 from tools.save_images import save_img2
 from tools.yolo_utils import yolo_build_gt_batch
+from tools.ssd_utils import BBoxUtility # SSD Utils
 
 # Pad image
 def pad_image(x, pad_amount, mode='reflect', constant=0.):
@@ -218,6 +220,7 @@ class ImageDataGenerator(object):
                  warp_grid_size=3,
                  dim_ordering='default',
                  class_mode='categorical',
+                 model_name=None,
                  rgb_mean=None,
                  rgb_std=None,
                  crop_size=None):
@@ -291,7 +294,7 @@ class ImageDataGenerator(object):
                             batch_size=32, shuffle=True, seed=None,
                             gt_directory=None,
                             save_to_dir=None, save_prefix='',
-                            save_format='jpeg'):
+                            save_format='jpeg', model_name=None):
         return DirectoryIterator(
             directory, self, resize=resize,
             target_size=target_size, color_mode=color_mode,
@@ -300,7 +303,7 @@ class ImageDataGenerator(object):
             batch_size=batch_size, shuffle=shuffle, seed=seed,
             gt_directory=gt_directory,
             save_to_dir=save_to_dir, save_prefix=save_prefix,
-            save_format=save_format)
+            save_format=save_format, model_name=model_name)
 
     def flow_from_directory2(self, directory,
                              resize=None, target_size=(256, 256),
@@ -309,7 +312,7 @@ class ImageDataGenerator(object):
                              batch_size=32, shuffle=True, seed=None,
                              gt_directory=None,
                              save_to_dir=None, save_prefix='',
-                             save_format='jpeg', directory2=None,
+                             save_format='jpeg', model_name=None, directory2=None,
                              gt_directory2=None, batch_size2=None):
         return DirectoryIterator2(
             directory, self, resize=resize,
@@ -319,7 +322,7 @@ class ImageDataGenerator(object):
             batch_size=batch_size, shuffle=shuffle, seed=seed,
             gt_directory=gt_directory,
             save_to_dir=save_to_dir, save_prefix=save_prefix,
-            save_format=save_format,
+            save_format=save_format, model_name=model_name,
             directory2=directory2, gt_directory2=gt_directory2,
             batch_size2=batch_size2)
 
@@ -840,7 +843,7 @@ class DirectoryIterator(Iterator):
                  dim_ordering='default',
                  classes=None, class_mode='categorical',
                  batch_size=32, shuffle=True, seed=None, gt_directory=None,
-                 save_to_dir=None, save_prefix='', save_format='jpeg'):
+                 save_to_dir=None, save_prefix='', save_format='jpeg', model_name=None):
         # Check dim order
         if dim_ordering == 'default':
             dim_ordering = K.image_dim_ordering()
@@ -853,6 +856,7 @@ class DirectoryIterator(Iterator):
         self.save_to_dir = save_to_dir
         self.save_prefix = save_prefix
         self.save_format = save_format
+        self.model_name = model_name
 
         # Check target size
         if target_size is None and batch_size > 1:
@@ -898,6 +902,7 @@ class DirectoryIterator(Iterator):
                 classes = list_subdirs(directory)
         else:
             classes = classes.values()
+
         self.nb_class = len(classes)
         self.class_indices = dict(zip(classes, range(len(classes))))
 
@@ -915,6 +920,7 @@ class DirectoryIterator(Iterator):
                     if not os.path.isfile(gt_fname):
                         raise ValueError('GT file not found: ' + gt_fname)
             self.filenames = np.sort(self.filenames)
+
         elif not self.class_mode == 'segmentation':
             for subdir in classes:
                 subpath = os.path.join(directory, subdir)
@@ -923,6 +929,7 @@ class DirectoryIterator(Iterator):
                         self.classes.append(self.class_indices[subdir])
                         self.filenames.append(os.path.join(subdir, fname))
             self.classes = np.array(self.classes)
+
         else:
             for fname in os.listdir(directory):
                 if has_valid_extension(fname):
@@ -981,6 +988,7 @@ class DirectoryIterator(Iterator):
                 gt = np.loadtxt(label_path)
                 if len(gt.shape) == 1:
                     gt = gt[np.newaxis,]
+
                 y = gt.copy()
                 y = y[((y[:,1] > 0.) & (y[:,1] < 1.))]
                 y = y[((y[:,2] > 0.) & (y[:,2] < 1.))]
@@ -1045,9 +1053,25 @@ class DirectoryIterator(Iterator):
             for i, label in enumerate(self.classes[index_array]):
                 batch_y[i, label] = 1.
         elif self.class_mode == 'detection':
-            # TODO detection: check model, other networks may expect a different batch_y format and shape
-            # YOLOLoss expects a particular batch_y format and shape
-            batch_y = yolo_build_gt_batch(batch_y, self.image_shape, self.nb_class)
+
+            # if self.image_shape[2] < self.image_shape[0]:
+            #     image_shape = (self.image_shape[2], self.image_shape[1], self.image_shape[0])
+            # else:
+            #     image_shape = self.image_shape
+            #
+            # print(image_shape)
+
+            # batch_y = yolo_build_gt_batch(batch_y, self.image_shape, self.nb_class)
+            # batch_y = ssd_build_gt_batch(batch_y, self.image_shape, self.nb_class)
+
+            if self.model_name == 'ssd':
+                # self.image_shape = (3, 300, 300)
+                priors = pickle.load(open('priors/prior_boxes_ssd300.pkl', 'rb'))
+                # batch_y = BBoxUtility(self.nb_class).assign_boxes(batch_y) # priors[0]
+                batch_y = BBoxUtility(self.nb_class+1, priors=priors).ssd_build_gt_batch_v2(batch_y)
+            else:
+                batch_y = yolo_build_gt_batch(batch_y, self.image_shape, self.nb_class)
+
         elif self.class_mode == None:
             return batch_x
 
@@ -1062,7 +1086,7 @@ class DirectoryIterator2(object):
                  classes=None, class_mode='categorical',
                  batch_size=32, shuffle=True, seed=None, gt_directory=None,
                  save_to_dir=None, save_prefix='', save_format='jpeg',
-                 directory2=None, gt_directory2=None, batch_size2=None):
+                 directory2=None, gt_directory2=None, batch_size2=None, model_name=None):
 
         self.DI1 = DirectoryIterator(
             directory, image_data_generator, resize=resize,
@@ -1072,7 +1096,7 @@ class DirectoryIterator2(object):
             batch_size=batch_size, shuffle=shuffle, seed=seed,
             gt_directory=gt_directory,
             save_to_dir=save_to_dir, save_prefix=save_prefix,
-            save_format=save_format)
+            save_format=save_format, model_name=model_name)
 
         self.DI2 = DirectoryIterator(
             directory2, image_data_generator, resize=resize,
@@ -1082,7 +1106,7 @@ class DirectoryIterator2(object):
             batch_size=batch_size2, shuffle=shuffle, seed=seed,
             gt_directory=gt_directory2,
             save_to_dir=save_to_dir, save_prefix=save_prefix,
-            save_format=save_format)
+            save_format=save_format, model_name=model_name)
 
     def next(self):
         batch_x1, batch_y1 = self.DI1.next()
