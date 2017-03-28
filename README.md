@@ -28,9 +28,6 @@ Firstly, the performance of a pretrained VGG model is evaluated for traffic sign
 The performance of two more models, ResNet and InceptionV3, has been also tested using the TT100k dataset from scratch and fine-tuning. 
 Finally, the performance of our network has been boosted applying data augmentation with Horizontal Flip, Vertical Flip and zoom of 1.5, tuning the hyperparameters like learning rate and optimizer, adding layers in the classification block such as Batch Normalization, Dropout and Gaussian Noise.
 
-All the results can be followed in our [Overleaf project](https://www.overleaf.com/read/wwstzqxkjcxb) or in [these slides](https://docs.google.com/presentation/d/1pATMrlv-86Eotm-Z1qS7ohpkkS3RFFPdB2qlYrZ8-4Y).
-
-
 **Level of completeness of the goals**
 
 VGG:
