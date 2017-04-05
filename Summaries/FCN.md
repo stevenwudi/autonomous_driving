@@ -5,5 +5,5 @@ Convolutional networks improve classifcation for whole-image and also make progr
 
 Each layer of data in a convnet is a 3D array where, for example, the first one is the image. Locations in higher layers correspond to the locations in the image they are path-connected to (receptive fields).
 
-Their components (convolution, pooling and activation functions) operate on local input regions and depend only on relative spatial coordinates).
+Their components (convolution, pooling and activation functions) operate on local input regions and depend only on relative spatial coordinates.
 
