@@ -119,3 +119,9 @@ preprint arXiv:1506.02640, 2015. **[Paper summary](https://github.com/acasadeval
 
 W. Liu, D. Anguelov, D. Erhan, C. Szegedy, and S. Reed, “SSD: Single shot multibox detector,” arXiv:1512.02325, 2015. **[Paper summary](https://github.com/acasadevall/VR-Team4/blob/master/Summaries/SSD.md)**
 
+J. Long, E. Shelhamer, and T. Darrell, “Fully convolutional networks for semantic segmentation,” in Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition, pp. 3431–3440, 2015. **[Paper summary]()**
+
+
+V. Badrinarayanan, A. Kendall, and R. Cipolla, “Segnet: A deep convolutional encoder-decoder architecture for image segmentation,” arXiv preprint arXiv:1511.00561, 2015. **[Paper summary]()**
+
+
