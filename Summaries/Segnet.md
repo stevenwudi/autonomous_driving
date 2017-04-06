@@ -37,7 +37,18 @@ The key idea in computing a semantic contour score is to evaluate the F1-measure
 Each architecture is tested after 1000 iterations optimizations on the CamVid validation set until the training loss converges. It is important to achieve high global accuracies as is the best indicator for self-autonomous driving, as the major part of the pixels form part of the roads, buildings, etc.
 
 
-## Results
+## Results & Future Work
+Bilinear interpolation based upsampling without any learning performs the worst based on the measures of accuracy. All the other methods (FNC-Basic or Segnet-Basic) perform better. 
+
+When comparing the FNC with SegNet it can be seen that they perform equally in the datasets, the difference is that SegNet uses less memory during inference since it only stores max-pooling indices. 
+
+SegNet Basic is most similar to FCN Basic-NoAddition in therms of decoder, however, Segnet has a better performance and is also larger than FCN. The accuracy of FCN Basic-NoAddition is also lower than the FCN Basic, showing that is vital to capture the information present in the encoder feature maps.
+
+The size of FCN Basic-NoAddition-NoDimReduction model is slightly larger than the SegNet-Basic since the final enconder feature maps are not compressed to match the number of classes K. The performance of this FCN is poorer than the SegNet-Basic.
+
+The comparison between FCN-BasicNoAddition and SegNet Basic-SingleChannelDecoder shows that using max-pooling indices for upsampling and an overall larger decoder leads to better perfomance. Also, the results show that when no class balancing is used, the results are poorer for all the variants, particularly ofr class average accuracy and mIoU metric. 
+
+Sumarizing, the best performance is achieved when enconder feature maps are stored in full, when memory during inference is constrained and then compressed, it can be used to improve the performance and that larger decoders increase performance.
 
 
 
