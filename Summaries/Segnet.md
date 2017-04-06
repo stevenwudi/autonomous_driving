@@ -19,6 +19,31 @@ Each enconder performs a convolution with a filter bank to produce a set of feat
 The decoders decode the feature maps using the memorized max-pooling indices from the corresponding feature map. These feature maps are then convolved with filter bank to produce dense feature maps with and applied batch normalization. The output of the softmax is a K channel image of probabilities where K is the number of classes. The predicted segmentation correspond to the class with maximum probability at each pixel.
 
 ## Decoder Variants
+In order to compare Segnet with FCN, there has been implemented a reduced Segnet architecture named Segnet-Basic, with 4 encoders and 4 decoders. All the encoders perform max-pooling and sub-sampling and the decoders perform upsample with the received max-pooling indices. Batch Normalization and ReLu are also implemented as explaind before. Also, a 7x7 kernel is also used in order to provide a wide context for smooth labelling. 
+FNC-Basic is also created which shares the characteristics of Segnet-Basic but with the decoding procedure of FCN. 
+
+In Segnet, there is no learning involved in the upsampling process. Each decoder filter has the same number of channels as the upsampled feature maps. 
+FCN is different as it has a dimensionally reduction effect in the encoded feature maps. The compressed K channels (K is the number of classes) final encoder layer are the input of the decoder network. The upsampling in this network is performed by inverse convolution using a fixed kernel of 8x8 (also named convolution).
+
+## Training
+The dataset used is CamVid, which consists in 367 training and 233 testing RGB images at 360 x 480 resolution. The challenge is to segment 11 classes.
+
+The encoder and decoder weights are initialized as explained in He et al. and in order to train all the variants, the stochastic grandient descent is used. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
