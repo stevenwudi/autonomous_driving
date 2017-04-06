@@ -31,7 +31,15 @@ Another way to connect coarse outputs to dense pixels is interpolation. Upsampli
 Finally, in stochastic optimization the gradient computation is driven by the training distribution.
 
 ## Segmentation Architecture
+ILSVRC classifiers into FCNs and augment them for dense prediction in-network upsampling and a pixelwise loss. The network is trianed for segmentation by fine-tuning, with a per-pixel multinomial logistic loss and validate with the standard metric of mean pixel intersection over union with the mean taken over all classes. Training ignores pixels that are masked out in the groundtruth.
 
+The architectures chosen are the VGG16, Alexnet and GoogleNet. Each net is decapitated by discarding the final classifier layer and converting all fully connected layers to convolutions. 
+
+Fine-tuning from classification to segmentation gave reasonable predictions of each net. The new fully convolutional (FCN) for segmentation that combines layers of the features hierarchy and refines the spatial precision of the output. 
+
+The output stride is divided by predicting from a 16 pixel stride layer. Adding a 1x1 convolution layer on top of layer pool14. Decreasing the stride of pooling layers is the most straightforward way to obtain finer predictions. Another way to obtain finer predictions is to use the shift-and-stich trick.
+
+## Experimental Framework
 
 
 
