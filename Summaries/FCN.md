@@ -31,6 +31,7 @@ Another way to connect coarse outputs to dense pixels is interpolation. Upsampli
 Finally, in stochastic optimization the gradient computation is driven by the training distribution.
 
 ## Segmentation Architecture
+
 ILSVRC classifiers into FCNs and augment them for dense prediction in-network upsampling and a pixelwise loss. The network is trianed for segmentation by fine-tuning, with a per-pixel multinomial logistic loss and validate with the standard metric of mean pixel intersection over union with the mean taken over all classes. Training ignores pixels that are masked out in the groundtruth.
 
 The architectures chosen are the VGG16, Alexnet and GoogleNet. Each net is decapitated by discarding the final classifier layer and converting all fully connected layers to convolutions. 
@@ -46,8 +47,12 @@ All the layers are fine-tuned by back-propagation through the hole net. Just fin
 
 The PASCAL VOC 2011 is the training data used as it has 1112 images. Full convolutional training can balance classes by weighting or sampling the loss and the scores are upsampled  to the input dimensions by deconvolution layers.
 
-## Results & Conclusions
+## Results 
 
+The FCN is test on semantic segmentation and scene parsing, exploring PASCAL VOC 2011 and 2012 comparing the results to the previous state-of-the-art SDS and R-CNN and obtaining an improvement of 20% over both networks. FCN is also tested on NYUDv2 that contains 1449 RGB-D images and SIFT Flow which is a dataset of 2688 images with pixel labels for 33 semantic categories.
 
+The four metrics reported are Pixel accuracy, Mean accuracy, Mean IU and Frequency Weighted IU.
 
+## Conclusions
 
+Fully convolutional networks are a rich class of models of which modern classification convents are a special case. The extension of the nets from classication to segmentation allows improving the architecture with multi-resolution layer combinations dramatically improves the state-of-the-art and simplifies and speeds up learning and interference.
