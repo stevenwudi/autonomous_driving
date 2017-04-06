@@ -50,6 +50,19 @@ The comparison between FCN-BasicNoAddition and SegNet Basic-SingleChannelDecoder
 
 Sumarizing, the best performance is achieved when enconder feature maps are stored in full, when memory during inference is constrained and then compressed, it can be used to improve the performance and that larger decoders increase performance.
 
+### Segnet Results
+The performance of SegNet is quantified on two scenes segmentation benchmarking, one in road scene segmentation for autonomous driving and the other is indoor scene segmentation which is used for Augmented Reality. The input RGB images for both cases are 360 x 480. 
+
+Comparing Segnet with the other deep architecturres such as FCN, DeepLab-LargFOV and DeconvNet the same learning rate, momentum and different parameters are set to the same values. 
+
+The qualitative results show the ability of the proposed architecture to segment smaller classes in road scenes. SegNet shows superior performances as compared with the other architectures. SegNet obtains competitive results when compared with methods chich use CRFs, showing the ability of the architecture to extract meaningful features from the input image and map it, showing that there is a huge improvement in the mIOU parameter. 
+
+Also, SegNet and DeepConvnet achieve the highest scores in all the metrics compared with the other models. DeconvNet has a higher boundary delineation accuracy but SegNet is more efficient. FCN trains more slowly than the previous two. 
+
+
+### Future Work & Conclusions
+Deep learning models have been able to increase the succes in image segmentation. However, factors like memory and computational time during training and testing are also increaded. Training time becomes an important consideration if the performance increase is not meaningful and the Test time and memory are important in order to deploy models on specialized devices. The principal motivation under SegNet was to achieve a good performance with less time and computation resources in order to advance in that field, being a more efficient architecture because it only stores the max-pooling indices. It performs competitively in well-known datasets, achieving very good results in image segmentation.
+
 
 
 
