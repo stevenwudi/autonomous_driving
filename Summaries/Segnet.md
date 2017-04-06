@@ -25,10 +25,20 @@ FNC-Basic is also created which shares the characteristics of Segnet-Basic but w
 In Segnet, there is no learning involved in the upsampling process. Each decoder filter has the same number of channels as the upsampled feature maps. 
 FCN is different as it has a dimensionally reduction effect in the encoded feature maps. The compressed K channels (K is the number of classes) final encoder layer are the input of the decoder network. The upsampling in this network is performed by inverse convolution using a fixed kernel of 8x8 (also named convolution).
 
-## Training
+## Training & Analysis
 The dataset used is CamVid, which consists in 367 training and 233 testing RGB images at 360 x 480 resolution. The challenge is to segment 11 classes.
 
-The encoder and decoder weights are initialized as explained in He et al. and in order to train all the variants, the stochastic grandient descent is used with a fixed learning rate of 0.1 and a momentum of 0.9. Before each epoch the training set is s
+The encoder and decoder weights are initialized as explained in He et al. and in order to train all the variants, the stochastic grandient descent is used with a fixed learning rate of 0.1 and a momentum of 0.9. Before each epoch the training set is shuffled and the minibatched picked is 12 images. The crossentropy loss is used as objective function.
+
+To compare the performance of the different decoder networks the performance measures used are global accuracy (G, percentage of pixels correctly classified), class average accuracy (C, mean of the predictive accuracy over all classes) and mean intersection over union (mIoU, stringent metric that penalizes the false positive prediction).
+
+The key idea in computing a semantic contour score is to evaluate the F1-measure (computing Recall and Precision too). The F1 measure for each class is averaged by the F1 measure of each image in the class.
+
+Each architecture is tested after 1000 iterations optimizations on the CamVid validation set until the training loss converges. It is important to achieve high global accuracies as is the best indicator for self-autonomous driving, as the major part of the pixels form part of the roads, buildings, etc.
+
+
+## Results
+
 
 
 
