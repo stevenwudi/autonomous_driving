@@ -40,7 +40,13 @@ Fine-tuning from classification to segmentation gave reasonable predictions of e
 The output stride is divided by predicting from a 16 pixel stride layer. Adding a 1x1 convolution layer on top of layer pool14. Decreasing the stride of pooling layers is the most straightforward way to obtain finer predictions. Another way to obtain finer predictions is to use the shift-and-stich trick.
 
 ## Experimental Framework
+The Optimization is made by the training with the SGD and momentum. The minibatch size is 20 images and the momentum chosed is 0.9 and the weight decay is 0.00005 or 0.0002.
 
+All the layers are fine-tuned by back-propagation through the hole net. Just fine-tuning the output classifier alone yields 70%. Training from scratch is not feasible considering the time required to learn the base classification nets. 
+
+The PASCAL VOC 2011 is the training data used as it has 1112 images. Full convolutional training can balance classes by weighting or sampling the loss and the scores are upsampled  to the input dimensions by deconvolution layers.
+
+## Results & Conclusions
 
 
 
