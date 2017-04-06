@@ -28,7 +28,7 @@ FCN is different as it has a dimensionally reduction effect in the encoded featu
 ## Training
 The dataset used is CamVid, which consists in 367 training and 233 testing RGB images at 360 x 480 resolution. The challenge is to segment 11 classes.
 
-The encoder and decoder weights are initialized as explained in He et al. and in order to train all the variants, the stochastic grandient descent is used. 
+The encoder and decoder weights are initialized as explained in He et al. and in order to train all the variants, the stochastic grandient descent is used with a fixed learning rate of 0.1 and a momentum of 0.9. Before each epoch the training set is s
 
 
 
