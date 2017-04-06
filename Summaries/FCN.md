@@ -18,3 +18,22 @@ While a general deep net computes a general nonlinear function, a net with only 
 
 ### Adapting classifier for dense prediction
 Recognition nets (Alexnet, etc.) take fixed-size inputs and produce non-spatial outputs. The fully connected layers of these nets have fixed dimensions and throw away spatial coordinates.
+
+The spatial output maps of these convolutionalized models make them a natural choice of dense problems like semantic segmentation. With groundtruth available, both the forward and backward passes are straightforward and both take advantage of inherent computation. 
+
+### Shift-and-stich & Upsampling
+Dense predictions can be obtained from coarse outputs by stitching together output from shifted versions of the input. This transformation increases the cost by a factor of f square (f being the downsampling factor).
+
+Decreasing subsampling withing a net is a traedoff, the filters see the finer information but have smaller receptive fields and take longer to compute.
+
+Another way to connect coarse outputs to dense pixels is interpolation. Upsampling with factor f is convolution with a a fractional input stride of 1/f. The deconvolutional filter in such layer need not be fixed  but can be learned. A stack of deconvolutional layers and activation functions can even learn a nonlinear upsampling. 
+
+Finally, in stochastic optimization the gradient computation is driven by the training distribution.
+
+## Segmentation Architecture
+
+
+
+
+
+
