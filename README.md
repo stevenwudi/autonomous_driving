@@ -71,9 +71,26 @@ SSD:
 ## Image Semantic Segmentation
 **Introduction**
 
+The goal of this part is to segment each object of the scene giving its associated label using any state-of-the-art network.
+
 **Implementation**
 
+During theses weeks the performance of different models as FCN8 and SegNet has been evaluated using several datasets (CamVid, Cityscapes, Synthia and Polyps). To understand its behavior, the FCN8 and SegNet papers has been read and we also have done the corresponding summaries.
+Finally, the performance of our network has been boosted applying data augmentation and making tuning of the metaparameters. 
+
+
 **Level of completeness of the goals**
+
+FCN:
+- Reading the paper.
+- Training and evaluating the FCN8 model on the CamVid dataset.
+- Training/fine-tuning the model on the datasets Synthia, Cityscapes and Polyps.
+- Boosting the performance of the network.
+
+SegNet:
+- Reading the paper.
+- Implementing the model.
+- Training the model on Cityscapes dataset.
 
 
 ## How to Execute the Code
@@ -96,10 +113,10 @@ Object Detection:
 - `ssd_detection.py` using both datasets (TT100K and Udacity)
 
 Segmentation:
-- `camvid_segmentation.py` using Camvid dataset (11 classes)
+- `camvid_segmentation.py` using CamVid dataset (11 classes)
 - `cityscapes_segmentation.py` using Cityscapes dataset (20 classes)
 - `synthia_seg.py` using Synthia dataset (20 classes)
-- `polyps_segmentation` using Polyps dataset
+- `polyps_segmentation.py` using Polyps dataset (4 classes)
 
 **Modules Used**
 
