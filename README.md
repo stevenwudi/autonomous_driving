@@ -68,6 +68,14 @@ SSD:
 - Implementing the SSD network.
 - Evaluating it on TT100K and Udacity.
 
+## Image Semantic Segmentation
+**Introduction**
+
+**Implementation**
+
+**Level of completeness of the goals**
+
+
 ## How to Execute the Code
 Go to the folder `VR-Team4/code` 
 ```
@@ -87,20 +95,22 @@ Object Detection:
 - `udacity_detection.py` using Udacity dataset
 - `ssd_detection.py` using both datasets (TT100K and Udacity)
 
-Segmentation (not implemented yet):
-- [···]
+Segmentation:
+- `camvid_segmentation.py` using Camvid dataset (11 classes)
+- `cityscapes_segmentation.py` using Cityscapes dataset (20 classes)
+- `synthia_seg.py` using Synthia dataset (20 classes)
+- `polyps_segmentation` using Polyps dataset
 
 **Modules Used**
 
 Object Recognition:
-- VGG, ResNet, InceptionV3
+- VGG, ResNet and InceptionV3
 
 Object Detection:
-- YOLO, Tiny-YOLO, SSD
+- YOLO, Tiny-YOLO and SSD
 
 Segmentation:
-[···]
-
+- FCN and SegNet
 
 To calculate the f-score and FPS on train, validation and test sets, go to the folder `VR-Team4/code` 
 ```
