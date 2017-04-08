@@ -92,7 +92,6 @@ SegNet:
 - Implementing the model.
 - Training the model on Cityscapes dataset.
 
-
 ## How to Execute the Code
 Go to the folder `VR-Team4/code` 
 ```
