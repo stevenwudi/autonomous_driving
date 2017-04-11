@@ -114,7 +114,7 @@ Object Detection:
 Segmentation:
 - `camvid_segmentation.py` using CamVid dataset (11 classes)
 - `cityscapes_segmentation.py` using Cityscapes dataset (20 classes)
-- `synthia_seg.py` using Synthia dataset (20 classes)
+- `synthia_segmentation.py` using Synthia dataset (20 classes)
 - `polyps_segmentation.py` using Polyps dataset (4 classes)
 
 **Modules Used**
@@ -126,14 +126,19 @@ Object Detection:
 - YOLO, Tiny-YOLO and SSD
 
 Segmentation:
-- FCN and SegNet
+- FCN, SegNet and Tiramisu
 
 To calculate the f-score and FPS on train, validation and test sets, go to the folder `VR-Team4/code` 
 ```
-    python eval_detection_fscore.py -c config/CONF_FILE.py -e EXT_NAME -s SET_DATASET_FOLDER
+    python eval_detection_fscore.py MODEL_NAME DATASET_NAME WEIGHTS_PATH TEST_FOLDER_PATH
 ```
-where the `CONF_FILE.py` will be one of the _configurations file_ located in `code/config`, the `EXT_FOLDER` the name of the experimental folder where all the results will be saved and the `SET_DATASET_FOLDER` the path of the specified set (train, validation or test) of a particular dataset.
+where the `MODEL_NAME` and the `DATASET_NAME` will be the name of the network and the dataset to be performed, respectively. For the `WEIGHTS_PATH` and the `TEST_FOLDER_PATH` will be the paths for the weights and the test folder with the images to be tested.
 
+Other arguments (optionals) that will affect the final performance of the network will be ...
+`--detection-threshold NUM`: Minimum confidence value for a prediction to be considered (between 0 and 1). By default = 0.5
+`--nms-threshold NUM`: Non-Maxima Supression threshold (between 0 and 1). By default = 0.2
+`--display BOOLEAN`: Display or not the image, the predicted bounding boxes and the ground truth bounding boxes. By default = FALSE
+`--ignore-class LIST_OF_INGNORED_CLASS`: List of classes to be ignore from predictions. 
 
 ## References (Summary)
 Simonyan, K., & Zisserman, A. (2014). Very deep convolutional networks for large-scale image recognition. arXiv preprint arXiv:1409.1556. **[Paper summary](https://github.com/acasadevall/VR-Team4/blob/master/Summaries/VGG%20Summary.md)**
@@ -147,7 +152,6 @@ W. Liu, D. Anguelov, D. Erhan, C. Szegedy, and S. Reed, “SSD: Single shot mult
 
 J. Long, E. Shelhamer, and T. Darrell, “Fully convolutional networks for semantic segmentation,” in Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition, pp. 3431–3440, 2015. **[Paper summary](https://github.com/acasadevall/VR-Team4/blob/master/Summaries/FCN.md)**
 
-
 V. Badrinarayanan, A. Kendall, and R. Cipolla, “Segnet: A deep convolutional encoder-decoder architecture for image segmentation,” arXiv preprint arXiv:1511.00561, 2015. **[Paper summary](https://github.com/acasadevall/VR-Team4/blob/master/Summaries/Segnet.md)**
 
-
+S. Jégou, M. Drozdzal, D. Vázquez, A. Romero and Y. Bengio, “The One Hundred Layers Tiramisu: Fully Convolutional DenseNets for Semantic Segmentation“, arXiv preprint arXiv:1611.09326, 2016.
