@@ -135,10 +135,10 @@ To calculate the f-score and FPS on train, validation and test sets, go to the f
 where the `MODEL_NAME` and the `DATASET_NAME` will be the name of the network and the dataset to be performed, respectively. For the `WEIGHTS_PATH` and the `TEST_FOLDER_PATH` will be the paths for the weights and the test folder with the images to be tested.
 
 Other arguments (optionals) that will affect the final performance of the network will be ...
-`--detection-threshold NUM`: Minimum confidence value for a prediction to be considered (between 0 and 1). By default = 0.5
-`--nms-threshold NUM`: Non-Maxima Supression threshold (between 0 and 1). By default = 0.2
-`--display BOOLEAN`: Display or not the image, the predicted bounding boxes and the ground truth bounding boxes. By default = FALSE
-`--ignore-class LIST_OF_INGNORED_CLASS`: List of classes to be ignore from predictions. 
+- `--detection-threshold NUM`: Minimum confidence value for a prediction to be considered (between 0 and 1). By default = 0.5
+- `--nms-threshold NUM`: Non-Maxima Supression threshold (between 0 and 1). By default = 0.2
+- `--display BOOLEAN`: Display or not the image, the predicted bounding boxes and the ground truth bounding boxes. By default = FALSE
+- `--ignore-class LIST_OF_INGNORED_CLASS`: List of classes to be ignore from predictions. 
 
 ## References (Summary)
 Simonyan, K., & Zisserman, A. (2014). Very deep convolutional networks for large-scale image recognition. arXiv preprint arXiv:1409.1556. **[Paper summary](https://github.com/acasadevall/VR-Team4/blob/master/Summaries/VGG%20Summary.md)**
