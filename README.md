@@ -134,6 +134,7 @@ Segmentation:
 - FCN, SegNet and Tiramisu
 
 **F-Score and FPS**
+
 To calculate the f-score and FPS on train, validation and test sets, go to the folder `VR-Team4/code` 
 ```
     python eval_detection_fscore.py MODEL_NAME DATASET_NAME WEIGHTS_PATH TEST_FOLDER_PATH
