@@ -85,12 +85,17 @@ FCN:
 - Reading the paper.
 - Training and evaluating the FCN8 model on the CamVid dataset.
 - Training/fine-tuning the model on the datasets Synthia, Cityscapes and Polyps.
-- Boosting the performance of the network.
+- Boosting the performance of the network with Camvid dataset.
 
 SegNet:
 - Reading the paper.
 - Implementing the model.
-- Training the model on Cityscapes dataset.
+- Training the model on CamVid and Cityscapes datasets.
+
+Tiramisu:
+- Reading the paper.
+- Implementing the model.
+- Training the model on CamVid and Cityscapes datasets.
 
 ## How to Execute the Code
 Go to the folder `VR-Team4/code` 
