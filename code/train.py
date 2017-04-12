@@ -16,7 +16,6 @@ from callbacks.callbacks_factory import Callbacks_Factory
 from models.model_factory import Model_Factory
 from datetime import datetime
 
-
 def HMS(sec):
     '''
     :param sec: seconds
@@ -36,7 +35,7 @@ def configurationPATH(cf, dataset_path):
     :return: Print some paths
     '''
 
-    print "\n###########################"
+    print ("\n###########################")
     print (' > Conf File Path = "%s"' % (cf.config_path))
     print (' > Save Path = "%s"' % (cf.savepath))
     print (' > Dataset PATH = "%s"' % (os.path.join(dataset_path, cf.problem_type, cf.dataset_name)))
@@ -136,11 +135,13 @@ def main():
     shared_dataset_path = os.path.join(shared_path, 'Datasets')
     experiments_path = os.path.join(local_path, 'Experiments')
     shared_experiments_path = os.path.join(shared_path, 'Experiments')
+    usr_path = os.path.join('/home/', getuser())
 
     # Load configuration files
     configuration = Configuration(arguments.config_path, arguments.exp_name,
                                   dataset_path, shared_dataset_path,
-                                  experiments_path, shared_experiments_path)
+                                  experiments_path, shared_experiments_path,
+                                  usr_path)
 
     cf = configuration.load()
 
@@ -150,7 +151,7 @@ def main():
     process(cf)
 
     # Copy result to shared directory
-    #configuration.copy_to_shared()
+    # configuration.copy_to_shared()
 
     # End Time
     end_time = time.time()
