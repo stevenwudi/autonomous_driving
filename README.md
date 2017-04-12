@@ -75,9 +75,8 @@ The goal of this part is to segment each object of the scene giving its associat
 
 **Implementation**
 
-During theses weeks the performance of different models as FCN8 and SegNet has been evaluated using several datasets (CamVid, Cityscapes, Synthia and Polyps). To understand its behavior, the FCN8 and SegNet papers has been read and we also have done the corresponding summaries.
+During theses weeks the performance of different models as FCN8, SegNet and Tiramisu has been evaluated using several datasets (CamVid, Cityscapes, Synthia and Polyps). To understand its behavior, FCN8, SegNet and Tiramisu papers have been read and we also have done the corresponding summaries for both FCN8 and SegNet.
 Finally, the performance of our network has been boosted applying data augmentation and making tuning of the metaparameters. 
-
 
 **Level of completeness of the goals**
 
