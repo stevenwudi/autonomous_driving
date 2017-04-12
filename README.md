@@ -95,7 +95,7 @@ SegNet:
 Tiramisu:
 - Reading the paper.
 - Implementing the model.
-- Training the model on CamVid and Cityscapes datasets.
+- Training the model on CamVid dataset.
 
 ## How to Execute the Code
 Go to the folder `VR-Team4/code` 
