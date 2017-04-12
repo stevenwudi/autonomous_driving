@@ -4,7 +4,8 @@ import numpy as np
 from keras.engine.training import GeneratorEnqueuer
 #from model_factory import Model_Factory
 from tools.save_images import save_img3
-
+from tools.yolo_utils import *
+from keras.preprocessing import image
 
 """
 Interface for normal (one net) models and adversarial models. Objects of
@@ -40,6 +41,7 @@ class One_Net_Model(Model):
     def train(self, train_gen, valid_gen, cb):
         if (self.cf.train_model):
             print('\n > Training the model...')
+
             hist = self.model.fit_generator(generator=train_gen,
                                             samples_per_epoch=self.cf.dataset.n_images_train,
                                             nb_epoch=self.cf.n_epochs,
