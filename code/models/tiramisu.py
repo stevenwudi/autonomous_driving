@@ -104,7 +104,7 @@ def tiramisu(img_shape, n_classes, n_layers_block, growth_rate, weight_decay, nb
         nb_filter = int(compression * nb_filter)
 
         # Transition Down
-        x = tiramisu_layers.TransitionDown(x, nb_filter, dropout_rate=dropout, td_id='down_td{}'.format(block_idx))
+        x = tiramisu_layers.TransitionDown(x, nb_filter, dropout_rate=dropout, id='down_td{}'.format(block_idx))
         feature_name = 'td_{}'.format(block_idx)
         net[feature_name] = x
 
@@ -127,7 +127,7 @@ def tiramisu(img_shape, n_classes, n_layers_block, growth_rate, weight_decay, nb
         skip = skip_connection[block_idx]
 
         # Transition Up
-        x_up = tiramisu_layers.TransitionUp(x, skip, keep_filters, tu_id='up_tu{}'.format(block_idx))
+        x_up = tiramisu_layers.TransitionUp(x, skip, keep_filters, id='up_tu{}'.format(block_idx))
 
         feature_name = 'tu_{}'.format(block_idx)
         net[feature_name] = x_up
