@@ -57,7 +57,7 @@ class TiramisuLayers():
             list_feat.append(x)
 
         for i in range(nb_layers):
-            x = self.ConvolutionPart(x, nb_filter=self.growth_rate, dropout_rate=dropout_rate, dense_id='{}_l{}'.format(block_id, i))
+            x = self.ConvolutionPart(x, nb_filter=self.growth_rate, dropout_rate=dropout_rate, id='{}_l{}'.format(block_id, i))
             list_feat.append(x)
 
             if len(list_feat) > 1:
@@ -67,13 +67,13 @@ class TiramisuLayers():
 
         return x, nb_filter
 
-    def TransitionDown(self, x, nb_filter, dropout_rate=None, td_id=""):
+    def TransitionDown(self, x, nb_filter, dropout_rate=None, id=""):
         """
         TransitionDown part of Tiramisu
         :param x: 
         :param nb_filter: 
         :param dropout_rate: 
-        :param td_id: 
+        :param id: 
         :return: output
         """
 
@@ -81,20 +81,20 @@ class TiramisuLayers():
                                axis=self.bn_axis,
                                gamma_regularizer=l2(self.weight_decay),
                                beta_regularizer=l2(self.weight_decay),
-                               name='{}_bn'.format(td_id))(x)
+                               name='{}_bn'.format(id))(x)
 
-        x = Activation('relu', name='{}_relu'.format(td_id))(x)
+        x = Activation('relu', name='{}_relu'.format(id))(x)
 
         x = Convolution2D(nb_filter, 1, 1,
                           init='he_uniform',
                           border_mode=self.border_mode,
                           W_regularizer=l2(self.weight_decay),
                           b_regularizer=l2(self.weight_decay),
-                          name='{}_conv'.format(td_id))(x)
+                          name='{}_conv'.format(id))(x)
         if dropout_rate:
-            x = Dropout(dropout_rate, name='{}_drop'.format(td_id))(x)
+            x = Dropout(dropout_rate, name='{}_drop'.format(id))(x)
 
-        x = MaxPooling2D((2, 2), strides=(2, 2), name='{}_pool'.format(td_id))(x)
+        x = MaxPooling2D((2, 2), strides=(2, 2), name='{}_pool'.format(id))(x)
 
         return x
 
@@ -126,7 +126,7 @@ class TiramisuLayers():
         :param x: 
         :param nb_filter: 
         :param dropout_rate: 
-        :param dense_id: 
+        :param id: 
         :return: output
         """
 
