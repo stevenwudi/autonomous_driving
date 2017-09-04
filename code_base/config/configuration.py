@@ -26,7 +26,7 @@ class Configuration():
         shared_experiments_path = self.shared_experiments_path
 
         # Load configuration file
-        print config_path
+        print(config_path)
         cf = imp.load_source('config', config_path)
 
         # Save extra parameter
@@ -39,18 +39,18 @@ class Configuration():
                                          cf.exp_name)
         cf.log_file = os.path.join(cf.savepath, "logfile.log")
         if not os.path.exists(cf.savepath):
-            os.makedirs(cf.savepath)
+            os.mkdir(cf.savepath)
 
         # Copy config file
-        shutil.copyfile(config_path, os.path.join(cf.savepath, "config.py"))
+        #shutil.copyfile(config_path, os.path.join(cf.savepath, "config.py"))
 
         # Load dataset configuration
-        cf.dataset = self.load_config_dataset(cf.dataset_name, dataset_path,
+        cf.dataset = self.load_config_dataset(cf.savepath, cf.dataset_name, dataset_path,
                                               shared_dataset_path,
                                               cf.problem_type,
                                               'config_dataset')
         if cf.dataset_name2:
-            cf.dataset2 = self.load_config_dataset(cf.dataset_name2,
+            cf.dataset2 = self.load_config_dataset(cf.savepath, cf.dataset_name2,
                                                    dataset_path,
                                                    shared_dataset_path,
                                                    cf.problem_type,
@@ -115,9 +115,9 @@ class Configuration():
         return cf
 
     # Load the configuration file of the dataset
-    def load_config_dataset(self, dataset_name, dataset_path, shared_dataset_path, problem_type, name='config'):
+    def load_config_dataset(self, savepath, dataset_name, dataset_path, shared_dataset_path, problem_type, name='config'):
         # Copy the dataset from the shared to the local path if not existing
-        shared_dataset_path = os.path.join(shared_dataset_path, problem_type, dataset_name)
+        #shared_dataset_path = os.path.join(shared_dataset_path, problem_type, dataset_name)
         dataset_path = os.path.join(dataset_path, problem_type, dataset_name)
         if not os.path.exists(dataset_path):
             print('The local path {} does not exist. Copying '
@@ -126,8 +126,10 @@ class Configuration():
             print('Done.')
 
         # Load dataset config file
-        dataset_config_path = os.path.join(dataset_path, 'config.py')
-        print 'dataset_config_path', dataset_config_path
+        #dataset_config_path = os.path.join(savepath, 'config.py')
+        dataset_config_path = self.config_path
+
+        print('dataset_config_path', dataset_config_path)
         dataset_conf = imp.load_source(name, dataset_config_path)
         dataset_conf.config_path = dataset_config_path
 

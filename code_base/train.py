@@ -5,16 +5,17 @@ import sys
 from getpass import getuser
 import matplotlib
 import time
-matplotlib.use('Agg')  # Faster plot
+from datetime import datetime
+#matplotlib.use('Agg')  # Faster plot
 
 # Import tools
 from config.configuration import Configuration
 from tools.logger import Logger
 from tools.dataset_generators import Dataset_Generators
-from tools.optimizer_factory import Optimizer_Factory
-from callbacks.callbacks_factory import Callbacks_Factory
-from models.model_factory import Model_Factory
-from datetime import datetime
+# from tools.optimizer_factory import Optimizer_Factory
+# from callbacks.callbacks_factory import Callbacks_Factory
+# from models.model_factory import Model_Factory
+
 
 def HMS(sec):
     '''
@@ -132,7 +133,7 @@ def main():
     shared_path = arguments.shared_path
     local_path = arguments.local_path
     dataset_path = os.path.join(local_path, 'Datasets')
-    shared_dataset_path = os.path.join(shared_path, 'Datasets')
+    shared_dataset_path = os.path.join(shared_path)
     experiments_path = os.path.join(local_path, 'Experiments')
     shared_experiments_path = os.path.join(shared_path, 'Experiments')
     usr_path = os.path.join('/home/', getuser())
@@ -140,8 +141,7 @@ def main():
     # Load configuration files
     configuration = Configuration(arguments.config_path, arguments.exp_name,
                                   dataset_path, shared_dataset_path,
-                                  experiments_path, shared_experiments_path,
-                                  usr_path)
+                                  experiments_path, shared_experiments_path)
 
     cf = configuration.load()
 

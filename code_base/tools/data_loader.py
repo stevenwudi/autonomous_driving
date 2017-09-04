@@ -760,17 +760,20 @@ class ImageDataGenerator(object):
         """
         # Get file names
         def get_filenames(directory):
-            subdirs = list_subdirs(directory)
-            subdirs.append(directory)
-
+            # subdirs = list_subdirs(directory)
+            # subdirs.append(directory)
+            #
+            # file_names = []
+            # for subdir in subdirs:
+            #     subpath = os.path.join(directory, subdir)
+            #     for fname in os.listdir(subpath):
+            #         if has_valid_extension(fname):
+            #             file_names.append(os.path.join(directory, subdir,
+            #                                            fname))
             file_names = []
-            for subdir in subdirs:
-                subpath = os.path.join(directory, subdir)
-                for fname in os.listdir(subpath):
-                    if has_valid_extension(fname):
-                        file_names.append(os.path.join(directory, subdir,
-                                                       fname))
-
+            for fname in os.listdir(directory):
+                if has_valid_extension(fname):
+                    file_names.append(os.path.join(directory, fname))
             return file_names
 
         # Precompute the mean and std

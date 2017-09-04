@@ -1,9 +1,9 @@
 import os
 
 # Keras imports
-from metrics.metrics import cce_flatt, IoU, YOLOLoss, YOLOMetrics, MultiboxLoss
+from metrics.metrics import cce_flatt, IoU, YOLOLoss, YOLOMetrics, SSDLoss
 from keras import backend as K
-from keras.utils.visualize_util import plot
+from keras.utils.vis_utils import plot_model
 
 # Classification models
 # from models.lenet import build_lenet
@@ -64,7 +64,7 @@ class Model_Factory():
                 in_shape = (cf.target_size_train[0],
                             cf.target_size_train[1],
                             cf.dataset.n_channels)
-                loss = MultiboxLoss(cf.dataset.n_classes, neg_pos_ratio=2.0).compute_loss
+                loss = SSDLoss(cf.dataset.n_classes, neg_pos_ratio=2.0).compute_loss
                 metrics = [] # TODO: There is no metrics for the ssd model
 
             else:
@@ -245,7 +245,7 @@ class Model_Factory():
         # Show model structure
         if cf.show_model:
             model.summary()
-            plot(model, to_file=os.path.join(cf.savepath, 'model_'+cf.model_name+'.png'))
+            plot_model(model, to_file=os.path.join(cf.savepath, 'model_'+cf.model_name+'.png'))
 
         # Output the model
         print ('   Model: ' + cf.model_name)

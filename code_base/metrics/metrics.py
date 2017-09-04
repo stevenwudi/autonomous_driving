@@ -1,6 +1,6 @@
 import numpy as np
 from keras import backend as K
-import cPickle as pickle
+import _pickle  as pickle
 
 dim_ordering = K.image_dim_ordering()
 if dim_ordering == 'th':

@@ -1,9 +1,10 @@
 import math
 import os
 
-from keras.callbacks import (EarlyStopping, ModelCheckpoint, CSVLogger, LearningRateScheduler, TensorBoard)
+from keras.callbacks import EarlyStopping, ModelCheckpoint, CSVLogger, LearningRateScheduler, TensorBoard
 
-from callbacks import (History_plot, Jacc_new, Save_results, LRDecayScheduler, LearningRateSchedulerBatch, Scheduler, ElapsedTime)
+from callbacks.callbacks import History_plot, Jacc_new, Save_results, LRDecayScheduler, LearningRateSchedulerBatch,\
+    Scheduler, ElapsedTime
 
 # Create callbacks
 class Callbacks_Factory():

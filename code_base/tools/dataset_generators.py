@@ -1,5 +1,5 @@
 from tools.data_loader import ImageDataGenerator
-
+import os
 
 # Load datasets
 
@@ -8,17 +8,15 @@ class Dataset_Generators():
         pass
 
     def make(self, cf):
-        mean = cf.dataset.rgb_mean
-        std = cf.dataset.rgb_std
-        cf.dataset.cb_weights = None
+        #cf.dataset.cb_weights = None
 
         if cf.train_model:
             # Load training set
             print ('\n > Reading training set...')
             # Create the data generator with its data augmentation
             dg_tr = ImageDataGenerator(imageNet=cf.norm_imageNet_preprocess,
-                                       rgb_mean=mean,
-                                       rgb_std=std,
+                                       rgb_mean=cf.dataset.rgb_mean,
+                                       rgb_std=cf.dataset.rgb_std,
                                        rescale=cf.norm_rescale,
                                        featurewise_center=cf.norm_featurewise_center,
                                        featurewise_std_normalization=cf.norm_featurewise_std_normalization,
@@ -49,6 +47,51 @@ class Dataset_Generators():
                                        model_name=cf.model_name
                                        )
 
+            # if there is training folder, mean the dataset is not split yet, we split them here
+            for split in ['train', 'valid', 'test']:
+                folder_path = os.path.join(cf.dataset.path, split)
+                if not os.path.exists(folder_path): os.mkdir(folder_path)
+                for img_type in ['images', 'masks']:
+                    folder_path = os.path.join(cf.dataset.path, split, img_type)
+                    if not os.path.exists(folder_path): os.mkdir(folder_path)
+
+            if cf.dataset.create_split:
+                import shutil
+                # Di Wu artificially split the dataset using 1000 images for training, 100 for validation
+                # and 100 for testing.
+
+                # Checks if a file is an image
+                def has_valid_extension(fname, white_list_formats={'png', 'jpg', 'jpeg', 'bmp', 'tif'}):
+                    for extension in white_list_formats:
+                        if fname.lower().endswith('.' + extension):
+                            return True
+                    return False
+
+                def get_filenames(directory):
+                    file_names = []
+                    for fname in os.listdir(directory):
+                        if has_valid_extension(fname):
+                            file_names.append(fname)
+                    return file_names
+
+                img_files = get_filenames(os.path.join(cf.dataset.path, 'RGB'))
+                for i, imgs in enumerate(img_files[:1000]):
+                    shutil.copyfile(os.path.join(cf.dataset.path, 'RGB', imgs),
+                                    os.path.join(cf.dataset.path, 'train', 'images', imgs))
+                    shutil.copyfile(os.path.join(cf.dataset.path, 'GTTXT', imgs[:-4]+'.txt'),
+                                    os.path.join(cf.dataset.path, 'train', 'masks', imgs[:-4]+'.txt'))
+
+                for i, imgs in enumerate(img_files[1000:1100]):
+                    shutil.copyfile(os.path.join(cf.dataset.path, 'RGB', imgs),
+                                    os.path.join(cf.dataset.path, 'valid', 'images', imgs))
+                    shutil.copyfile(os.path.join(cf.dataset.path, 'GTTXT', imgs[:-4]+'.txt'),
+                                    os.path.join(cf.dataset.path, 'valid', 'masks', imgs[:-4]+'.txt'))
+
+                for i, imgs in enumerate(img_files[1100:1200]):
+                    shutil.copyfile(os.path.join(cf.dataset.path, 'RGB', imgs),
+                                    os.path.join(cf.dataset.path, 'test', 'images', imgs))
+                    shutil.copyfile(os.path.join(cf.dataset.path, 'GTTXT', imgs[:-4]+'.txt'),
+                                    os.path.join(cf.dataset.path, 'test', 'masks', imgs[:-4]+'.txt'))
             # Compute normalization constants if required
             if cf.norm_fit_dataset:
                 print ('   Computing normalization constants from training set...')
