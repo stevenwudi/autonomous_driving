@@ -133,7 +133,7 @@ def list_subdirs(directory):
 
 
 # Checks if a file is an image
-def has_valid_extension(fname, white_list_formats = {'png', 'jpg', 'jpeg', 'bmp', 'tif'}):
+def has_valid_extension(fname, white_list_formats = {'png', 'jpg', 'jpeg', 'bmp', 'tif', 'txt'}):
     for extension in white_list_formats:
         if fname.lower().endswith('.' + extension):
             return True
@@ -836,19 +836,20 @@ class ImageDataGenerator(object):
             # Count the number of samples of each class
             count_per_label = np.zeros(n_classes + len(void_labels))
             total_count_per_label = np.zeros(n_classes + len(void_labels))
-
             # Process each file
             for file_name in file_names:
                 # Load image and mask
-                mask = io.imread(file_name)
-                mask = mask.astype('int32')
+                with open(file_name) as text_file:  # can throw FileNotFoundError
+                    lines = tuple(l.split() for l in text_file.readlines())
+
+                mask = np.asarray(lines).astype('int32')
 
                 # Count elements
                 unique_labels, counts_label = np.unique(mask, return_counts=True)
                 count_per_label[unique_labels] += counts_label
                 total_count_per_label[unique_labels] += np.sum(counts_label[:n_classes])
 
-            # Remove void class
+            # Remove void class, because void label is -1
             count_per_label = count_per_label[:n_classes]
             total_count_per_label = total_count_per_label[:n_classes]
 
@@ -973,7 +974,7 @@ class DirectoryIterator(Iterator):
                         self.filenames.append(os.path.join(subdir, fname))
             self.classes = np.array(self.classes)
         else:
-            for fname in os.listdir(directory):
+            for fname in os.listdir(gt_directory):
                 if has_valid_extension(fname):
                     self.filenames.append(fname)
                     # Look for the GT filename

@@ -45,7 +45,7 @@ seed_valid                   = 1924            # Random seed for the validation 
 seed_test                    = 1924            # Random seed for the testing shuffle
 
 # Training parameters
-optimizer                    = 'rmsprop'       # Optimizer
+optimizer                    = 'adam'       # Optimizer
 learning_rate                = 0.0001          # Training learning rate
 weight_decay                 = 0.              # Weight decay or L2 parameter norm penalty
 n_epochs                     = 25            # Number of epochs during training
@@ -104,7 +104,6 @@ norm_samplewise_center             = False  # Substract mean - sample
 norm_samplewise_std_normalization  = False  # Divide std - sample
 norm_gcn                           = False  # Global contrast normalization
 norm_zca_whitening                 = False  # Apply ZCA whitening
-cb_weights_method                  = None   # Label weight balance [None | 'median_freq_cost' | 'rare_freq_cost']
 
 # Data augmentation for training
 da_rotation_range                  = 0      # Rnd rotation degrees 0-180
@@ -122,12 +121,23 @@ da_warp_sigma                      = 10     # Elastic deformation sigma
 da_warp_grid_size                  = 3      # Elastic deformation gridSize
 da_save_to_dir                     = False  # Save the images for debuging
 
-
+#############################
+norm_fit_dataset                    = False   # If True it recompute std and mean from images. Either it uses the std and mean set at the dataset config file
 norm_featurewise_center             = False   # Substract mean - dataset
 norm_featurewise_std_normalization  = False   # Divide std - dataset
-rgb_mean                            = [ 0.39450742,  0.37999875,  0.35578521] # Wudi pre-computed mean using first 1000 images
-rgb_std                             = [ 0.20455311,  0.20075491,  0.19981377] # Wudi pre-computed mean using first 1000 images
-classes                             = ['void', 'sky', 'building', 'road', 'sidewalk', 'fence', 'vegetation', 'pole', 'car', 'sign', 'pedestrian', 'cyclist']
-void_class                          = len(classes) +1
+color_mode                          = 'rgb'
+n_channels                          = 3
+rgb_mean                            = [0.39450742,  0.37999875,  0.35578521] # Wudi pre-computed mean using first 1000 images
+rgb_std                             = [0.20455311,  0.20075491,  0.19981377] # Wudi pre-computed mean using first 1000 images
+#classes                             = ['void', 'sky', 'building', 'road', 'sidewalk', 'fence', 'vegetation', 'pole', 'car', 'sign', 'pedestrian', 'cyclist']
+classes                             = {'void':-1, 'sky':0, 'building':1, 'road':2,
+                                       'sidewalk':3, 'fence':4, 'vegetation':5,
+                                       'pole':6, 'car':7, 'sign':8, 'pedestrian':9,
+                                       'cyclist':10}
+n_classes                           = len(classes)
+void_class                          = [len(classes) + 1]
 create_split                        = False
-norm_fit_dataset                    = True   # If True it recompute std and mean from images. Either it uses the std and mean set at the dataset config file
+cb_weights_method                   = 'rare_freq_cost'   # Label weight balance [None | 'median_freq_cost' | 'rare_freq_cost']
+cb_weights                          =[  5.31950559,   1.65697855,   0.23748228,   0.29841721,
+         0.63769955,   9.23991394,   1.66974087,   6.60188582,
+         0.92809024,  19.85701845,   2.60712632,  14.72396384]

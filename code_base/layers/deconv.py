@@ -5,7 +5,7 @@ dim_ordering = K.image_dim_ordering()
 if dim_ordering == 'th':
     from deconv_th import deconv2d
 else:
-    from layers.deconv_tf import deconv2d
+    from code_base.layers.deconv_tf import deconv2d
 
 
 class Deconvolution2D(Convolution2D):

@@ -104,9 +104,9 @@ class Dataset_Generators():
                                          cf.dataset.void_class,
                                          cf.cb_weights_method)
 
-                mean = dg_tr.rgb_mean
-                std = dg_tr.rgb_std
-                cf.dataset.cb_weights = dg_tr.cb_weights
+            mean = dg_tr.rgb_mean
+            std = dg_tr.rgb_std
+            cf.dataset.cb_weights = dg_tr.cb_weights
 
             # Load training data
             if not cf.dataset_name2:
