@@ -34,10 +34,15 @@ class Configuration():
         cf.exp_name = exp_name
 
         # Create output folders
-        cf.savepath = os.path.join(experiments_path, cf.dataset_name, cf.exp_name)
+        cf.savepath = os.path.join(experiments_path, cf.exp_name, cf.dataset_name)
+
         cf.final_savepath = os.path.join(shared_experiments_path, cf.dataset_name,
                                          cf.exp_name)
-        cf.log_file = os.path.join(cf.savepath, "logfile.log")
+        #cf.log_file = os.path.join(cf.savepath, "logfile.log")
+        if not os.path.exists(experiments_path):
+            os.mkdir(experiments_path)
+        if not os.path.exists(os.path.join(experiments_path, cf.exp_name)):
+            os.mkdir(os.path.join(experiments_path, cf.exp_name))
         if not os.path.exists(cf.savepath):
             os.mkdir(cf.savepath)
 
@@ -45,10 +50,11 @@ class Configuration():
         #shutil.copyfile(config_path, os.path.join(cf.savepath, "config.py"))
 
         # Load dataset configuration
-        cf.dataset = self.load_config_dataset(cf.savepath, cf.dataset_name, dataset_path,
-                                              shared_dataset_path,
-                                              cf.problem_type,
-                                              'config_dataset')
+        # DI WU uncomment the below
+        #     cf.dataset = self.load_config_dataset(cf.savepath, cf.dataset_name, dataset_path,
+        #                                           shared_dataset_path,
+        #                                           cf.problem_type,
+        #                                           'config_dataset')
         if cf.dataset_name2:
             cf.dataset2 = self.load_config_dataset(cf.savepath, cf.dataset_name2,
                                                    dataset_path,
@@ -66,35 +72,35 @@ class Configuration():
         if cf.debug and cf.debug_n_epochs > 0:
             cf.n_epochs = cf.debug_n_epochs
 
-        # Define target sizes
-        if cf.crop_size_train is not None: cf.target_size_train = cf.crop_size_train
-        elif cf.resize_train is not None: cf.target_size_train = cf.resize_train
-        else: cf.target_size_train = cf.dataset.img_shape
-
-        if cf.crop_size_valid is not None: cf.target_size_valid = cf.crop_size_valid
-        elif cf.resize_valid is not None: cf.target_size_valid = cf.resize_valid
-        else: cf.target_size_valid = cf.dataset.img_shape
-
-        if cf.crop_size_test is not None: cf.target_size_test = cf.crop_size_test
-        elif cf.resize_test is not None: cf.target_size_test = cf.resize_test
-        else: cf.target_size_test = cf.dataset.img_shape
+        # # Define target sizes
+        # if cf.crop_size_train is not None: cf.target_size_train = cf.crop_size_train
+        # elif cf.resize_train is not None: cf.target_size_train = cf.resize_train
+        # else: cf.target_size_train = cf.dataset.img_shape
+        #
+        # if cf.crop_size_valid is not None: cf.target_size_valid = cf.crop_size_valid
+        # elif cf.resize_valid is not None: cf.target_size_valid = cf.resize_valid
+        # else: cf.target_size_valid = cf.dataset.img_shape
+        #
+        # if cf.crop_size_test is not None: cf.target_size_test = cf.crop_size_test
+        # elif cf.resize_test is not None: cf.target_size_test = cf.resize_test
+        # else: cf.target_size_test = cf.dataset.img_shape
 
         # Get training weights file name
-        path, _ = os.path.split(cf.weights_file)
-        if path == '':
-            cf.weights_file = os.path.join(cf.savepath, cf.weights_file)
-
-        # Get testing weights file name
-        try:
-            path_test, _ = os.path.split(cf.weights_test_file)
-            if path_test == '':
-                cf.weights_test_file = os.path.join(cf.savepath, cf.weights_test_file)
-        except:
-            cf.weights_test_file = os.path.join(cf.savepath, 'weights.hdf5')
+        # path, _ = os.path.split(cf.weights_file)
+        # if path == '':
+        #     cf.weights_file = os.path.join(cf.savepath, cf.weights_file)
+        #
+        # # Get testing weights file name
+        # try:
+        #     path_test, _ = os.path.split(cf.weights_test_file)
+        #     if path_test == '':
+        #         cf.weights_test_file = os.path.join(cf.savepath, cf.weights_test_file)
+        # except:
+        #     cf.weights_test_file = os.path.join(cf.savepath, 'weights.hdf5')
 
 
         # Plot metrics
-        if cf.dataset.class_mode == 'segmentation':
+        if cf.class_mode == 'segmentation':
             cf.train_metrics = ['loss', 'acc', 'jaccard']
             cf.valid_metrics = ['val_loss', 'val_acc', 'val_jaccard']
             cf.best_metric = 'val_jaccard'
@@ -112,6 +118,7 @@ class Configuration():
             cf.best_type = 'max'
 
         self.configuration = cf
+        cf.dataset_path = os.path.join(dataset_path, cf.problem_type, cf.dataset_name)
         return cf
 
     # Load the configuration file of the dataset

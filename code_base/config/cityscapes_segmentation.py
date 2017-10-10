@@ -10,7 +10,6 @@ freeze_layers_from           = None            # Freeze layers from 0 to this la
 show_model                   = True            # Show the architecture layers
 load_imageNet                = False           # Load Imagenet weights and normalize following imagenet procedure
 load_pretrained              = False            # Load a pretrained model for doing finetuning
-weights_file                 = 'weights.hdf5'  # Training weight file name
 
 # Parameters
 train_model                  = True            # Train the model
@@ -19,21 +18,8 @@ pred_model                   = False           # Predict using the model
 
 # Debug
 debug                        = False            # Use only few images for debuging
-debug_images_train           = 50              # N images for training in debug mode (-1 means all)
-debug_images_valid           = 30              # N images for validation in debug mode (-1 means all)
-debug_images_test            = 30              # N images for testing in debug mode (-1 means all)
-debug_n_epochs               = 2               # N of training epochs in debug mode
 
 # Batch sizes
-batch_size_train             = 10              # Batch size during training
-batch_size_valid             = 10              # Batch size during validation
-batch_size_test              = 10              # Batch size during testing
-crop_size_train              = None            # Crop size during training (Height, Width) or None
-crop_size_valid              = None            # Crop size during validation
-crop_size_test               = None            # Crop size during testing
-resize_train                 = (240, 480)      # Resize the image during training (Height, Width) or None
-resize_valid                 = (240, 480)      # Resize the image during validation
-resize_test                  = (240, 480)      # Resize the image during testing
 
 # Data shuffle
 shuffle_train                = True            # Whether to shuffle the training data
@@ -44,81 +30,35 @@ seed_valid                   = 1924            # Random seed for the validation 
 seed_test                    = 1924            # Random seed for the testing shuffle
 
 # Training parameters
-optimizer                    = 'rmsprop'       # Optimizer
-learning_rate                = 0.0001          # Training learning rate
-weight_decay                 = 0.              # Weight decay or L2 parameter norm penalty
+optimizer                    = 'sgd'       # Optimizer
+learning_rate                = 1e-5   #0.0001          # Training learning rate
+momentum                     = 0  #0.9
+weight_decay                 = 2e-4              # Weight decay or L2 parameter norm penalty
 n_epochs                     = 100            # Number of epochs during training
 
-# Callback save results
-save_results_enabled         = False           # Enable the Callback
-save_results_nsamples        = 5               # Number of samples to save
-save_results_batch_size      = 5               # Size of the batch
+# Data
+dataroot_dir                        = '/home/public/CITYSCAPE/'
+crop_size                           = 512
+workers                             = 8  #'Data loader workers'
+num_classes                         = 20
+#exp_dir                             = './Experiments/CityScape_semantic_segmentation'
+class_mode                          = 'segmentation'
+batch_size                          = 16
+load_trained_model                  = True
+train_model_path                    = './Experiments/CityScape_semantic_segmentation/100_net.pth'
 
-
-# Callback early stoping
-earlyStopping_enabled        = True            # Enable the Callback
-earlyStopping_monitor        = 'val_jaccard'   # Metric to monitor
-earlyStopping_mode           = 'max'           # Mode ['max' | 'min']
-earlyStopping_patience       = 100             # Max patience for the early stopping
-earlyStopping_verbose        = 0               # Verbosity of the early stopping
-
-# Callback model check point
-checkpoint_enabled           = True            # Enable the Callback
-checkpoint_monitor           = 'val_jaccard'   # Metric to monitor
-checkpoint_mode              = 'max'           # Mode ['max' | 'min']
-checkpoint_save_best_only    = True            # Save best or last model
-checkpoint_save_weights_only = True            # Save only weights or also model
-checkpoint_verbose           = 0               # Verbosity of the checkpoint
-
-# Callback plot
-plotHist_enabled             = True            # Enable the Callback
-plotHist_verbose             = 0               # Verbosity of the callback
-
-# Callback LR decay scheduler
-lrDecayScheduler_enabled     = False           # Enable the Callback
-lrDecayScheduler_epochs      = [5, 10, 20]     # List of epochs were decay is applied or None for all epochs
-lrDecayScheduler_rate        = 2               # Decay rate (new_lr = lr / decay_rate). Usually between 2 and 10.
-
-# Callback learning rate scheduler
-LRScheduler_enabled          = True             # Enable the Callback
-LRScheduler_batch_epoch      = 'batch'          # Schedule the LR each 'batch' or 'epoch'
-LRScheduler_type             = 'poly'         # Type of scheduler ['linear' | 'step' | 'square' | 'sqrt' | 'poly']
-LRScheduler_M                = 75000            # Number of iterations/epochs expected until convergence
-LRScheduler_decay            = 0.1              # Decay for 'step' method
-LRScheduler_S                = 10000            # Step for the 'step' method
-LRScheduler_power            = 0.9              # Power for te poly method
-
-# Callback TensorBoard
-TensorBoard_enabled          = True             # Enable the Callback
-TensorBoard_histogram_freq   = 1                # Frequency (in epochs) at which to compute activation histograms for the layers of the model. If set to 0, histograms won't be computed.
-TensorBoard_write_graph      = True             # Whether to visualize the graph in Tensorboard. The log file can become quite large when write_graph is set to True.
-TensorBoard_write_images     = False            # Whether to write model weights to visualize as image in Tensorboard.
-TensorBoard_logs_folder      = None             #
-
-# Data augmentation for training and normalization
-norm_imageNet_preprocess           = False  # Normalize following imagenet procedure
-norm_fit_dataset                   = True   # If True it recompute std and mean from images. Either it uses the std and mean set at the dataset config file
-norm_rescale                       = 1/255. # Scalar to divide and set range 0-1
-norm_featurewise_center            = False   # Substract mean - dataset
-norm_featurewise_std_normalization = False   # Divide std - dataset
-norm_samplewise_center             = False  # Substract mean - sample
-norm_samplewise_std_normalization  = False  # Divide std - sample
-norm_gcn                           = False  # Global contrast normalization
-norm_zca_whitening                 = False  # Apply ZCA whitening
-cb_weights_method                  = None   # Label weight balance [None | 'median_freq_cost' | 'rare_freq_cost']
-
-# Data augmentation for training
-da_rotation_range                  = 0      # Rnd rotation degrees 0-180
-da_width_shift_range               = 0.0    # Rnd horizontal shift
-da_height_shift_range              = 0.0    # Rnd vertical shift
-da_shear_range                     = 0.0    # Shear in radians
-da_zoom_range                      = 0.0    # Zoom
-da_channel_shift_range             = 0.     # Channecf.l shifts
-da_fill_mode                       = 'constant'  # Fill mode
-da_cval                            = 0.     # Void image value
-da_horizontal_flip                 = False  # Rnd horizontal flip
-da_vertical_flip                   = False  # Rnd vertical flip
-da_spline_warp                     = False  # Enable elastic deformation
-da_warp_sigma                      = 10     # Elastic deformation sigma
-da_warp_grid_size                  = 3      # Elastic deformation gridSize
-da_save_to_dir                     = False  # Save the images for debuging
+full_to_train = {-1: 19, 0: 19, 1: 19, 2: 19, 3: 19, 4: 19, 5: 19, 6: 19, 7: 0, 8: 1, 9: 19, 10: 19, 11: 2,
+                      12: 3,
+                      13: 4, 14: 19, 15: 19, 16: 19, 17: 5, 18: 19, 19: 6, 20: 7, 21: 8, 22: 9, 23: 10, 24: 11,
+                      25: 12,
+                      26: 13, 27: 14, 28: 15, 29: 19, 30: 19, 31: 16, 32: 17, 33: 18}
+train_to_full = {0: 7, 1: 8, 2: 11, 3: 12, 4: 13, 5: 17, 6: 19, 7: 20, 8: 21, 9: 22, 10: 23, 11: 24,
+                      12: 25, 13: 26,
+                      14: 27, 15: 28, 16: 31, 17: 32, 18: 33, 19: 0}
+full_to_colour = {0: (0, 0, 0), 7: (128, 64, 128), 8: (244, 35, 232), 11: (70, 70, 70),
+                       12: (102, 102, 156),
+                       13: (190, 153, 153), 17: (153, 153, 153), 19: (250, 170, 30), 20: (220, 220, 0),
+                       21: (107, 142, 35), 22: (152, 251, 152), 23: (70, 130, 180), 24: (220, 20, 60),
+                       25: (255, 0, 0),
+                       26: (0, 0, 142), 27: (0, 0, 70), 28: (0, 60, 100), 31: (0, 80, 100), 32: (0, 0, 230),
+                       33: (119, 11, 32)}

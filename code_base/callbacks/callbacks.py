@@ -1,13 +1,15 @@
 # Imports
+import os
 from keras import backend as K
 from keras.callbacks import Callback, Progbar, ProgbarLogger
 from keras.engine.training import GeneratorEnqueuer
-from tools.save_images import save_img3
-from tools.plot_history import plot_history
+from code_base.tools.save_images import save_img3
+from code_base.tools.plot_history import plot_history
 import numpy as np
 import time
 
 dim_ordering = K.image_dim_ordering()
+
 
 def HMS(sec):
     '''
@@ -19,6 +21,36 @@ def HMS(sec):
     h, m = divmod(m, 60)
 
     return "%dh:%02dm:%02ds" % (h, m, s)
+
+
+def configurationPATH(cf, dataset_path):
+    '''
+    :param cf: config file
+    :param dataset_path: path where the datased is located
+    :return: Print some paths
+    '''
+
+    print ("\n###########################")
+    print (' > Conf File Path = "%s"' % (cf.config_path))
+    print (' > Save Path = "%s"' % (cf.savepath))
+    print (' > Dataset PATH = "%s"' % (os.path.join(dataset_path, cf.problem_type, cf.dataset_name)))
+    print ("###########################\n")
+
+
+# Sets the backend and GPU device.
+class Environment():
+    def __init__(self, backend='tensorflow'):
+        backend = 'tensorflow'  # 'theano' or 'tensorflow'
+        os.environ['KERAS_BACKEND'] = backend
+        os.environ["CUDA_VISIBLE_DEVICES"]="0" # "" to run in CPU, extra slow! just for debuging
+        if backend == 'theano':
+            # os.environ['THEANO_FLAGS']='mode=FAST_RUN,device=gpu1,floatX=float32,optimizer=fast_compile'
+            """ fast_compile que lo que hace es desactivar las optimizaciones => mas lento """
+            os.environ['THEANO_FLAGS'] = 'device=gpu0,floatX=float32,lib.cnmem=0.95'
+            print('Backend is Theano now')
+        else:
+            print('Backend is Tensorflow now')
+
 
 # PROGBAR replacements
 def progbar__set_params(self, params):

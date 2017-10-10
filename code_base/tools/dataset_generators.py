@@ -96,7 +96,7 @@ class Dataset_Generators():
             if cf.norm_fit_dataset:
                 print ('   Computing normalization constants from training set...')
                 # if cf.cb_weights_method is None:
-                #     dg_tr.fit_from_directory(cf.dataset.path_train_img)
+                #    dg_tr.fit_from_directory(cf.dataset.path_train_img)
                 # else:
                 dg_tr.fit_from_directory(cf.dataset.path_train_img,
                                          cf.dataset.path_train_mask,

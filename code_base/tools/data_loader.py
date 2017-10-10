@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from __future__ import print_function
 
 import warnings
-import cv2
+#import cv2
 import skimage.io as io
 from skimage.color import rgb2gray, gray2rgb
 import skimage.transform
