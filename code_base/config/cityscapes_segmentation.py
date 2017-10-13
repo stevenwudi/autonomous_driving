@@ -45,7 +45,7 @@ num_classes                         = 20
 class_mode                          = 'segmentation'
 batch_size                          = 16
 load_trained_model                  = True
-train_model_path                    = './Experiments/CityScape_semantic_segmentation/100_net.pth'
+train_model_path                    = '/home/stevenwudi/PycharmProjects/autonomous_driving/Experiments/CityScape_semantic_segmentation/100_net.pth'
 
 full_to_train = {-1: 19, 0: 19, 1: 19, 2: 19, 3: 19, 4: 19, 5: 19, 6: 19, 7: 0, 8: 1, 9: 19, 10: 19, 11: 2,
                       12: 3,

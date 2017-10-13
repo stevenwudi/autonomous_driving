@@ -7,8 +7,9 @@ import shutil
 
 class Configuration():
     def __init__(self, config_path, exp_name,
-                       dataset_path, shared_dataset_path,
-                       experiments_path, shared_experiments_path):
+                 dataset_path, shared_dataset_path,
+                 experiments_path, shared_experiments_path,
+                 sequence_name):
 
         self.config_path = config_path
         self.exp_name = exp_name
@@ -16,10 +17,10 @@ class Configuration():
         self.shared_dataset_path = shared_dataset_path
         self.experiments_path = experiments_path
         self.shared_experiments_path = shared_experiments_path
+        self.sequence_name = sequence_name
 
     def load(self):
         config_path = self.config_path
-        exp_name = self.exp_name
         dataset_path = self.dataset_path
         shared_dataset_path = self.shared_dataset_path
         experiments_path = self.experiments_path
@@ -31,7 +32,7 @@ class Configuration():
 
         # Save extra parameter
         cf.config_path = config_path
-        cf.exp_name = exp_name
+        cf.exp_name = cf.problem_type
 
         # Create output folders
         cf.savepath = os.path.join(experiments_path, cf.exp_name, cf.dataset_name)
@@ -105,7 +106,12 @@ class Configuration():
             cf.valid_metrics = ['val_loss', 'val_acc', 'val_jaccard']
             cf.best_metric = 'val_jaccard'
             cf.best_type = 'max'
-        elif cf.dataset.class_mode == 'detection':
+        elif cf.class_mode == 'car_trajectory_prediction':
+            cf.train_metrics = ['loss', 'acc', 'jaccard']
+            cf.valid_metrics = ['val_loss', 'val_acc', 'val_jaccard']
+            cf.best_metric = 'val_jaccard'
+            cf.best_type = 'max'
+        elif cf.class_mode == 'detection':
             # TODO detection : different nets may have other metrics
             cf.train_metrics = ['loss', 'avg_recall', 'avg_iou']
             cf.valid_metrics = ['val_loss', 'val_avg_recall', 'val_avg_iou']
@@ -118,7 +124,10 @@ class Configuration():
             cf.best_type = 'max'
 
         self.configuration = cf
-        cf.dataset_path = os.path.join(dataset_path, cf.problem_type, cf.dataset_name)
+        if self.sequence_name:
+            cf.dataset_path = os.path.join(dataset_path, self.sequence_name)
+        else:
+            cf.dataset_path = os.path.join(dataset_path, cf.problem_type, cf.dataset_name)
         return cf
 
     # Load the configuration file of the dataset

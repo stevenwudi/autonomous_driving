@@ -5,7 +5,7 @@ opencv
 
 ## Authors
 
-- _Di Wu, stevenwudi@gmail.com
+- Di Wu, stevenwudi@gmail.com
 **Implementation**
 
 

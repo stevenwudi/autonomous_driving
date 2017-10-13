@@ -70,7 +70,7 @@ def main():
                                   dataset_path, shared_dataset_path,
                                   experiments_path, shared_experiments_path)
     cf = configuration.load()
-    configurationPATH(cf, dataset_path)
+    configurationPATH(cf)
 
     # Train /test/predict with the network, depending on the configuration
     process(cf)

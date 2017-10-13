@@ -11,7 +11,7 @@ from skimage import io, transform
 from scipy.misc import imresize
 import numpy as np
 import matplotlib.pyplot as plt
-from PIL import Image
+import cv2 as cv
 
 import torch
 from torch.utils.data import Dataset, DataLoader
@@ -104,7 +104,7 @@ class ToTensor(object):
                 'label': torch.from_numpy(label)}
 
 
-class Dataset_Generators():
+class Dataset_Generators_Synthia():
     """ Initially we use synthia dataset"""
 
     def __init__(self, cf):
@@ -259,3 +259,4 @@ class CityscapesDataset(Dataset):
         for c in range(self.num_classes):
             target[c][remapped_target == c] = 1
         return input, target, remapped_target  # Return x, y (one-hot), y (index)
+
