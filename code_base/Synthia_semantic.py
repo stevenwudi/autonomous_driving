@@ -2,27 +2,6 @@
 import argparse
 import os
 import sys
-from getpass import getuser
-from matplotlib import pyplot as plt
-import time
-from datetime import datetime
-#matplotlib.use('Agg')  # Faster plot
-
-# Import tools
-from code_base.config.configuration import Configuration
-from code_base.tools.logger import Logger
-from code_base.tools.PyTorch_data_generator import Dataset_Generators
-#from code_base.callbacks.callbacks_factory import Callbacks_Factory
-from code_base.utils import HMS, configurationPATH, show_DG
-#from code_base.models.model_factory import Model_Factory
-from code_base.models.PyTorch_fcn import FeatureResNet, SegResNet
-from torchvision import models
-from torch import nn
-
-import argparse
-
-import os
-import sys
 # Di Wu add the following really ugly code so that python can find the path
 sys.path.append(os.getcwd())
 import time
@@ -30,47 +9,18 @@ from datetime import datetime
 
 from code_base.tools.PyTorch_data_generator import Dataset_Generators_Cityscape
 from code_base.models.PyTorch_model_factory import Model_Factory
+from code_base.tools.PyTorch_data_generator import Dataset_Generators_Synthia
 from code_base.config.configuration import Configuration
-from code_base.utils import HMS, configurationPATH
-
+from code_base.utils import show_DG, HMS, configurationPATH
 
 
 def process(cf):
-    # Enable log file
-    sys.stdout = Logger(cf.log_file)
-    print(' ---> Init experiment: ' + cf.exp_name + ' <---')
-
     # Create the data generators
-    DG = Dataset_Generators(cf)
+    DG = Dataset_Generators_Synthia(cf)
     show_DG(DG)  # this script will draw an image
 
     # Build model
     print('\n > Building model...')
-    pretrained_net = FeatureResNet()
-    pretrained_net.load_state_dict(models.resnet34(pretrained=True).state_dict())
-    net = SegResNet(cf.n_classes, pretrained_net).cuda()
-    crit = nn.BCELoss().cuda()
-
-
-    # Create the callbacks
-    print('\n > Creating callbacks...')
-    cb = Callbacks_Factory().make(cf, valid_gen)
-
-    if cf.train_model:
-        # Train the model
-        model.train(train_gen, valid_gen, cb)
-
-    if cf.test_model:
-        # Compute validation metrics
-        model.test(valid_gen)
-        # Compute test metrics
-        model.test(test_gen)
-
-    if cf.pred_model:
-        # Compute validation metrics
-        model.predict(valid_gen, tag='pred')
-        # Compute test metrics
-        model.predict(test_gen, tag='pred')
 
     # Finish
     print(' ---> Finish experiment: ' + cf.exp_name + ' <---')
@@ -101,7 +51,6 @@ def main():
     configuration = Configuration(arguments.config_path, arguments.exp_name,
                                   dataset_path, shared_dataset_path,
                                   experiments_path, shared_experiments_path)
-
     cf = configuration.load()
     configurationPATH(cf, dataset_path)
 
