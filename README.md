@@ -2,6 +2,7 @@
 
 ## requirement
 opencv
+imutil
 
 ## Authors
 

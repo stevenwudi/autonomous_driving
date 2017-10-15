@@ -76,18 +76,24 @@ def show_DG_car_trajectory(DG, show_set='train'):
               sample_batched['instances'].size())
 
         # observe 4th batch and stop.
-        if i_batch == 2:
-            plt.figure()
-            show_landmarks_batch_car_trajectory(sample_batched, DG)
-            im_name_tmp = "-".join(sample_batched['img_name'][0].split("/")[-5:])
-            save_im_name = os.path.join('/home/stevenwudi/PycharmProjects/autonomous_driving/Experiments/car_trajectory_prediction/Figures', im_name_tmp)
-            plt.savefig(save_im_name, bbox_inches='tight', dpi=1000)
-            #plt.axis('off')
-            plt.ioff()
-            #plt.ion()
-            plt.show()
-            #plt.waitforbuttonpress()
-            break
+
+        if i_batch == 10:
+            if False:
+                plt.figure()
+                show_landmarks_batch_car_trajectory(sample_batched, DG)
+                im_name_tmp = "-".join(sample_batched['img_name'][0].split("/")[-5:])
+                save_im_name = os.path.join('/home/stevenwudi/PycharmProjects/autonomous_driving/Experiments/car_trajectory_prediction/Figures', im_name_tmp)
+                plt.savefig(save_im_name, bbox_inches='tight', dpi=1000)
+                #plt.axis('off')
+                plt.ioff()
+                #plt.ion()
+                plt.show()
+                #plt.waitforbuttonpress()
+
+            instances = sample_batched['instances'][0]
+            classes = sample_batched['classes'][0]
+            return instances.numpy(), classes.numpy()
+
 
 
 # Helper function to show a batch
@@ -96,14 +102,14 @@ def show_landmarks_batch_car_trajectory(sample_batched, DG):
     images_batch, classes_batch, instances_batch = \
             sample_batched['image'], sample_batched['classes'], sample_batched['instances']
 
-    grid_images = utils.make_grid(images_batch, nrow=5, padding=10)
+    grid_images = utils.make_grid(images_batch, nrow=4, padding=10)
     # because the utils.make_grid requires tensor (Tensor or list): 4D mini-batch Tensor of shape (B x C x H x W)
     # also the grid image is of dtype DoubleTensor
     classes_batch = classes_batch.unsqueeze(1).type(torch.DoubleTensor)
-    grid_classes = utils.make_grid(classes_batch, nrow=5, padding=10, normalize=True)
+    grid_classes = utils.make_grid(classes_batch, nrow=4, padding=10, normalize=True)
 
     instances_batch = instances_batch.unsqueeze(1).type(torch.DoubleTensor)
-    grid_instances = utils.make_grid(instances_batch, nrow=5, padding=10, normalize=True)
+    grid_instances = utils.make_grid(instances_batch, nrow=4, padding=10, normalize=True)
     # we need to expand the labels range
     plt.subplot(3, 1, 1)
     plt.imshow(grid_images.numpy().transpose(1, 2, 0))

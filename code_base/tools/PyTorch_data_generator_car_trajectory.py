@@ -150,7 +150,7 @@ class ImageDataGenerator_Synthia_Car_trajectory(Dataset):
         label = cv.imread(label_name, -1)
         classes = np.uint8(label[:, :, 2])
         instances = np.uint8(label[:, :, 1])
-        sample = {'image': image, 'classes': classes, 'instances': instances, }
+        sample = {'image': image, 'classes': classes, 'instances': instances}
 
         if self.transform:
             sample = self.transform(sample)
