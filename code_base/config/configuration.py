@@ -9,7 +9,7 @@ class Configuration():
     def __init__(self, config_path, exp_name,
                  dataset_path, shared_dataset_path,
                  experiments_path, shared_experiments_path,
-                 sequence_name):
+                 sequence_name=None):
 
         self.config_path = config_path
         self.exp_name = exp_name

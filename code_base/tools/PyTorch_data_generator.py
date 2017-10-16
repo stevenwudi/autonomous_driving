@@ -11,6 +11,8 @@ from skimage import io, transform
 from scipy.misc import imresize
 import numpy as np
 import matplotlib.pyplot as plt
+from PIL import Image
+
 import cv2 as cv
 
 import torch
