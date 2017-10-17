@@ -45,6 +45,3 @@ Dilated Residual Networks
     year      = {2016}
 }
 ```
-
-
-### wzn just for a try. Delete it at any time.
