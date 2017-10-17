@@ -26,6 +26,11 @@ The code is written in Python using [Pytorch](https://github.com/pytorch/pytorch
 - Di Wu, stevenwudi@gmail.com
 **Implementation**
 
+### To Yangyi and Zhennan
+To set the GPU: you can set the environment variables as:
+CUDA_VISIBLE_DEVICES=1,2,3
+DIWU=1, Yangyi=2, Zhennan=3
+
 
 ## References
 
