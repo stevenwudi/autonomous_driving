@@ -12,6 +12,7 @@ from scipy.misc import imresize
 import numpy as np
 import matplotlib.pyplot as plt
 import cv2 as cv
+from PIL import Image
 
 import torch
 from torch.utils.data import Dataset, DataLoader
