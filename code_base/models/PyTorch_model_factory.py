@@ -25,7 +25,9 @@ class Model_Factory():
         self.net = SegResNet(cf.num_classes, pretrained_net).cuda()
         # Set the loss criterion
         # TODO: set the weight of the loss
-        self.crit = nn.BCELoss().cuda()
+        # TODO: confirm loss
+        #self.crit = nn.BCELoss().cuda()
+        self.crit = nn.NLLLoss().cuda()
         self.num_classes = cf.num_classes
         self.exp_dir = cf.savepath + '___' + datetime.now().strftime('%a, %d %b %Y-%m-%d %H:%M:%S')
         os.mkdir(self.exp_dir)
@@ -63,7 +65,9 @@ class Model_Factory():
         for i, (input, target, _) in enumerate(train_loader):
             self.optimiser.zero_grad()
             input, target = Variable(input.cuda(async=True)), Variable(target.cuda(async=True))
-            output = F.sigmoid(self.net(input))
+            #output = F.sigmoid(self.net(input))
+            # TODO: check softmax loss
+            output = F.softmax(self.net(input))
             self.loss = self.crit(output, target)
             print(epoch, i, self.loss.data[0])
             self.loss.backward()
