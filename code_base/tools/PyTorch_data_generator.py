@@ -10,11 +10,7 @@ import random
 from skimage import io, transform
 from scipy.misc import imresize
 import numpy as np
-import matplotlib.pyplot as plt
 from PIL import Image
-
-import cv2 as cv
-
 import torch
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms as T
@@ -22,7 +18,6 @@ from torchvision import transforms as T
 import warnings
 
 warnings.filterwarnings("ignore")
-plt.ion()  # interactivve mode
 
 
 class Rescale(object):
