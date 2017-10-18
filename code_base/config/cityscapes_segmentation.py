@@ -32,10 +32,17 @@ seed_test                    = 1924            # Random seed for the testing shu
 
 # Training parameters
 optimizer                    = 'sgd'       # Optimizer
+<<<<<<< HEAD
 learning_rate                = 1e-4   #0.001, 0.0001          # Training learning rate
 momentum                     = 0.99  #0.9
 weight_decay                 = 1e-4              # Weight decay or L2 parameter norm penalty
 n_epochs                     = 150            # Number of epochs during training
+=======
+learning_rate                = 1e-3   #0.0001          # Training learning rate
+momentum                     = 0  #0.9
+weight_decay                 = 2e-4              # Weight decay or L2 parameter norm penalty
+n_epochs                     = 100            # Number of epochs during training
+>>>>>>> 7142a5a7d192d6a53c67d9272e0d84c73abf6c49
 
 # Data
 dataroot_dir                        = '/home/public/CITYSCAPE/'
@@ -45,8 +52,13 @@ num_classes                         = 20
 #exp_dir                             = './Experiments/CityScape_semantic_segmentation'
 class_mode                          = 'segmentation'
 batch_size                          = 16
+<<<<<<< HEAD
 load_trained_model                  = False
 train_model_path                    = '/home/stevenwudi/PycharmProjects/autonomous_driving/Experiments/CityScape_semantic_segmentation/100_net.pth'
+=======
+load_trained_model                  = True
+train_model_path                    = '/home/stevenwudi/PycharmProjects/autonomous_driving/Experiments/cityscape_segmentation/39_net.pth'
+>>>>>>> 7142a5a7d192d6a53c67d9272e0d84c73abf6c49
 
 full_to_train = {-1: 19, 0: 19, 1: 19, 2: 19, 3: 19, 4: 19, 5: 19, 6: 19, 7: 0, 8: 1, 9: 19, 10: 19, 11: 2,
                       12: 3,

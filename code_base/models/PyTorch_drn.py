@@ -2,6 +2,7 @@ import torch
 from torch import nn
 from torch.nn import init
 from torchvision.models.resnet import BasicBlock, ResNet
+
 import math
 import torch.utils.model_zoo as model_zoo
 __all__ = ['DRN', 'drn26', 'drn42', 'drn58']
@@ -321,3 +322,5 @@ if __name__ == '__main__':
     print (model)
     print('----------')
     # print(*list(model.children())[:-1])
+
+

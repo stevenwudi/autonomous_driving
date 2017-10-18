@@ -51,6 +51,7 @@ def main():
                         default='/home/ty/code/autonomous_driving', help='Path to local data folder')
 
     arguments = parser.parse_args()
+
     assert arguments.config_path is not None, 'Please provide a configuration path using -c config/pathname'
     assert arguments.exp_name is not None, 'Please provide a name for the experiment using -e name in the command line'
 
