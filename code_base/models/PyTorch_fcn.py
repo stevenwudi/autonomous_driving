@@ -1,3 +1,7 @@
+"""
+This code is adapted from
+https://github.com/Kaixhin/FCN-semantic-segmentation
+"""
 import torch
 from torch import nn
 from torch.nn import init
