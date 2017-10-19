@@ -157,6 +157,6 @@ class ImageDataGenerator_Synthia_Car_trajectory(Dataset):
 
         # Di Wu also save the image name here for the future documentation and
         # it could be useful for time series prediction
-        sample['img_name'] = img_name
+        sample['img_name'] = self.image_files[item]
         return sample
 

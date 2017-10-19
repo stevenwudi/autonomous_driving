@@ -77,7 +77,7 @@ def show_DG_car_trajectory(DG, show_set='train'):
 
         # observe 4th batch and stop.
 
-        if i_batch == 10:
+        if i_batch == 20:
             if False:
                 plt.figure()
                 show_landmarks_batch_car_trajectory(sample_batched, DG)
@@ -93,7 +93,6 @@ def show_DG_car_trajectory(DG, show_set='train'):
             instances = sample_batched['instances'][0]
             classes = sample_batched['classes'][0]
             return instances.numpy(), classes.numpy()
-
 
 
 # Helper function to show a batch

@@ -5,7 +5,8 @@ dataset_name2                = None            # Second dataset name. None if no
 perc_mb2                     = None            # Percentage of data from the second dataset in each minibatch
 
 # Model
-model_name                   = 'segnet_basic'  # Model to use ['fcn8' | 'lenet' | 'alexNet' | 'vgg16' |  'vgg19' | 'resnet50' | 'InceptionV3']
+model_name                   = 'drn_d_22'  # Model to use ['fcn8' | 'lenet' | 'alexNet' | 'vgg16' |  'vgg19' | 'resnet50' | 'InceptionV3']
+                                               # ty add: drn_c_26 drn_c_42, drn_d_22 .....
 freeze_layers_from           = None            # Freeze layers from 0 to this layer during training (Useful for finetunning) [None | 'base_model' | Layer_id]
 show_model                   = True            # Show the architecture layers
 load_imageNet                = False           # Load Imagenet weights and normalize following imagenet procedure
@@ -31,10 +32,12 @@ seed_test                    = 1924            # Random seed for the testing shu
 
 # Training parameters
 optimizer                    = 'sgd'       # Optimizer
-learning_rate                = 1e-3   #0.0001          # Training learning rate
-momentum                     = 0  #0.9
-weight_decay                 = 2e-4              # Weight decay or L2 parameter norm penalty
-n_epochs                     = 100            # Number of epochs during training
+
+learning_rate                = 1e-3   #0.001, 0.0001          # Training learning rate
+momentum                     = 0.99  #0.9
+weight_decay                 = 1e-4              # Weight decay or L2 parameter norm penalty
+n_epochs                     = 150            # Number of epochs during training
+
 
 # Data
 dataroot_dir                        = '/home/public/CITYSCAPE/'
@@ -44,8 +47,10 @@ num_classes                         = 20
 #exp_dir                             = './Experiments/CityScape_semantic_segmentation'
 class_mode                          = 'segmentation'
 batch_size                          = 16
+
 load_trained_model                  = True
 train_model_path                    = '/home/stevenwudi/PycharmProjects/autonomous_driving/Experiments/cityscape_segmentation/39_net.pth'
+
 
 full_to_train = {-1: 19, 0: 19, 1: 19, 2: 19, 3: 19, 4: 19, 5: 19, 6: 19, 7: 0, 8: 1, 9: 19, 10: 19, 11: 2,
                       12: 3,
