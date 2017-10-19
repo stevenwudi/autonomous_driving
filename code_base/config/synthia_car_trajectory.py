@@ -11,7 +11,7 @@ model_name                   = 'fcn8'          # Model to use ['fcn8' | 'lenet' 
 debug                        = False
 resize_train                 = (760, 1280)      # Resize the image during training (Height, Width) or None
 #random_size_crop             = (350*2, 460*2)      # Random size crop of the image during training
-batch_size_train             = 8              # Batch size during training
+batch_size_train             = 1              # Batch size during training
 batch_size_valid             = 8              # Batch size during validation
 batch_size_test              = 8              # Batch size during testing
 dataloader_num_workers_train = 1        # Number of dataload works during training
@@ -36,7 +36,7 @@ weight_decay                 = 0.              # Weight decay or L2 parameter no
 n_epochs                     = 1            # Number of epochs during training
 
 #############################
-dataroot_dir                        = '/media/houbo/SYNTHIA'
+dataroot_dir                        = '/home/stevenwudi/PycharmProjects/autonomous_driving/Datasets'
 data_type                           = 'RGB'
 data_stereo                         = 'Stereo_Left'
 data_camera                         = 'Omni_F'
@@ -61,4 +61,5 @@ cb_weights                          = [5.31950559,   1.65697855,   0.23748228,  
          0.63769955,   9.23991394,   1.66974087,   6.60188582,
          0.92809024,  19.85701845,   2.60712632,  14.72396384]
 
-threshold_car_pixel                 = 1e-3  # we only count if the sum of the pixels are larger than 1e-3
+threshold_car_POR_start                 = 2e-3  # we only count if the sum of the pixels are larger than 1e-3
+threshold_car_POR_end                   = 1e-3  # we only count if the sum of the pixels are larger than 1e-3
