@@ -12,7 +12,7 @@ matplotlib.use('TkAgg')
 from code_base.tools.PyTorch_data_generator_car_trajectory import Dataset_Generators_Synthia_Car_trajectory
 from code_base.config.configuration import Configuration
 from code_base.utils import show_DG_car_trajectory, HMS, configurationPATH
-from code_base.tools.gt_acquisition import get_ground_truth_sequence_car_trajectory
+from code_base.tools.gt_acquisition import get_ground_truth_sequence_car_trajectory, draw_selected_gt_car_trajectory
 
 
 def process(cf):
@@ -20,7 +20,8 @@ def process(cf):
     cf.batch_size_train = 1  # because we want to read every single image sequentially
     DG = Dataset_Generators_Synthia_Car_trajectory(cf)
     #instances, classes = show_DG_car_trajectory(DG)  # this script will draw an image
-    car_tracking_dict = get_ground_truth_sequence_car_trajectory(DG, cf)
+    #get_ground_truth_sequence_car_trajectory(DG, cf)
+    draw_selected_gt_car_trajectory(DG, cf)
     # Build model
     print('\n > Building model...')
 
