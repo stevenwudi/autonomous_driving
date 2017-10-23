@@ -20,18 +20,19 @@ plt.switch_backend('agg')  # Allow plotting when running remotely
 class Model_Factory():
     def __init__(self, cf):
         # If we load from a pretrained model
+        self.model_name = cf.model_name
+        self.num_classes = cf.num_classes
         if cf.model_name == 'segnet_basic':
             pretrained_net = FeatureResNet()
             pretrained_net.load_state_dict(models.resnet34(pretrained=True).state_dict())
             self.net = SegResNet(cf.num_classes, pretrained_net).cuda()
         elif cf.model_name == 'drn_c_26':
-            self.net = drn_c_26(num_classes=cf.num_classes)
+            self.net = drn_c_26(num_classes=cf.num_classes, pretrained=cf.pretrained_drn_c_26)
         elif cf.model_name == 'drn_d_22':
             self.net = drn_d_22(num_classes=cf.num_classes)
         # Set the loss criterion
-        self.crit = nn.NLLLoss2d(ignore_index=255).cuda()
+        self.crit = nn.NLLLoss2d(ignore_index=19).cuda()
 
-        self.num_classes = cf.num_classes
         self.exp_dir = cf.savepath + '___' + datetime.now().strftime('%a, %d %b %Y-%m-%d %H:%M:%S')
         os.mkdir(self.exp_dir)
         # Enable log file
@@ -70,13 +71,8 @@ class Model_Factory():
         self.net.train()
         for i, (input, target_one_hot, target) in enumerate(train_loader):
             self.optimiser.zero_grad()
-            input, target = Variable(input.cuda(async=True)), Variable(target.cuda(async=True))
-
-            #output = F.sigmoid(self.net(input))
-            # TODO: check softmax loss
-            #output = F.softmax(self.net(input))
+            input, target, target_one_hot = Variable(input.cuda(async=True)), Variable(target.cuda(async=True)), Variable(target_one_hot.cuda(async=True))
             output = F.log_softmax(self.net(input))
-
             self.loss = self.crit(output, target)
             print(epoch, i, self.loss.data[0])
             self.loss.backward()

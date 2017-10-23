@@ -25,11 +25,11 @@ def process(cf):
     print('\n > Building model...')
     model = Model_Factory(cf)
 
-    # model.test(DG.val_loader, 0)
+    model.test(DG.val_loader, 0)
     if cf.train_model:
         for epoch in range(1, cf.n_epochs + 1):
             model.train(DG.train_loader, epoch)
-            if epoch % 30 == 0:
+            if epoch % cf.test_epoch == 0:
                 if cf.test_model:
                     model.test(DG.val_loader, epoch)
 
@@ -42,13 +42,13 @@ def main():
     # Get parameters from arguments
     parser = argparse.ArgumentParser(description='Semantic segmentation')
     parser.add_argument('-c', '--config_path', type=str,
-                        default='/home/ty/code/autonomous_driving/code_base/config/cityscapes_segmentation.py', help='Configuration file')
+                        default='/home/stevenwudi/PycharmProjects/autonomous_driving/code_base/config/cityscapes_segmentation.py', help='Configuration file')
     parser.add_argument('-e', '--exp_name', type=str,
                         default='cityscape_segmentation', help='Name of the experiment')
     parser.add_argument('-s', '--shared_path', type=str,
                         default='/home/public', help='Path to shared data folder')
     parser.add_argument('-l', '--local_path', type=str,
-                        default='/home/ty/code/autonomous_driving', help='Path to local data folder')
+                        default='/home/stevenwudi/PycharmProjects/autonomous_driving', help='Path to local data folder')
 
     arguments = parser.parse_args()
 
