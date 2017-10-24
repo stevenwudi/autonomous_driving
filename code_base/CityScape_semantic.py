@@ -1,6 +1,6 @@
 import argparse
 import os
-os.environ['CUDA_VISIBLE_DEVICES'] = '2'
+os.environ['CUDA_VISIBLE_DEVICES'] = '3'
 import sys
 # Di Wu add the following really ugly code so that python can find the path
 sys.path.append(os.getcwd())
@@ -25,7 +25,7 @@ def process(cf):
     print('\n > Building model...')
     model = Model_Factory(cf)
 
-    # model.test(DG.val_loader, 0)
+    model.test(DG.val_loader, 0)
     if cf.train_model:
         for epoch in range(1, cf.n_epochs + 1):
             model.train(DG.train_loader, epoch)

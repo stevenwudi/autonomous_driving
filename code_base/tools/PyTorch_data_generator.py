@@ -242,13 +242,12 @@ class CityscapesDataset(Dataset):
         # Convert to tensors
         w, h = input.size
         input = torch.ByteTensor(torch.ByteStorage.from_buffer(input.tobytes())).view(h, w, 3).permute(2, 0,
-                                                                                                       1).float().div(
-            255)
+                                                                                                       1).float().div(255)
         target = torch.ByteTensor(torch.ByteStorage.from_buffer(target.tobytes())).view(h, w).long()
         # Normalise input
-        input[0].add_(-0.485).div_(0.229)
-        input[1].add_(-0.456).div_(0.224)
-        input[2].add_(-0.406).div_(0.225)
+        input[0].add_(-0.290101).div_(0.182954)
+        input[1].add_(-0.328081).div_(0.186566)
+        input[2].add_(-0.286964).div_(0.184475)
         # Convert to training labels
         remapped_target = target.clone()
         for k, v in self.full_to_train.items():

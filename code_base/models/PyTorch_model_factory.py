@@ -1,5 +1,5 @@
 from code_base.models.PyTorch_fcn import FeatureResNet, SegResNet, iou
-from code_base.models.PyTorch_drn import drn_c_26, drn_d_22
+from code_base.models.PyTorch_drn import drn_c_26, drn_d_22, DRNSeg, DRNSegF
 import torch
 from torchvision import models
 from torch import nn
@@ -15,6 +15,12 @@ import os
 import sys
 plt.switch_backend('agg')  # Allow plotting when running remotely
 
+def adjust_learning_rate(lr, optimizer, epoch):
+    """Sets the learning rate to the initial LR decayed by 10 every 30 epochs"""
+    lr = lr * (0.1 ** (epoch // 50))
+    for param_group in optimizer.param_groups:
+        param_group['lr'] = lr
+    return lr
 
 # Build the model
 class Model_Factory():
@@ -25,9 +31,11 @@ class Model_Factory():
             pretrained_net.load_state_dict(models.resnet34(pretrained=True).state_dict())
             self.net = SegResNet(cf.num_classes, pretrained_net).cuda()
         elif cf.model_name == 'drn_c_26':
-            self.net = drn_c_26(num_classes=cf.num_classes)
+            self.net = DRNSeg('drn_c_26', cf.num_classes, pretrained=True, linear_up=True)
         elif cf.model_name == 'drn_d_22':
-            self.net = drn_d_22(num_classes=cf.num_classes)
+            self.net = DRNSeg('drn_d_22', cf.num_classes, pretrained=True, linear_up=False)
+        elif cf.model_name == 'drn_d_38':
+            self.net = DRNSeg('drn_d_38', cf.num_classes, pretrained=True, linear_up=True)
         # Set the loss criterion
         self.crit = nn.NLLLoss2d(ignore_index=255).cuda()
 
@@ -46,6 +54,8 @@ class Model_Factory():
         if cf.load_trained_model:
             print("Load from pretrained_model weight: "+cf.train_model_path)
             self.net.load_state_dict(torch.load(cf.train_model_path))
+
+        # self.net = DRNSegF(self.net, 20)
         params_dict = dict(self.net.named_parameters())
         params = []
         for key, value in params_dict.items():
@@ -67,6 +77,8 @@ class Model_Factory():
             self.net = self.net.cuda()
 
     def train(self, train_loader, epoch):
+        lr = adjust_learning_rate(self.cf.learning_rate, self.optimiser, epoch)
+        print ('learning rate:', lr)
         self.net.train()
         for i, (input, target_one_hot, target) in enumerate(train_loader):
             self.optimiser.zero_grad()
@@ -81,6 +93,7 @@ class Model_Factory():
             print(epoch, i, self.loss.data[0])
             self.loss.backward()
             self.optimiser.step()
+
 
     def test(self, val_loader, epoch):
         self.net.eval()
