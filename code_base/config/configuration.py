@@ -126,7 +126,11 @@ class Configuration():
         self.configuration = cf
         cf.sequence_name = self.sequence_name
         if self.sequence_name:
-            cf.dataset_path = os.path.join(dataset_path, self.sequence_name)
+            if len(self.sequence_name)==15:
+                # it means we take the SYNTHIA-SEQS-0* as the sequence_name
+                cf.dataset_path = [os.path.join(dataset_path, x) for x in os.listdir(dataset_path) if x[:15]==self.sequence_name]
+            else:
+                cf.dataset_path = os.path.join(dataset_path, self.sequence_name)
         else:
             cf.dataset_path = os.path.join(dataset_path, cf.problem_type, cf.dataset_name)
         return cf

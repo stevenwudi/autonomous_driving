@@ -187,7 +187,7 @@ def get_ground_truth_box(cf, instances, classes, car_tracking_dict, i_frame, img
     return car_tracking_dict
 
 
-def get_ground_truth_sequence_car_trajectory(DG, cf, show_set='train'):
+def get_ground_truth_sequence_car_trajectory(DG, cf, sequence_name, show_set='train'):
     """
      # Let's instantiate this class the iterate through the data samples.
     # For the paper "End-to-end Learning of Driving Models from Large-scale Video Datasets" cvpr2017 (oral)
@@ -200,11 +200,12 @@ def get_ground_truth_sequence_car_trajectory(DG, cf, show_set='train'):
     :param show_set:
     :return:
     """
-
+    print("Processing sequence: "+cf.dataset_path)
     train_set = DG.dataloader[show_set]
     car_tracking_dict = {}
     for i_batch, sample_batched in enumerate(train_set):
         if i_batch == 0:
+            print('image, classes and instances sizes are:')
             print(sample_batched['image'].size(),
                   sample_batched['classes'].size(),
                   sample_batched['instances'].size())
@@ -218,7 +219,7 @@ def get_ground_truth_sequence_car_trajectory(DG, cf, show_set='train'):
         img_name = sample_batched['img_name'][0]  # because for GT construction, the batch size is always 1
         car_tracking_dict = get_ground_truth_box(cf, instances, classes, car_tracking_dict, i_batch, img_name)
 
-    json_file_path = os.path.join(cf.savepath, cf.sequence_name+'.json')
+    json_file_path = os.path.join(cf.savepath, sequence_name+'.json')
 
     # Di Wu's comment: json key must be string, duh....
     car_tracking_dict = convert_key_to_string(car_tracking_dict)
@@ -229,14 +230,15 @@ def get_ground_truth_sequence_car_trajectory(DG, cf, show_set='train'):
     return car_tracking_dict
 
 
-def draw_selected_gt_car_trajectory(DG, cf, show_set='train'):
+def draw_selected_gt_car_trajectory(DG, cf, sequence_name, show_set='train'):
     """
     This script is used to visualise the collected GT
     :param DG:
     :param cf:
     :return:
     """
-    json_file_path = os.path.join(cf.savepath, cf.sequence_name + '.json')
+    print("Processing sequence: " + cf.dataset_path)
+    json_file_path = os.path.join(cf.savepath, sequence_name + '.json')
     with open(json_file_path) as json_data:
         car_tracking_dict = json.load(json_data)
 
