@@ -11,9 +11,20 @@ import json
 
 def convert_key_to_string(car_tracking_dict):
     # json file key only allow string...
+    # for key in car_tracking_dict.keys():
+    #     if type(key) is not str:
+    #         car_tracking_dict[str(key)] = car_tracking_dict[key]
+    #         del car_tracking_dict[key]
+
     for key in car_tracking_dict.keys():
         if type(key) is not str:
-            car_tracking_dict[str(key)] = car_tracking_dict[key]
+            try:
+                car_tracking_dict[str(key)] = car_tracking_dict[key]
+            except:
+                try:
+                    car_tracking_dict[repr(key)] = car_tracking_dict[key]
+                except:
+                    pass
             del car_tracking_dict[key]
 
     return car_tracking_dict
@@ -22,11 +33,14 @@ def convert_key_to_string(car_tracking_dict):
 def convert_list_to_json_serializable(car_tracking_dict):
     # because stupid reason the saved list data type can not be dumped directly to json
     for key in car_tracking_dict.keys():
+        # if type(key) is not str:
+        #     car_tracking_dict[str(key)] = car_tracking_dict[key]
+        #     del car_tracking_dict[key]
         for i, track_list in enumerate(car_tracking_dict[key]['tracking_rect']):
             converted_list = []
             for l in track_list:
                 converted_list.append([np.int(i) for i in l])
-            car_tracking_dict[str(key)]['tracking_rect'][i] = converted_list
+            car_tracking_dict[key]['tracking_rect'][i] = converted_list
 
     return car_tracking_dict
 
@@ -222,8 +236,11 @@ def get_ground_truth_sequence_car_trajectory(DG, cf, sequence_name, show_set='tr
     json_file_path = os.path.join(cf.savepath, sequence_name+'.json')
 
     # Di Wu's comment: json key must be string, duh....
-    car_tracking_dict = convert_key_to_string(car_tracking_dict)
     car_tracking_dict = convert_list_to_json_serializable(car_tracking_dict)
+    car_tracking_dict = convert_key_to_string(car_tracking_dict)
+    # Di Wu has no idea why it need to execute twice here, if not, cannot dump into json file
+    car_tracking_dict = convert_key_to_string(car_tracking_dict)
+
     with open(json_file_path, 'w') as fp:
         json.dump(car_tracking_dict, fp, indent=4)
 
