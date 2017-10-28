@@ -1,7 +1,9 @@
 # Dataset
 problem_type                 = 'car_trajectory_prediction'  # ['classification' | 'detection' | 'segmentation']
-dataset_name                 = 'synthia_rand_cityscapes'        # Dataset
-dataset_name                 = 'SYNTHIA_SEQ01'
+#dataset_name                 = 'synthia_rand_cityscapes'        # Dataset
+sequence_name                = 'SYNTHIA-SEQS-06'
+local_path                   = '/home/stevenwudi/PycharmProjects/autonomous_driving'
+shared_path                  = '/home/public'
 dataset_name2                = None            # Second dataset name. None if not Domain Adaptation
 perc_mb2                     = None            # Percentage of data from the second dataset in each minibatch
 class_mode                   = problem_type

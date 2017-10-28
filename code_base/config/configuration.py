@@ -6,62 +6,22 @@ import shutil
 
 
 class Configuration():
-    def __init__(self, config_path, exp_name,
-                 dataset_path, shared_dataset_path,
-                 experiments_path, shared_experiments_path,
-                 sequence_name=None):
+    def __init__(self, config_path):
 
         self.config_path = config_path
-        self.exp_name = exp_name
-        self.dataset_path = dataset_path
-        self.shared_dataset_path = shared_dataset_path
-        self.experiments_path = experiments_path
-        self.shared_experiments_path = shared_experiments_path
-        self.sequence_name = sequence_name
 
     def load(self):
-        config_path = self.config_path
-        dataset_path = self.dataset_path
-        shared_dataset_path = self.shared_dataset_path
-        experiments_path = self.experiments_path
-        shared_experiments_path = self.shared_experiments_path
-
-        # Load configuration file
-        print(config_path)
-        cf = imp.load_source('config', config_path)
+        # Load configuration file...
+        print(self.config_path)
+        cf = imp.load_source('config', self.config_path)
+        dataset_path = os.path.join(cf.local_path, 'Datasets')
+        shared_dataset_path = os.path.join(cf.shared_path)
+        experiments_path = os.path.join(cf.local_path, 'Experiments')
+        shared_experiments_path = os.path.join(cf.shared_path, 'Experiments')
 
         # Save extra parameter
-        cf.config_path = config_path
+        cf.config_path = self.config_path
         cf.exp_name = cf.problem_type
-
-        # Create output folders
-        cf.savepath = os.path.join(experiments_path, cf.exp_name, cf.dataset_name)
-
-        cf.final_savepath = os.path.join(shared_experiments_path, cf.dataset_name,
-                                         cf.exp_name)
-        #cf.log_file = os.path.join(cf.savepath, "logfile.log")
-        if not os.path.exists(experiments_path):
-            os.mkdir(experiments_path)
-        if not os.path.exists(os.path.join(experiments_path, cf.exp_name)):
-            os.mkdir(os.path.join(experiments_path, cf.exp_name))
-        if not os.path.exists(cf.savepath):
-            os.mkdir(cf.savepath)
-
-        # Copy config file
-        #shutil.copyfile(config_path, os.path.join(cf.savepath, "config.py"))
-
-        # Load dataset configuration
-        # DI WU uncomment the below
-        #     cf.dataset = self.load_config_dataset(cf.savepath, cf.dataset_name, dataset_path,
-        #                                           shared_dataset_path,
-        #                                           cf.problem_type,
-        #                                           'config_dataset')
-        if cf.dataset_name2:
-            cf.dataset2 = self.load_config_dataset(cf.savepath, cf.dataset_name2,
-                                                   dataset_path,
-                                                   shared_dataset_path,
-                                                   cf.problem_type,
-                                                   'config_dataset2')
 
         # If in Debug mode use few images
         if cf.debug and cf.debug_images_train > 0:
@@ -72,33 +32,6 @@ class Configuration():
             cf.dataset.n_images_test = cf.debug_images_test
         if cf.debug and cf.debug_n_epochs > 0:
             cf.n_epochs = cf.debug_n_epochs
-
-        # # Define target sizes
-        # if cf.crop_size_train is not None: cf.target_size_train = cf.crop_size_train
-        # elif cf.resize_train is not None: cf.target_size_train = cf.resize_train
-        # else: cf.target_size_train = cf.dataset.img_shape
-        #
-        # if cf.crop_size_valid is not None: cf.target_size_valid = cf.crop_size_valid
-        # elif cf.resize_valid is not None: cf.target_size_valid = cf.resize_valid
-        # else: cf.target_size_valid = cf.dataset.img_shape
-        #
-        # if cf.crop_size_test is not None: cf.target_size_test = cf.crop_size_test
-        # elif cf.resize_test is not None: cf.target_size_test = cf.resize_test
-        # else: cf.target_size_test = cf.dataset.img_shape
-
-        # Get training weights file name
-        # path, _ = os.path.split(cf.weights_file)
-        # if path == '':
-        #     cf.weights_file = os.path.join(cf.savepath, cf.weights_file)
-        #
-        # # Get testing weights file name
-        # try:
-        #     path_test, _ = os.path.split(cf.weights_test_file)
-        #     if path_test == '':
-        #         cf.weights_test_file = os.path.join(cf.savepath, cf.weights_test_file)
-        # except:
-        #     cf.weights_test_file = os.path.join(cf.savepath, 'weights.hdf5')
-
 
         # Plot metrics
         if cf.class_mode == 'segmentation':
@@ -124,9 +57,32 @@ class Configuration():
             cf.best_type = 'max'
 
         self.configuration = cf
-        cf.sequence_name = self.sequence_name
-        if self.sequence_name:
-            cf.dataset_path = os.path.join(dataset_path, self.sequence_name)
+        if cf.sequence_name:
+            if len(cf.sequence_name) == 15:
+                # it means we take the SYNTHIA-SEQS-0* as the sequence_name
+                cf.dataset_path = [os.path.join(dataset_path, x) for x in os.listdir(dataset_path) if x[:15]==cf.sequence_name]
+                cf.savepath = os.path.join(experiments_path, cf.exp_name, cf.sequence_name)
+                if not os.path.exists(experiments_path):
+                    os.mkdir(experiments_path)
+                if not os.path.exists(os.path.join(experiments_path, cf.exp_name)):
+                    os.mkdir(os.path.join(experiments_path, cf.exp_name))
+                if not os.path.exists(cf.savepath):
+                    os.mkdir(cf.savepath)
+
+            else:
+                cf.dataset_path = os.path.join(dataset_path, self.sequence_name)
+                # Create output folders
+                cf.savepath = os.path.join(experiments_path, cf.exp_name, cf.dataset_name)
+
+                cf.final_savepath = os.path.join(shared_experiments_path, cf.dataset_name,
+                                                 cf.exp_name)
+                # cf.log_file = os.path.join(cf.savepath, "logfile.log")
+                if not os.path.exists(experiments_path):
+                    os.mkdir(experiments_path)
+                if not os.path.exists(os.path.join(experiments_path, cf.exp_name)):
+                    os.mkdir(os.path.join(experiments_path, cf.exp_name))
+                if not os.path.exists(cf.savepath):
+                    os.mkdir(cf.savepath)
         else:
             cf.dataset_path = os.path.join(dataset_path, cf.problem_type, cf.dataset_name)
         return cf
