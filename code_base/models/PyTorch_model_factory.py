@@ -22,24 +22,47 @@ def adjust_learning_rate(lr, optimizer, epoch):
         param_group['lr'] = lr
     return lr
 
+def save_output_images(predictions, filenames, output_dir):
+    """
+    Saves a given (B x C x H x W) into an image file.
+    If given a mini-batch tensor, will save the tensor as a grid of images.
+    """
+    # pdb.set_trace()
+    root = '/home/public/CITYSCAPE'
+    from PIL import Image
+    import numpy as np
+    for ind in range(len(filenames)):
+        im = Image.fromarray(predictions[ind].astype(np.uint8))
+        name = filenames[ind].replace(root, output_dir)
+        # fn = os.path.join(output_dir, filenames[ind])
+        out_dir = os.path.split(name)[0]
+        if not os.path.exists(out_dir):
+            os.makedirs(out_dir)
+        im.save(name)
+
 # Build the model
 class Model_Factory():
     def __init__(self, cf):
         # If we load from a pretrained model
+        self.model_name = cf.model_name
+        self.num_classes = cf.num_classes
         if cf.model_name == 'segnet_basic':
             pretrained_net = FeatureResNet()
             pretrained_net.load_state_dict(models.resnet34(pretrained=True).state_dict())
             self.net = SegResNet(cf.num_classes, pretrained_net).cuda()
         elif cf.model_name == 'drn_c_26':
+
             self.net = DRNSeg('drn_c_26', cf.num_classes, pretrained=True, linear_up=True)
+
+            # self.net = drn_c_26(num_classes=cf.num_classes, pretrained=cf.pretrained_drn_c_26)
+
         elif cf.model_name == 'drn_d_22':
             self.net = DRNSeg('drn_d_22', cf.num_classes, pretrained=True, linear_up=False)
         elif cf.model_name == 'drn_d_38':
-            self.net = DRNSeg('drn_d_38', cf.num_classes, pretrained=True, linear_up=True)
+            self.net = DRNSeg('drn_d_38', cf.num_classes, pretrained=True, linear_up=False)
         # Set the loss criterion
-        self.crit = nn.NLLLoss2d(ignore_index=255).cuda()
+        self.crit = nn.NLLLoss2d(ignore_index=19).cuda()
 
-        self.num_classes = cf.num_classes
         self.exp_dir = cf.savepath + '___' + datetime.now().strftime('%a, %d %b %Y-%m-%d %H:%M:%S')
         os.mkdir(self.exp_dir)
         # Enable log file
@@ -80,15 +103,10 @@ class Model_Factory():
         lr = adjust_learning_rate(self.cf.learning_rate, self.optimiser, epoch)
         print ('learning rate:', lr)
         self.net.train()
-        for i, (input, target_one_hot, target) in enumerate(train_loader):
+        for i, (input, target_one_hot, target, _) in enumerate(train_loader):
             self.optimiser.zero_grad()
-            input, target = Variable(input.cuda(async=True)), Variable(target.cuda(async=True))
-
-            #output = F.sigmoid(self.net(input))
-            # TODO: check softmax loss
-            #output = F.softmax(self.net(input))
+            input, target, target_one_hot = Variable(input.cuda(async=True)), Variable(target.cuda(async=True)), Variable(target_one_hot.cuda(async=True))
             output = F.log_softmax(self.net(input))
-
             self.loss = self.crit(output, target)
             print(epoch, i, self.loss.data[0])
             self.loss.backward()
@@ -98,7 +116,7 @@ class Model_Factory():
     def test(self, val_loader, epoch):
         self.net.eval()
         total_ious = []
-        for i, (input, _, target) in enumerate(val_loader):
+        for i, (input, _, target, _) in enumerate(val_loader):
             input, target = Variable(input.cuda(async=True), volatile=True), Variable(target.cuda(async=True), volatile=True)
             output = F.log_softmax(self.net(input))
             b, _, h, w = output.size()
@@ -145,3 +163,13 @@ class Model_Factory():
         plt.ylabel('Mean IoU')
         plt.savefig(os.path.join(self.exp_dir, 'ious.png'))
         plt.close()
+
+    def test_and_save(self, val_loader):
+        self.net.eval()
+        for i, (input, _, target, filename) in enumerate(val_loader):
+            input, target = Variable(input.cuda(async=True), volatile=True), Variable(target.cuda(async=True), volatile=True)
+            output = F.log_softmax(self.net(input))
+            b, _, h, w = output.size()
+            pred = output.permute(0, 2, 3, 1).contiguous().view(-1, self.num_classes).max(1)[1].view(b, h, w)
+            pred = pred.cpu().data.numpy()
+            save_output_images(pred, filename, '/home/ty/code/autonomous_driving/Experiments/CityScape_semantic_segmentation')

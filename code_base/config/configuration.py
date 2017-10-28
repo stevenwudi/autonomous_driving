@@ -124,6 +124,7 @@ class Configuration():
             cf.best_type = 'max'
 
         self.configuration = cf
+        cf.sequence_name = self.sequence_name
         if self.sequence_name:
             cf.dataset_path = os.path.join(dataset_path, self.sequence_name)
         else:

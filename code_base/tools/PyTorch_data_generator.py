@@ -103,6 +103,19 @@ class ToTensor(object):
                 'label': torch.from_numpy(label)}
 
 
+class RandomHorizontalFlip(object):
+    """Randomly horizontally flips the given PIL.Image with a probability of 0.5
+    """
+
+    def __call__(self, image, label):
+        if random.random() < 0.5:
+            results = [image.transpose(Image.FLIP_LEFT_RIGHT),
+                       label.transpose(Image.FLIP_LEFT_RIGHT)]
+        else:
+            results = [image, label]
+        return results
+
+
 class Dataset_Generators_Synthia():
     """ Initially we use synthia dataset"""
 
@@ -183,42 +196,39 @@ class Dataset_Generators_Cityscape():
 
         # Load training set
         print('\n > Loading training, valid, test set')
-        train_dataset = CityscapesDataset(split='train', crop=cf.crop_size, flip=True, dataroot=cf.dataroot_dir)
-        val_dataset = CityscapesDataset(split='val', dataroot=cf.dataroot_dir)
-        self.train_loader = DataLoader(train_dataset, batch_size=cf.batch_size, shuffle=True, num_workers=cf.workers,
-                                       pin_memory=True)
+        # train_dataset = CityscapesDataset(cf=cf, split='train', transform=T.Compose([RandomCrop(cf.random_size_crop),
+        #                                                                              RandomHorizontalFlip(),
+        #                                                                              ToTensor(),
+        #                                                                              T.Normalize(mean=cf.mean, std=cf.std)]))
+        train_dataset = CityscapesDataset(cf=cf, split='train', crop=True, flip=True)
+        val_dataset = CityscapesDataset(cf=cf, split='val', crop=False, flip=False)
+        test_dataset = CityscapesDataset(cf=cf, split='test', crop=False, flip=False)
+        self.train_loader = DataLoader(train_dataset, batch_size=cf.batch_size, shuffle=True, num_workers=cf.workers, pin_memory=True)
         self.val_loader = DataLoader(val_dataset, batch_size=1, num_workers=cf.workers, pin_memory=True)
+        self.test_loader = DataLoader(test_dataset, batch_size=cf.batch_size, num_workers=cf.workers, pin_memory=True)
 
 
 class CityscapesDataset(Dataset):
-    def __init__(self, split='train', crop=None, flip=False, dataroot='/home/public/CITYSCAPE/'):
+    def __init__(self, cf, split='train', crop=True, flip=True):
         super().__init__()
         self.crop = crop
+        self.crop_size = cf.crop_size
         self.flip = flip
         self.inputs = []
         self.targets = []
-        self.num_classes = 20
-        self.full_to_train = {-1: 19, 0: 19, 1: 19, 2: 19, 3: 19, 4: 19, 5: 19, 6: 19, 7: 0, 8: 1, 9: 19, 10: 19, 11: 2,
-                              12: 3,
-                              13: 4, 14: 19, 15: 19, 16: 19, 17: 5, 18: 19, 19: 6, 20: 7, 21: 8, 22: 9, 23: 10, 24: 11,
-                              25: 12,
-                              26: 13, 27: 14, 28: 15, 29: 19, 30: 19, 31: 16, 32: 17, 33: 18}
-        self.train_to_full = {0: 7, 1: 8, 2: 11, 3: 12, 4: 13, 5: 17, 6: 19, 7: 20, 8: 21, 9: 22, 10: 23, 11: 24,
-                              12: 25, 13: 26,
-                              14: 27, 15: 28, 16: 31, 17: 32, 18: 33, 19: 0}
-        self.full_to_colour = {0: (0, 0, 0), 7: (128, 64, 128), 8: (244, 35, 232), 11: (70, 70, 70),
-                               12: (102, 102, 156),
-                               13: (190, 153, 153), 17: (153, 153, 153), 19: (250, 170, 30), 20: (220, 220, 0),
-                               21: (107, 142, 35), 22: (152, 251, 152), 23: (70, 130, 180), 24: (220, 20, 60),
-                               25: (255, 0, 0),
-                               26: (0, 0, 142), 27: (0, 0, 70), 28: (0, 60, 100), 31: (0, 80, 100), 32: (0, 0, 230),
-                               33: (119, 11, 32)}
+        self.num_classes = cf.num_classes
+        self.full_to_train = cf.full_to_train
+        self.train_to_full = cf.train_to_full
+        self.full_to_colour = cf.full_to_colour
+        self.mean = cf.mean
+        self.std = cf.std
+        #self.transform = transform
 
-        for root, _, filenames in os.walk(os.path.join(dataroot, 'leftImg8bit', split)):
+        for root, _, filenames in os.walk(os.path.join(cf.dataroot_dir, 'leftImg8bit', split)):
             for filename in filenames:
                 if os.path.splitext(filename)[1] == '.png':
                     filename_base = '_'.join(filename.split('_')[:-1])
-                    target_root = os.path.join(dataroot, 'gtFine', split, os.path.basename(root))
+                    target_root = os.path.join(cf.dataroot_dir, 'gtFine', split, os.path.basename(root))
                     self.inputs.append(os.path.join(root, filename_base + '_leftImg8bit.png'))
                     self.targets.append(os.path.join(target_root, filename_base + '_gtFine_labelIds.png'))
 
@@ -229,11 +239,11 @@ class CityscapesDataset(Dataset):
         # Load images and perform augmentations with PIL
         input, target = Image.open(self.inputs[i]), Image.open(self.targets[i])
         # Random uniform crop
-        if self.crop is not None:
+        if self.crop:
             w, h = input.size
-            x1, y1 = random.randint(0, w - self.crop), random.randint(0, h - self.crop)
-            input, target = input.crop((x1, y1, x1 + self.crop, y1 + self.crop)), target.crop(
-                (x1, y1, x1 + self.crop, y1 + self.crop))
+            x1, y1 = random.randint(0, w - self.crop_size), random.randint(0, h - self.crop_size)
+            input, target = input.crop((x1, y1, x1 + self.crop_size, y1 + self.crop_size)), \
+                            target.crop((x1, y1, x1 + self.crop_size, y1 + self.crop_size))
         # Random horizontal flip
         if self.flip:
             if random.random() < 0.5:
@@ -241,20 +251,23 @@ class CityscapesDataset(Dataset):
 
         # Convert to tensors
         w, h = input.size
-        input = torch.ByteTensor(torch.ByteStorage.from_buffer(input.tobytes())).view(h, w, 3).permute(2, 0,
-                                                                                                       1).float().div(255)
+
+        input = torch.ByteTensor(torch.ByteStorage.from_buffer(input.tobytes())).view(h, w, 3).permute(2, 0, 1).float().div(255)
         target = torch.ByteTensor(torch.ByteStorage.from_buffer(target.tobytes())).view(h, w).long()
         # Normalise input
-        input[0].add_(-0.290101).div_(0.182954)
-        input[1].add_(-0.328081).div_(0.186566)
-        input[2].add_(-0.286964).div_(0.184475)
+        input[0].sub_(self.mean[0]).div_(self.std[0])
+        input[1].sub_(self.mean[1]).div_(self.std[1])
+        input[2].sub_(self.mean[2]).div_(self.std[2])
         # Convert to training labels
-        remapped_target = target.clone()
+        target_clone = target.clone()
         for k, v in self.full_to_train.items():
-            remapped_target[target == k] = v
+            target_clone[target == k] = v
         # Create one-hot encoding
-        target = torch.zeros(self.num_classes, h, w)
+        target_one_hot = torch.zeros(self.num_classes, h, w)
         for c in range(self.num_classes):
-            target[c][remapped_target == c] = 1
-        return input, target, remapped_target  # Return x, y (one-hot), y (index)
+            target_one_hot[c][target_clone == c] = 1
+
+        # TOD): dangerous hack below
+        #target_clone[target == self.num_classes] = 0
+        return input, target_one_hot, target_clone, self.inputs[i]  # Return x, y (one-hot), y (index)
 

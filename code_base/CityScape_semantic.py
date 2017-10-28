@@ -24,14 +24,15 @@ def process(cf):
     # Build model
     print('\n > Building model...')
     model = Model_Factory(cf)
+    model.test_and_save(DG.val_loader)
 
-    model.test(DG.val_loader, 0)
-    if cf.train_model:
-        for epoch in range(1, cf.n_epochs + 1):
-            model.train(DG.train_loader, epoch)
-            if epoch % 30 == 0:
-                if cf.test_model:
-                    model.test(DG.val_loader, epoch)
+    # model.test(DG.val_loader, 0)
+    # if cf.train_model:
+    #     for epoch in range(1, cf.n_epochs + 1):
+    #         model.train(DG.train_loader, epoch)
+    #         if epoch % cf.test_epoch == 0:
+    #             if cf.test_model:
+    #                 model.test(DG.val_loader, epoch)
 
     # Finish
     print(' ---> Finish experiment: ' + cf.exp_name + ' <---')
