@@ -30,7 +30,7 @@ class Rescale(object):
         self.output_size = output_size
 
     def __call__(self, sample):
-        image, classes, instances = sample['image'], sample['classes'], sample['instances']
+        image, classes, instances, depth = sample['image'], sample['classes'], sample['instances'], sample['depth']
 
         h, w = image.shape[:2]
         if isinstance(self.output_size, int):
@@ -46,7 +46,8 @@ class Rescale(object):
         image = imresize(image, size=(new_h, new_w))
         classes = imresize(classes, size=(new_h, new_w), interp='nearest', mode='F')
         instances = imresize(instances, size=(new_h, new_w), interp='nearest', mode='F')
-        return {'image': image, 'classes': classes, 'instances': instances}
+        depth = imresize(depth, size=(new_h, new_w), interp='nearest', mode='F')
+        return {'image': image, 'classes': classes, 'instances': instances, 'depth': depth}
 
 
 class RandomCrop(object):
@@ -66,7 +67,7 @@ class RandomCrop(object):
             self.output_size = output_size
 
     def __call__(self, sample):
-        image, classes, instances = sample['image'], sample['classes'], sample['instances']
+        image, classes, instances, depth = sample['image'], sample['classes'], sample['instances'], sample['depth']
 
         h, w = image.shape[:2]
         new_h, new_w = self.output_size
@@ -77,15 +78,16 @@ class RandomCrop(object):
         image = image[top: top + new_h, left: left + new_w]
         classes = classes[top: top + new_h, left: left + new_w]
         instances = instances[top: top + new_h, left: left + new_w]
+        depth = depth[top: top + new_h, left: left + new_w]
 
-        return {'image': image, 'classes': classes, 'instances': instances}
+        return {'image': image, 'classes': classes, 'instances': instances, 'depth': depth}
 
 
 class ToTensor(object):
     """Convert ndarrays in sample to Tensors."""
 
     def __call__(self, sample):
-        image, classes, instances = sample['image'], sample['classes'], sample['instances']
+        image, classes, instances, depth = sample['image'], sample['classes'], sample['instances'], sample['depth']
 
         # swap color axis because
         # numpy image: H x W x C
@@ -93,7 +95,8 @@ class ToTensor(object):
         image = image.transpose((2, 0, 1))
         return {'image': torch.from_numpy(image),
                 'classes': torch.from_numpy(classes),
-                'instances': torch.from_numpy(instances)}
+                'instances': torch.from_numpy(instances),
+                'depth': torch.from_numpy(depth)}
 
 
 class Dataset_Generators_Synthia_Car_trajectory():
@@ -128,13 +131,16 @@ class ImageDataGenerator_Synthia_Car_trajectory(Dataset):
 
         :param root_dir: Directory will all the images
         :param label_dir: Directory will all the label images
-        :param transform:  (callable, optional): Optional tra
-        nsform to be applied
+        :param transform:  (callable, optional): Optional transform to be applied
         """
         self.image_dir = os.path.join(cf.dataset_path, cf.data_type, cf.data_stereo, cf.data_camera)
         self.image_files = sorted(os.listdir(self.image_dir))
         self.label_dir = os.path.join(cf.dataset_path, 'GT', cf.data_label, cf.data_stereo, cf.data_camera)
         self.label_files = sorted(os.listdir(self.label_dir))
+        self.depth_dir = os.path.join(cf.dataset_path, 'Depth', cf.data_stereo, cf.data_camera)
+        self.depth_files = sorted(os.listdir(self.depth_dir))
+        # we need to check all the image, label, depth have the same number of files
+        assert len(self.image_files) == len(self.label_files) == len(self.depth_files), "number of files are not equal"
         self.transform = transform
 
     def __len__(self):
@@ -144,13 +150,15 @@ class ImageDataGenerator_Synthia_Car_trajectory(Dataset):
         img_name = os.path.join(self.image_dir, self.image_files[item])
         image = io.imread(img_name)
         label_name = os.path.join(self.label_dir, self.image_files[item])
+        depth_name = os.path.join(self.depth_dir, self.depth_files[item])
         # folder containing png files (one per image). Annotations are given in two channels. The first
-        #  channel contains the class of that pixel (see the table below). The second channel contains
-        #  the unique ID of the instance for those objects that are dynamic (cars, pedestrians, etc.).
+        # channel contains the class of that pixel (see the table below). The second channel contains
+        # the unique ID of the instance for those objects that are dynamic (cars, pedestrians, etc.).
         label = cv.imread(label_name, -1)
+        depth = cv.imread(depth_name, -1)
         classes = np.uint8(label[:, :, 2])
         instances = np.uint8(label[:, :, 1])
-        sample = {'image': image, 'classes': classes, 'instances': instances}
+        sample = {'image': image, 'classes': classes, 'instances': instances, 'depth': depth[:, :, 0].astype(np.int32)}
 
         if self.transform:
             sample = self.transform(sample)

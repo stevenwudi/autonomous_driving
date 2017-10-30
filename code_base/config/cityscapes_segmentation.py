@@ -5,7 +5,7 @@ dataset_name2                = None            # Second dataset name. None if no
 perc_mb2                     = None            # Percentage of data from the second dataset in each minibatch
 
 # Model
-model_name                   = 'segnet_basic'  # Model to use ['segnet_basic' | 'drn_c_26']
+model_name                   = 'drn_c_26'  # Model to use ['segnet_basic' | 'drn_c_26']
                                                # ty add: drn_c_26 drn_c_42, drn_d_22 .....
 freeze_layers_from           = None            # Freeze layers from 0 to this layer during training (Useful for finetunning) [None | 'base_model' | Layer_id]
 show_model                   = True            # Show the architecture layers
