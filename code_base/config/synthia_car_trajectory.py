@@ -1,13 +1,20 @@
 # Dataset
 problem_type                 = 'car_trajectory_prediction'  # ['classification' | 'detection' | 'segmentation']
 #dataset_name                 = 'synthia_rand_cityscapes'        # Dataset
-sequence_name                = 'SYNTHIA-SEQS-06'
+
 local_path                   = '/home/stevenwudi/PycharmProjects/autonomous_driving'
 shared_path                  = '/home/public/synthia'
 dataset_name2                = None            # Second dataset name. None if not Domain Adaptation
 perc_mb2                     = None            # Percentage of data from the second dataset in each minibatch
 class_mode                   = problem_type
+
+sequence_name                = 'SYNTHIA-SEQS-06'
 collect_data                 = False
+collect_data                 = False
+get_ground_truth_sequence_car_trajectory = False  # flag to get get_ground_truth_sequence_car_trajectory
+formatting_ground_truth_sequence_car_trajectory = False
+draw_seq                                = 'SYNTHIA-SEQS-06-NIGHT'   # which sequence to draw, need to set the above two flags to False
+
 
 # Model
 model_name                   = 'fcn8'          # Model to use ['fcn8' | 'lenet' | 'alexNet' | 'vgg16' |  'vgg19' | 'resnet50' | 'InceptionV3']
@@ -24,19 +31,6 @@ dataloader_num_workers_test  = 1        # Number of dataload works during test
 shuffle_train                = False            # No shuffling because the time sequence matters
 shuffle_valid                = False           # Whether to shuffle the validation data
 shuffle_test                 = False           # Whether to shuffle the testing data
-
-
-# Parameters
-train_model                  = True            # Train the model
-test_model                   = True           # Test the model
-pred_model                   = False           # Predict using the model
-
-
-# Training parameters
-optimizer                    = 'adam'       # Optimizer
-learning_rate                = 0.0001          # Training learning rate
-weight_decay                 = 0.              # Weight decay or L2 parameter norm penalty
-n_epochs                     = 1            # Number of epochs during training
 
 #############################
 dataroot_dir                        = '/home/stevenwudi/PycharmProjects/autonomous_driving/Datasets'
@@ -71,6 +65,19 @@ threshold_car_depth_start               = 2000  # threshold for car start tracki
 threshold_car_depth_end                 = 3000  # threshold for car end tracking using depth
 
 lstm_training_stepsize                  = [1, 23]  # step size for collecting training data
-get_ground_truth_sequence_car_trajectory = False  # flag to get get_ground_truth_sequence_car_trajectory
-formatting_ground_truth_sequence_car_trajectory = True
-draw_seq                                = 'SYNTHIA-SEQS-06-NIGHT'   # which sequence to draw, need to set the above two flags to False
+lstm_input_frame                        = 15
+lstm_predict_frame                      = 8
+
+# Parameters
+train_model                  = True            # Train the model
+test_model                   = True           # Test the model
+pred_model                   = False           # Predict using the model
+
+# Training parameters
+
+weight_decay                 = 0.              # Weight decay or L2 parameter norm penalty
+n_epochs                     = 100            # Number of epochs during training
+cuda                         = False
+loss                         = 'MSE'
+optimizer                    = 'LBFGS'      # LBFGS','adam'
+learning_rate                = 0.1          # Training learning rate

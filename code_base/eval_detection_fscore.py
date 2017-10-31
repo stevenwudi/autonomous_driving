@@ -7,8 +7,8 @@ import cv2
 from keras.applications.imagenet_utils import preprocess_input
 from keras.preprocessing import image
 
-from models.yolo import build_yolo
-from tools.yolo_utils import *
+from code_base.models.yolo import build_yolo
+from code_base.tools.yolo_utils import *
 
 # Net output post-processing needs two parameters:
 detection_threshold = 0.6 # Min probablity for a prediction to be considered
@@ -17,7 +17,7 @@ nms_threshold       = 0.2 # Non Maximum Suppression threshold
 #            you are allowed to find their optimal values in the validation/train sets
 
 if len(sys.argv) < 3:
-  print "USAGE: python eval_detection_fscore.py weights_file path_to_images"
+  print("USAGE: python eval_detection_fscore.py weights_file path_to_images")
   quit()
 
 classes     = ['i2','i4','i5','il100','il60','il80','io','ip','p10','p11','p12','p19','p23','p26','p27','p3','p5','p6','pg','ph4','ph4.5','ph5','pl100','pl120','pl20','pl30','pl40','pl5','pl50','pl60','pl70','pl80','pm20','pm30','pm55','pn','pne','po','pr40','w13','w32','w55','w57','w59','wo']
@@ -37,7 +37,7 @@ imfiles = [os.path.join(test_dir,f) for f in os.listdir(test_dir)
                                     and f.endswith('jpg')]
 
 if len(imfiles) == 0:
-  print "ERR: path_to_images do not contain any jpg file"
+  print("ERR: path_to_images do not contain any jpg file")
   quit()
 
 inputs = []

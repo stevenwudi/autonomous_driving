@@ -1,9 +1,6 @@
 import argparse
 import os
 import sys
-import numpy as np
-
-
 # Di Wu add the following really ugly code so that python can find the path
 sys.path.append(os.getcwd())
 import time
@@ -12,19 +9,20 @@ import matplotlib
 matplotlib.use('TkAgg')
 
 from code_base.config.configuration import Configuration
-from code_base.utils import HMS, configurationPATH
+from code_base.tools.utils import HMS, configurationPATH
 from code_base.tools.gt_acquisition import gt_collection_examintion
+from code_base.tools.PyTorch_model_training import baseline_lstm
 
 
 def process(cf):
-
     # Create the data generators
     if cf.collect_data:
         print(' ---> Collecting data: ' + cf.sequence_name + ' <---')
         gt_collection_examintion(cf)
 
     if cf.train_model:
-        pass
+        print(' ---> Training data: ' + cf.sequence_name + ' <---')
+        baseline_lstm(cf)
 
     print(' ---> Finish experiment: ' + cf.exp_name + ' <---')
 
