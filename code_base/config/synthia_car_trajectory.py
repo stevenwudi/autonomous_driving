@@ -69,7 +69,7 @@ lstm_input_frame                        = 15
 lstm_predict_frame                      = 8
 
 # Parameters
-train_model                  = True            # Train the model
+train_model                  = False            # Train the model
 test_model                   = True           # Test the model
 pred_model                   = False           # Predict using the model
 

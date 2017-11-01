@@ -15,6 +15,9 @@ from code_base.tools.PyTorch_model_training import baseline_lstm
 
 
 def process(cf):
+
+    #
+
     # Create the data generators
     if cf.collect_data:
         print(' ---> Collecting data: ' + cf.sequence_name + ' <---')
