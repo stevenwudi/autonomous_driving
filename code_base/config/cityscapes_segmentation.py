@@ -5,7 +5,10 @@ dataset_name2                = None            # Second dataset name. None if no
 perc_mb2                     = None            # Percentage of data from the second dataset in each minibatch
 
 # Model
-model_name                   = 'drn_c_26'  # Model to use ['segnet_basic' | 'drn_c_26']
+
+
+model_name                   = 'drn_d_38'  # Model to use ['fcn8' | 'lenet' | 'alexNet' | 'vgg16' |  'vgg19' | 'resnet50' | 'InceptionV3']
+
                                                # ty add: drn_c_26 drn_c_42, drn_d_22 .....
 freeze_layers_from           = None            # Freeze layers from 0 to this layer during training (Useful for finetunning) [None | 'base_model' | Layer_id]
 show_model                   = True            # Show the architecture layers
@@ -33,22 +36,24 @@ seed_test                    = 1924            # Random seed for the testing shu
 # Training parameters
 optimizer                    = 'sgd'       # Optimizer
 
-learning_rate                = 1e-3   #0.001, 0.0001          # Training learning rate
+learning_rate                = 0.001  #0.001, 0.0001          # Training learning rate
 momentum                     = 0.99  #0.9
 weight_decay                 = 1e-4              # Weight decay or L2 parameter norm penalty
-n_epochs                     = 150            # Number of epochs during training
+n_epochs                     = 250            # Number of epochs during training
+
 
 
 # Data
 dataroot_dir                        = '/home/public/CITYSCAPE/'
-crop_size                           = 512
-workers                             = 4  #'Data loader workers'
-num_classes                         = 20
+crop_size                           = 896
+workers                             = 8  #'Data loader workers'
+
+num_classes                         = 19
 class_mode                          = 'segmentation'
-batch_size                          = 4
+batch_size                          = 6
 
 load_trained_model                  = True
-train_model_path                    = '/home/stevenwudi/PycharmProjects/autonomous_driving/Experiments/segmentation/cityscapes___Wed, 18 Oct 2017-10-18 15:40:42/100_net.pth'
+train_model_path                    = '/home/ty/code/autonomous_driving/Experiments/CityScape_semantic_segmentation/drn_d_38_cityscapes.pth'
 
 mean                                = [0.290101, 0.328081, 0.286964]
 std                                 = [0.182954, 0.186566, 0.184475]
