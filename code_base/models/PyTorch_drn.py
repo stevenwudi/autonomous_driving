@@ -160,11 +160,11 @@ class DRN(nn.Module):
                 self._make_conv_layers(channels[7], layers[7], dilation=1)
 
         if num_classes > 0:
-            # self.avgpool = nn.AvgPool2d(pool_size)
-            # self.fc = nn.Conv2d(self.out_dim, num_classes, kernel_size=1,
-            #                     stride=1, padding=0, bias=True)
-            self.seg = nn.Conv2d(self.out_dim, num_classes,kernel_size=1, stride=1, padding=0, bias=True)
-            self.up = nn.UpsamplingBilinear2d(scale_factor=8)
+            self.avgpool = nn.AvgPool2d(pool_size)
+            self.fc = nn.Conv2d(self.out_dim, num_classes, kernel_size=1,
+                                stride=1, padding=0, bias=True)
+            # self.seg = nn.Conv2d(self.out_dim, num_classes,kernel_size=1, stride=1, padding=0, bias=True)
+            # self.up = nn.UpsamplingBilinear2d(scale_factor=8)
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
@@ -266,7 +266,6 @@ class DRN(nn.Module):
 
 def drn_c_26(num_classes, pretrained=False, **kwargs):
     model = DRN(BasicBlock, [1, 1, 2, 2, 2, 2, 1, 1], num_classes, arch='C', **kwargs)
-
     # base = nn.Sequential(*list(model.children()[:-2]))
     # seg
     if pretrained:
@@ -295,8 +294,8 @@ def drn_d_22(num_classes, pretrained=False, **kwargs):
     return model
 
 
-def drn_d_38(pretrained=False, **kwargs):
-    model = DRN(BasicBlock, [1, 1, 3, 4, 6, 3, 1, 1], arch='D', **kwargs)
+def drn_d_38(num_classes, pretrained=False, **kwargs):
+    model = DRN(BasicBlock, [1, 1, 3, 4, 6, 3, 1, 1], num_classes, arch='D', **kwargs)
     if pretrained:
         model.load_state_dict(model_zoo.load_url(model_urls['drn-d-38']))
     return model
@@ -315,12 +314,78 @@ def drn_d_105(pretrained=False, **kwargs):
         model.load_state_dict(model_zoo.load_url(model_urls['drn-d-105']))
     return model
 
+def fill_up_weights(up):
+    w = up.weight.data
+    f = math.ceil(w.size(2) / 2)
+    c = (2 * f - 1 - f % 2) / (2. * f)
+    for i in range(w.size(2)):
+        for j in range(w.size(3)):
+            w[0, 0, i, j] = (1 - math.fabs(i / f - c)) * (1 - math.fabs(j / f- c))
+
+    for c in range(1, w.size(0)):
+        w[c, 0, :, :] = w[0, 0, :, :]
+
+class DRNSeg(nn.Module):
+    def __init__(self, model_name, num_classes, pretrained_model=None, pretrained=True, linear_up = False, train_model_path = None):
+        super(DRNSeg, self).__init__()
+        if model_name == 'drn_d_22':
+            model = drn_d_22(1000, pretrained)
+        elif model_name == 'drn_c_26':
+            model = drn_c_26(1000, pretrained)
+        elif model_name == 'drn_d_38':
+            model = drn_d_38(1000, pretrained)
+
+        self.base = nn.Sequential(*list(model.children())[:-2])
+        self.seg = nn.Conv2d(model.out_dim, num_classes, kernel_size=1, stride=1, padding=0, bias=True)
+
+        m = self.seg
+        n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
+        m.weight.data.normal_(0, math.sqrt(2. / n))
+        m.bias.data.zero_()
+
+        if linear_up:
+            self.up = nn.UpsamplingBilinear2d(scale_factor=8)
+        else:
+            up = nn.ConvTranspose2d(num_classes, num_classes, 16, stride=8, padding=4, output_padding=0, groups=num_classes, bias=False)
+            fill_up_weights(up)
+            # up.weight.requires_grad = False
+            self.up = up
+
+
+    def forward(self, x):
+        x = self.base(x)
+        x = self.seg(x)
+        y = self.up(x)
+        return y
+
+class DRNSegF(nn.Module):
+    def __init__(self, model, num_classes):
+        super(DRNSegF, self).__init__()
+
+
+        self.base = nn.Sequential(*list(model.children())[:-2])
+        self.seg = nn.Conv2d(512, num_classes, kernel_size=1, stride=1, padding=0, bias=True)
+
+        m = self.seg
+        n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
+        m.weight.data.normal_(0, math.sqrt(2. / n))
+        m.bias.data.zero_()
+        self.up = nn.UpsamplingBilinear2d(scale_factor=8)
+
+
+
+    def forward(self, x):
+        x = self.base(x)
+        x = self.seg(x)
+        y = self.up(x)
+        return y
 
 if __name__ == '__main__':
-    model = drn_d_22(20)
+    model = DRNSeg('drn_c_26', 20, pretrained=True)
 
     print (model)
     print('----------')
+
     # print(*list(model.children())[:-1])
 
 

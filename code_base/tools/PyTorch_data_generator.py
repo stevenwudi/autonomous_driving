@@ -201,10 +201,10 @@ class Dataset_Generators_Cityscape():
         #                                                                              ToTensor(),
         #                                                                              T.Normalize(mean=cf.mean, std=cf.std)]))
         train_dataset = CityscapesDataset(cf=cf, split='train', crop=True, flip=True)
-        val_dataset = CityscapesDataset(cf=cf, split='val', crop=True, flip=True)
+        val_dataset = CityscapesDataset(cf=cf, split='val', crop=False, flip=False)
         test_dataset = CityscapesDataset(cf=cf, split='test', crop=False, flip=False)
         self.train_loader = DataLoader(train_dataset, batch_size=cf.batch_size, shuffle=True, num_workers=cf.workers, pin_memory=True)
-        self.val_loader = DataLoader(val_dataset, batch_size=cf.batch_size, num_workers=cf.workers, pin_memory=True)
+        self.val_loader = DataLoader(val_dataset, batch_size=1, num_workers=cf.workers, pin_memory=True)
         self.test_loader = DataLoader(test_dataset, batch_size=cf.batch_size, num_workers=cf.workers, pin_memory=True)
 
 
@@ -251,12 +251,13 @@ class CityscapesDataset(Dataset):
 
         # Convert to tensors
         w, h = input.size
+
         input = torch.ByteTensor(torch.ByteStorage.from_buffer(input.tobytes())).view(h, w, 3).permute(2, 0, 1).float().div(255)
         target = torch.ByteTensor(torch.ByteStorage.from_buffer(target.tobytes())).view(h, w).long()
         # Normalise input
-        input[0].add_(self.mean[0]).div_(self.std[0])
-        input[1].add_(self.mean[1]).div_(self.std[1])
-        input[2].add_(self.mean[2]).div_(self.std[2])
+        input[0].sub_(self.mean[0]).div_(self.std[0])
+        input[1].sub_(self.mean[1]).div_(self.std[1])
+        input[2].sub_(self.mean[2]).div_(self.std[2])
         # Convert to training labels
         target_clone = target.clone()
         for k, v in self.full_to_train.items():
@@ -268,5 +269,5 @@ class CityscapesDataset(Dataset):
 
         # TOD): dangerous hack below
         #target_clone[target == self.num_classes] = 0
-        return input, target_one_hot, target_clone  # Return x, y (one-hot), y (index)
+        return input, target_one_hot, target_clone, self.inputs[i]  # Return x, y (one-hot), y (index)
 
