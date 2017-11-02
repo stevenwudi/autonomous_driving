@@ -263,7 +263,7 @@ def test_ssd512(gt_file, model_checkpoint, test_json_file):
         json.dump(predict_dict, fp, indent=4)
 
 
-def calculate_iou(test_gt_file, test_json_file, POR=None):
+def calculate_iou(test_gt_file, test_json_file, POR=None, draw=False):
     """
 
     :param test_gt_file:
@@ -306,21 +306,57 @@ def calculate_iou(test_gt_file, test_json_file, POR=None):
             total_true += 1
 
         for c, detection_threshold in enumerate(conf_threshold):
-            for b in boxes_pred:
+            true_matched_pred = np.zeros(shape=(len(boxes_pred), len(mAP_threshold)))
+            for ib, bx in enumerate(boxes_pred):
                 if POR and bx.w * bx.h < POR:
                     continue
-                if b.c < detection_threshold:
+                if bx.c < detection_threshold:
                     continue
                 total_pred[c] += 1
+                true_matched = np.zeros(shape=(len(boxes_true), len(mAP_threshold)))
                 for u, iou_threshold in enumerate(mAP_threshold):
-                    true_matched = np.zeros(len(boxes_true))
-                    for t, a in enumerate(boxes_true):
-                        if true_matched[t]:
+                    for t, gx in enumerate(boxes_true):
+                        if true_matched[t, u]:
                             continue
-                        if box_iou(a, b) > iou_threshold:
-                            true_matched[t] = 1
+                        if box_iou(gx, bx) > iou_threshold:
+                            true_matched[t, u] = 1
+                            true_matched_pred[ib, u] = 1
                             tp[c, u] += 1.
                             break
+
+        if draw:
+            # we only draw conf=0.5, mAP(oou)=0.5) with false postive and false negative
+            if len(true_matched_pred) != np.sum(true_matched_pred[:,0]) or len(true_matched) != np.sum(true_matched[:,0]):
+                img = plt.imread(k)
+                currentAxis = plt.gca()
+                currentAxis.cla()
+                plt.imshow(img)
+                # first we draw false positive as green
+                fp = true_matched_pred[:, 0] == 0
+                for idx_fp, fp_v in enumerate(fp):
+                    if fp_v:
+                        xmin, ymin, xmax, ymax, conf = predict_dict[k][int(idx_fp)]
+                        xmin *= img.shape[1]
+                        ymin *= img.shape[0]
+                        xmax *= img.shape[1]
+                        ymax *= img.shape[0]
+                        coords = (xmin, ymin), xmax - xmin + 1, ymax - ymin + 1
+                        currentAxis.add_patch(plt.Rectangle(*coords, fill=False, edgecolor='g', linewidth=1))
+                        currentAxis.text(xmin, ymin, '%.2f' % (conf), bbox={'facecolor': 'g', 'alpha': 0.5})
+                # Then we plot the false negative as red
+                fn = true_matched[:, 0] == 0
+                for idx_fp, fn_v in enumerate(fn):
+                    if fn_v:
+                        xmin, ymin, xmax, ymax, conf = gt_dict[k][int(idx_fp)]
+                        xmin *= img.shape[1]
+                        ymin *= img.shape[0]
+                        xmax *= img.shape[1]
+                        ymax *= img.shape[0]
+                        coords = (xmin, ymin), xmax - xmin + 1, ymax - ymin + 1
+                        currentAxis.add_patch(plt.Rectangle(*coords, fill=False, edgecolor='r', linewidth=1))
+                        currentAxis.text(xmin, ymin, 'FN', bbox={'facecolor': 'r', 'alpha': 0.5})
+            plt.draw()
+            plt.waitforbuttonpress(3)
 
     precision = tp / total_pred
     recall = tp / total_true
@@ -373,30 +409,30 @@ def ssd_synthia_car_fine_tune():
         test_ssd512(test_gt_file, model_checkpoint, test_json_file)
     # A separate file for accepting gt file and predicted json fil
     if True:
-        calculate_iou(test_gt_file, test_json_file, POR=1e-3)
+        calculate_iou(test_gt_file, test_json_file, POR=None, draw=True)
     """
     This is the network results train by SSD512 (with 0.05% POR trained)
     Conf: [ 0.5   0.55  0.6   0.65  0.7   0.75  0.8   0.85  0.9   0.95]
     
     ### POR=1e-3
     Total GT: 2327. 
-     Total prediction: [ 1724.  1695.  1659.  1626.  1595.  1559.  1521.  1470.  1413.  1347.]
-    Precision: [ 0.887  0.882  0.872  0.866  0.856  0.848  0.836  0.818  0.795  0.768]
-    Recall: [ 0.657  0.654  0.646  0.642  0.634  0.628  0.619  0.606  0.589  0.569]
-    F score: [[ 0.755  0.749  0.743  0.73   0.722  0.695  0.655  0.582  0.388  0.093]
-     [ 0.751  0.746  0.74   0.727  0.72   0.693  0.655  0.582  0.388  0.093]
-     [ 0.743  0.739  0.735  0.722  0.715  0.691  0.654  0.581  0.388  0.093]
-     [ 0.737  0.734  0.731  0.718  0.712  0.689  0.653  0.58   0.387  0.092]
-     [ 0.729  0.727  0.724  0.713  0.708  0.686  0.651  0.579  0.386  0.091]
-     [ 0.722  0.721  0.72   0.709  0.704  0.682  0.648  0.577  0.384  0.091]
-     [ 0.711  0.711  0.71   0.701  0.698  0.677  0.645  0.576  0.383  0.091]
-     [ 0.697  0.698  0.698  0.692  0.689  0.671  0.641  0.574  0.383  0.091]
-     [ 0.677  0.68   0.68   0.675  0.674  0.659  0.633  0.568  0.38   0.091]
-     [ 0.654  0.656  0.658  0.656  0.657  0.647  0.624  0.561  0.377  0.09 ]]
-     
+    Total prediction: [ 2016.  1986.  1951.  1918.  1888.  1852.  1815.  1774.  1711.  1641.]
+    Precision: [ 0.913  0.908  0.9    0.895  0.886  0.879  0.867  0.853  0.83   0.804]
+    Recall: [ 0.791  0.787  0.78   0.775  0.768  0.761  0.751  0.739  0.719  0.697]
+    F score: [[ 0.847  0.843  0.837  0.825  0.816  0.79   0.748  0.666  0.449  0.106]
+     [ 0.843  0.839  0.834  0.823  0.813  0.788  0.748  0.665  0.449  0.106]
+     [ 0.835  0.833  0.829  0.818  0.809  0.786  0.747  0.665  0.449  0.106]
+     [ 0.831  0.829  0.826  0.815  0.807  0.784  0.746  0.664  0.449  0.105]
+     [ 0.823  0.822  0.82   0.81   0.802  0.781  0.744  0.663  0.447  0.105]
+     [ 0.816  0.816  0.815  0.806  0.799  0.778  0.741  0.661  0.446  0.105]
+     [ 0.805  0.805  0.806  0.797  0.792  0.772  0.738  0.66   0.445  0.105]
+     [ 0.792  0.793  0.793  0.789  0.784  0.766  0.734  0.658  0.445  0.105]
+     [ 0.77   0.773  0.775  0.771  0.768  0.753  0.725  0.652  0.441  0.104]
+     [ 0.746  0.749  0.751  0.751  0.75   0.741  0.716  0.645  0.439  0.103]]
+         
      ### POR = None (consider all testing examples)
     Total GT: 2696. 
-     Total prediction: [ 2273.  2221.  2166.  2111.  2055.  2000.  1945.  1875.  1786.  1684.]
+    Total prediction: [ 2273.  2221.  2166.  2111.  2055.  2000.  1945.  1875.  1786.  1684.]
     Precision: [ 0.822  0.818  0.81   0.805  0.796  0.789  0.777  0.763  0.741  0.716]
     Recall: [ 0.693  0.69   0.683  0.678  0.671  0.665  0.655  0.643  0.625  0.604]
     F score: [[ 0.752  0.746  0.74   0.729  0.724  0.703  0.668  0.597  0.405  0.096]
