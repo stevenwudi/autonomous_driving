@@ -1,6 +1,8 @@
 import argparse
 import os
 import sys
+import numpy as np
+
 
 # Di Wu add the following really ugly code so that python can find the path
 sys.path.append(os.getcwd())
@@ -9,30 +11,21 @@ from datetime import datetime
 import matplotlib
 matplotlib.use('TkAgg')
 
-from code_base.tools.PyTorch_data_generator_car_trajectory import Dataset_Generators_Synthia_Car_trajectory
 from code_base.config.configuration import Configuration
 from code_base.utils import HMS, configurationPATH
-from code_base.tools.gt_acquisition import get_ground_truth_sequence_car_trajectory, draw_selected_gt_car_trajectory
+from code_base.tools.gt_acquisition import gt_collection_examintion
 
 
 def process(cf):
-    # Create the data generators
-    cf.batch_size_train = 1  # because we want to read every single image sequentially
-    dataset_path_list = cf.dataset_path
-    processed_list = os.listdir(cf.savepath)
-    for dataset_path in dataset_path_list:
-        sequence_name = dataset_path.split('/')[-1]
-        cf.dataset_path = dataset_path
-        DG = Dataset_Generators_Synthia_Car_trajectory(cf)
-        #if sequence_name+'.json' not in processed_list:
-        if False:
-            get_ground_truth_sequence_car_trajectory(DG, cf, sequence_name)
-        elif sequence_name == 'SYNTHIA-SEQS-06-SUMMER' and True:
-            draw_selected_gt_car_trajectory(DG, cf, sequence_name)
-    # Build model
-    print('\n > Building model...')
 
-    # Finish
+    # Create the data generators
+    if cf.collect_data:
+        print(' ---> Collecting data: ' + cf.sequence_name + ' <---')
+        gt_collection_examintion(cf)
+
+    if cf.train_model:
+        pass
+
     print(' ---> Finish experiment: ' + cf.exp_name + ' <---')
 
 
