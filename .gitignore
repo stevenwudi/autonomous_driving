@@ -6,7 +6,7 @@
 
 # weights
 *Experiments*
-.hdf5
+*.hdf5
 
 /Datasets
 /Summaries

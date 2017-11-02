@@ -10,7 +10,7 @@ from datetime import datetime
 from code_base.tools.PyTorch_data_generator import Dataset_Generators_Cityscape
 from code_base.models.PyTorch_model_factory import Model_Factory
 from code_base.config.configuration import Configuration
-from code_base.utils import HMS, configurationPATH
+from code_base.tools.utils import HMS, configurationPATH
 
 
 # Train the network
