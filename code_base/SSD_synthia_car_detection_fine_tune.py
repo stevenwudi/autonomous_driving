@@ -48,23 +48,17 @@ def converting_gt(annotations_url, gt_file, POR=None):
             img_path = el['image_path'] +'/' + el['image_name']
             gt[img_path] = []
             for anno in el['boundingbox']:
-
                 gt_annot = np.zeros(4+NUM_CLASSES-1)
                 xmin = anno[0] / resize_train[1]
                 ymin = anno[1] / resize_train[0]
                 xmax = anno[2] / resize_train[1]
                 ymax = anno[3] / resize_train[0]
-                if POR:
-                    if (ymax-ymin)*(xmax-xmin) > POR:
-                        gt_annot[:4] = [xmin, ymin, xmax, ymax]
-                        gt_annot[4] = 1
-                        gt[img_path].append(gt_annot)
-                        count += 1
-                else:
-                    gt_annot[:4] = [xmin, ymin, xmax, ymax]
-                    gt_annot[4] = 1
-                    gt[img_path].append(gt_annot)
-                    count += 1
+                if POR and (ymax-ymin)*(xmax-xmin) < POR:
+                    continue
+                gt_annot[:4] = [xmin, ymin, xmax, ymax]
+                gt_annot[4] = 1
+                gt[img_path].append(gt_annot)
+                count += 1
         print('Finish converting, total annotated car number is %d in total image of %d.'%(count, len(gt)))
         return gt
 
@@ -269,7 +263,15 @@ def test_ssd512(gt_file, model_checkpoint, test_json_file):
         json.dump(predict_dict, fp, indent=4)
 
 
-def calculate_iou(test_gt_file, test_json_file):
+def calculate_iou(test_gt_file, test_json_file, POR=None):
+    """
+
+    :param test_gt_file:
+    :param test_json_file:
+    :param POR: the pixel occupant rate, if smaller than this value, we ignore it both
+                for gt and prediction
+    :return:
+    """
     # loading predicted json file
     from code_base.tools.yolo_utils import box_iou, BoundBox
     with open(test_json_file, 'r') as fp:
@@ -289,22 +291,29 @@ def calculate_iou(test_gt_file, test_json_file):
 
         for b in predict_dict[k]:
             bx = BoundBox(1)
-            bx.x, bx.y, bx.w, bx.h, bx.c = b
+            bx.x, bx.y,  bx.c = b[0], b[1], b[-1]
+            bx.w, bx.h = b[2]-b[0], b[3]-b[1]
             boxes_pred.append(bx)
 
         for g in gt_dict[k]:
             gx = BoundBox(1)
-            gx.x, gx.y, gx.w, gx.h, gx.c = g
+            gx.x, gx.y, gx.c = g[0], g[1], g[-1]
+            gx.w, gx.h = g[2]-g[0], g[3]-g[1]
+            if POR and gx.w * gx.h < POR:
+                continue
+            # we count all GT boxes
             boxes_true.append(gx)
             total_true += 1
 
         for c, detection_threshold in enumerate(conf_threshold):
-            true_matched = np.zeros(len(boxes_true))
             for b in boxes_pred:
+                if POR and bx.w * bx.h < POR:
+                    continue
                 if b.c < detection_threshold:
                     continue
                 total_pred[c] += 1
                 for u, iou_threshold in enumerate(mAP_threshold):
+                    true_matched = np.zeros(len(boxes_true))
                     for t, a in enumerate(boxes_true):
                         if true_matched[t]:
                             continue
@@ -313,17 +322,16 @@ def calculate_iou(test_gt_file, test_json_file):
                             tp[c, u] += 1.
                             break
 
-    precision = tp / total_true
-    recall = tp /total_pred
+    precision = tp / total_pred
+    recall = tp / total_true
+    f = np.divide(2 * np.multiply(precision, recall),  (precision + recall))
 
-    def div0(a, b):
-        """ ignore / 0, div0( [-1, 0, 1], 0 ) -> [0, 0, 0] """
-        with np.errstate(divide='ignore', invalid='ignore'):
-            c = np.true_divide(a, b)
-            c[~ np.isfinite(c)] = 0  # -inf inf NaN
-        return c
-    f = div0(2 * np.dot(precision, recall),  (precision + recall))
-
+    np.set_printoptions(precision=3)
+    print('Conf: %s' % (np.array_str(conf_threshold)))
+    print('Total GT: %d. \n Total prediction: %s' % (total_true, np.array_str(total_pred)))
+    print('Precision: %s' % (np.array_str(precision[:, 0])))
+    print('Recall: %s' % (np.array_str(recall[:, 0])))
+    print('F score: %s' % (np.array_str(f)))
 
 
 def ssd_synthia_car_fine_tune():
@@ -365,7 +373,43 @@ def ssd_synthia_car_fine_tune():
         test_ssd512(test_gt_file, model_checkpoint, test_json_file)
     # A separate file for accepting gt file and predicted json fil
     if True:
-        calculate_iou(test_gt_file, test_json_file)
+        calculate_iou(test_gt_file, test_json_file, POR=1e-3)
+    """
+    This is the network results train by SSD512 (with 0.05% POR trained)
+    Conf: [ 0.5   0.55  0.6   0.65  0.7   0.75  0.8   0.85  0.9   0.95]
+    
+    ### POR=1e-3
+    Total GT: 2327. 
+     Total prediction: [ 1724.  1695.  1659.  1626.  1595.  1559.  1521.  1470.  1413.  1347.]
+    Precision: [ 0.887  0.882  0.872  0.866  0.856  0.848  0.836  0.818  0.795  0.768]
+    Recall: [ 0.657  0.654  0.646  0.642  0.634  0.628  0.619  0.606  0.589  0.569]
+    F score: [[ 0.755  0.749  0.743  0.73   0.722  0.695  0.655  0.582  0.388  0.093]
+     [ 0.751  0.746  0.74   0.727  0.72   0.693  0.655  0.582  0.388  0.093]
+     [ 0.743  0.739  0.735  0.722  0.715  0.691  0.654  0.581  0.388  0.093]
+     [ 0.737  0.734  0.731  0.718  0.712  0.689  0.653  0.58   0.387  0.092]
+     [ 0.729  0.727  0.724  0.713  0.708  0.686  0.651  0.579  0.386  0.091]
+     [ 0.722  0.721  0.72   0.709  0.704  0.682  0.648  0.577  0.384  0.091]
+     [ 0.711  0.711  0.71   0.701  0.698  0.677  0.645  0.576  0.383  0.091]
+     [ 0.697  0.698  0.698  0.692  0.689  0.671  0.641  0.574  0.383  0.091]
+     [ 0.677  0.68   0.68   0.675  0.674  0.659  0.633  0.568  0.38   0.091]
+     [ 0.654  0.656  0.658  0.656  0.657  0.647  0.624  0.561  0.377  0.09 ]]
+     
+     ### POR = None (consider all testing examples)
+    Total GT: 2696. 
+     Total prediction: [ 2273.  2221.  2166.  2111.  2055.  2000.  1945.  1875.  1786.  1684.]
+    Precision: [ 0.822  0.818  0.81   0.805  0.796  0.789  0.777  0.763  0.741  0.716]
+    Recall: [ 0.693  0.69   0.683  0.678  0.671  0.665  0.655  0.643  0.625  0.604]
+    F score: [[ 0.752  0.746  0.74   0.729  0.724  0.703  0.668  0.597  0.405  0.096]
+     [ 0.748  0.744  0.737  0.727  0.722  0.702  0.668  0.597  0.405  0.096]
+     [ 0.741  0.737  0.733  0.723  0.718  0.699  0.667  0.596  0.405  0.096]
+     [ 0.736  0.733  0.729  0.72   0.716  0.698  0.666  0.596  0.404  0.095]
+     [ 0.728  0.726  0.724  0.716  0.712  0.695  0.664  0.595  0.403  0.095]
+     [ 0.722  0.721  0.72   0.712  0.708  0.692  0.661  0.593  0.402  0.095]
+     [ 0.711  0.711  0.711  0.704  0.703  0.687  0.659  0.592  0.401  0.095]
+     [ 0.698  0.7    0.7    0.696  0.696  0.682  0.655  0.59   0.401  0.095]
+     [ 0.678  0.682  0.684  0.681  0.681  0.67   0.647  0.585  0.398  0.095]
+     [ 0.655  0.659  0.662  0.663  0.665  0.659  0.639  0.578  0.395  0.094]]
+ """
 
 
 if __name__ == "__main__":
