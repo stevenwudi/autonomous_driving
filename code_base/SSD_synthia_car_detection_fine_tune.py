@@ -83,14 +83,14 @@ def gt_classification_convert(gt):
     return gt
 
 
-def train_ssd512(gt_file, model_checkpoint=None):
+def train_ssd512(gt_file, model_checkpoint=None, base_lr=1e-4):
 
     model = SSD512v2(input_shape, num_classes=NUM_CLASSES)
     model.summary()
     if model_checkpoint:
         model.load_weights(model_checkpoint, by_name=True)
     else:
-        model.load_weights('./code_base/models/weights_SSD300.hdf5', by_name=True)
+        model.load_weights('/home/stevenwudi/PycharmProjects/autonomous_driving/code_base/models/weights_SSD300.hdf5', by_name=True)
     gt = pickle.load(open(gt_file, 'rb'), encoding='latin1')
     gt = gt_classification_convert(gt)
 
@@ -122,12 +122,12 @@ def train_ssd512(gt_file, model_checkpoint=None):
                                                  save_weights_only=True),
                  keras.callbacks.LearningRateScheduler(schedule)]
 
-    base_lr = 1e-4
+    base_lr = base_lr
     optim = keras.optimizers.Adam(lr=base_lr)
     model.compile(optimizer=optim,
                   loss=MultiboxLoss(NUM_CLASSES, neg_pos_ratio=2.0).compute_loss)
 
-    nb_epoch = 20
+    nb_epoch = 100
     history = model.fit_generator(generator=gen.generate(True),
                                   steps_per_epoch=gen.train_batches,
                                   epochs=nb_epoch, verbose=1,
@@ -233,6 +233,7 @@ def test_ssd512(gt_file, model_checkpoint, test_json_file):
 
     for i in range(len(keys)):
         img_path = keys[i]
+        print(img_path)
         if os.path.isfile(img_path):
             img = image.load_img(img_path, target_size=(512, 512))
             img = image.img_to_array(img)
@@ -240,23 +241,25 @@ def test_ssd512(gt_file, model_checkpoint, test_json_file):
             inputs = preprocess_input(np.array([img]))
             preds = model.predict(inputs, batch_size=1, verbose=1)
             results = bbox_util.detection_out(preds)
-
-            det_conf = results[0][:, 1]
-            det_xmin = results[0][:, 2]
-            det_ymin = results[0][:, 3]
-            det_xmax = results[0][:, 4]
-            det_ymax = results[0][:, 5]
-
-            # Get detections with confidence higher than 0.6.
-            top_indices = [i for i, conf in enumerate(det_conf) if conf >= 0.5]
-            top_conf = det_conf[top_indices]
-            top_xmin = det_xmin[top_indices]
-            top_ymin = det_ymin[top_indices]
-            top_xmax = det_xmax[top_indices]
-            top_ymax = det_ymax[top_indices]
             detected_rect = []
-            for j in range(len(top_indices)):
-                detected_rect.append([top_xmin[j], top_ymin[j], top_xmax[j], top_ymax[j], top_conf[j]])
+            if len(results[0]):
+                # TODO: check which image has no detection
+                det_conf = results[0][:, 1]
+                det_xmin = results[0][:, 2]
+                det_ymin = results[0][:, 3]
+                det_xmax = results[0][:, 4]
+                det_ymax = results[0][:, 5]
+
+                # Get detections with confidence higher than 0.6.
+                top_indices = [i for i, conf in enumerate(det_conf) if conf >= 0.5]
+                top_conf = det_conf[top_indices]
+                top_xmin = det_xmin[top_indices]
+                top_ymin = det_ymin[top_indices]
+                top_xmax = det_xmax[top_indices]
+                top_ymax = det_ymax[top_indices]
+
+                for j in range(len(top_indices)):
+                    detected_rect.append([top_xmin[j], top_ymin[j], top_xmax[j], top_ymax[j], top_conf[j]])
             predict_dict[img_path] = detected_rect
 
     with open(test_json_file, 'w') as fp:
@@ -335,26 +338,28 @@ def calculate_iou(test_gt_file, test_json_file, POR=None, draw=False):
                 fp = true_matched_pred[:, 0] == 0
                 for idx_fp, fp_v in enumerate(fp):
                     if fp_v:
-                        xmin, ymin, xmax, ymax, conf = predict_dict[k][int(idx_fp)]
-                        xmin *= img.shape[1]
-                        ymin *= img.shape[0]
-                        xmax *= img.shape[1]
-                        ymax *= img.shape[0]
-                        coords = (xmin, ymin), xmax - xmin + 1, ymax - ymin + 1
+                        bp = boxes_pred[int(idx_fp)]
+                        x, y, w, h, conf = bp.x, bp.y, bp.w, bp.h, bp.c
+                        x *= img.shape[1]
+                        y *= img.shape[0]
+                        w *= img.shape[1]
+                        h *= img.shape[0]
+                        coords = (x, y), w, h
                         currentAxis.add_patch(plt.Rectangle(*coords, fill=False, edgecolor='g', linewidth=1))
-                        currentAxis.text(xmin, ymin, '%.2f' % (conf), bbox={'facecolor': 'g', 'alpha': 0.5})
+                        currentAxis.text(x, y, '%.2f' % (conf), color='g')
                 # Then we plot the false negative as red
                 fn = true_matched[:, 0] == 0
-                for idx_fp, fn_v in enumerate(fn):
+                for idx_fn, fn_v in enumerate(fn):
                     if fn_v:
-                        xmin, ymin, xmax, ymax, conf = gt_dict[k][int(idx_fp)]
-                        xmin *= img.shape[1]
-                        ymin *= img.shape[0]
-                        xmax *= img.shape[1]
-                        ymax *= img.shape[0]
-                        coords = (xmin, ymin), xmax - xmin + 1, ymax - ymin + 1
+                        bt = boxes_true[int(idx_fn)]
+                        x, y, w, h, conf = bt.x, bt.y, bt.w, bt.h, bt.c
+                        x *= img.shape[1]
+                        y *= img.shape[0]
+                        w *= img.shape[1]
+                        h *= img.shape[0]
+                        coords = (x, y), w, h
                         currentAxis.add_patch(plt.Rectangle(*coords, fill=False, edgecolor='r', linewidth=1))
-                        currentAxis.text(xmin, ymin, 'FN', bbox={'facecolor': 'r', 'alpha': 0.5})
+                        #currentAxis.text(xmin, ymin, 'FN', bbox={'facecolor': 'r', 'alpha': 0.5})
             plt.draw()
             plt.waitforbuttonpress(3)
 
@@ -375,41 +380,41 @@ def ssd_synthia_car_fine_tune():
     The scirpt to calling different modules for fine-tuning/verifying SSD
     :return:
     """
-    merged_annotation = '/home/public/synthia/ssd_car_fine_tune/SYNTHIA-SEQS-01-TRAIN_MERGED.json'
+    merged_annotation = '/home/public/synthia/ssd_car_fine_tune/SYNTHIA-SEQS-01-TRAIN_MERGED-shuffle.json'
     if False:
-        # we combine the training and validation here
-        annotations_url_1 = '/home/public/synthia/SYNTHIA-SEQS-01-TRAIN.json'
-        annotations_url_2 = '/home/public/synthia/SYNTHIA-SEQS-01-VALIDATE.json'
+        print('we combine the training and validation here')
+        annotations_url_1 = '/home/public/synthia/SYNTHIA-SEQS-01-TRAIN-shuffle.json'
+        annotations_url_2 = '/home/public/synthia/SYNTHIA-SEQS-01-VALIDATE-shuffle.json'
         combine_gt(annotations_url_1, annotations_url_2, merged_annotation)
 
-    gt_file = '/home/public/synthia/ssd_car_fine_tune/ssd_car_fine_tune_gt.pkl'
-    model_checkpoint = '/home/public/synthia/ssd_car_fine_tune/small_weights_512.49-0.24.hdf5'
+    gt_file = '/home/public/synthia/ssd_car_fine_tune/ssd_car_fine_tune_gt-shuffle.pkl'
 
     if False:
-        # for training annotation conversion
+        print('Training annotation conversion')
         converting_gt(merged_annotation, gt_file, POR=1e-3)
         # POR: 1e-3  Finish converting, total annotated car number is 22332 in total image of 8814.
         # POR: 5e-4: Finish converting, total annotated fish number is 26800 in total image of 8814.
 
+    model_checkpoint = '/home/public/synthia/ssd_car_fine_tune/weights_512.54-0.19.hdf5'
     if False:
-        # Training
-        train_ssd512(gt_file, model_checkpoint=model_checkpoint)
+        print('Start DDS 512 training')
+        train_ssd512(gt_file, model_checkpoint=model_checkpoint, base_lr=1e-5)
 
-    test_gt_file = '/home/public/synthia/ssd_car_fine_tune/ssd_car_test_gt.pkl'
+    test_gt_file = '/home/public/synthia/ssd_car_fine_tune/ssd_car_test_gt-shuffle.pkl'
     if False:
-        # converting testing GT
-        annotations_url = '/home/public/synthia/SYNTHIA-SEQS-01-TEST.json'
+        print('Converting testing GT')
+        annotations_url = '/home/public/synthia/SYNTHIA-SEQS-01-TEST-shuffle.json'
         converting_gt(annotations_url, test_gt_file)
     if False:
         # Examine test data
         examine_ssd512(test_gt_file, model_checkpoint)
 
-    test_json_file = '/home/public/synthia/ssd_car_fine_tune/ssd_car_test.json'
+    test_json_file = '/home/public/synthia/ssd_car_fine_tune/ssd_car_test-shuffle.json'
     if False:
         test_ssd512(test_gt_file, model_checkpoint, test_json_file)
     # A separate file for accepting gt file and predicted json fil
     if True:
-        calculate_iou(test_gt_file, test_json_file, POR=None, draw=True)
+        calculate_iou(test_gt_file, test_json_file, POR=2e-3, draw=True)
     """
     This is the network results train by SSD512 (with 0.05% POR trained)
     Conf: [ 0.5   0.55  0.6   0.65  0.7   0.75  0.8   0.85  0.9   0.95]
@@ -430,6 +435,39 @@ def ssd_synthia_car_fine_tune():
      [ 0.77   0.773  0.775  0.771  0.768  0.753  0.725  0.652  0.441  0.104]
      [ 0.746  0.749  0.751  0.751  0.75   0.741  0.716  0.645  0.439  0.103]]
          
+    ### POR shuffle
+    Total GT: 2563. 
+    Total prediction: [ 2185.  2137.  2081.  2047.  2010.  1976.  1937.  1893.  1831.  1713.]
+    Precision: [ 0.843  0.836  0.826  0.819  0.813  0.805  0.795  0.784  0.766  0.726]
+    Recall: [ 0.719  0.712  0.704  0.698  0.693  0.686  0.678  0.669  0.653  0.619]
+    F score: [[ 0.776  0.698  0.646  0.619  0.597  0.571  0.525  0.447  0.31   0.106]
+     [ 0.769  0.693  0.642  0.616  0.595  0.57   0.524  0.447  0.31   0.106]
+     [ 0.76   0.686  0.637  0.612  0.591  0.568  0.523  0.445  0.31   0.106]
+     [ 0.754  0.681  0.632  0.608  0.588  0.565  0.521  0.443  0.31   0.106]
+     [ 0.749  0.677  0.629  0.605  0.586  0.563  0.52   0.442  0.309  0.106]
+     [ 0.741  0.671  0.624  0.602  0.583  0.561  0.518  0.441  0.309  0.106]
+     [ 0.732  0.664  0.619  0.597  0.579  0.558  0.516  0.44   0.308  0.106]
+     [ 0.722  0.656  0.612  0.59   0.573  0.553  0.515  0.439  0.308  0.106]
+     [ 0.705  0.642  0.6    0.58   0.564  0.545  0.508  0.435  0.306  0.105]
+     [ 0.668  0.614  0.578  0.561  0.548  0.531  0.496  0.426  0.302  0.105]]
+    
+    POR = 2e-3
+    Total GT: 1433. 
+    Total prediction: [ 1438.  1428.  1421.  1413.  1403.  1398.  1384.  1374.  1348.  1305.]
+    Precision: [ 0.928  0.926  0.924  0.922  0.919  0.917  0.91   0.906  0.898  0.876]
+    Recall: [ 0.931  0.929  0.927  0.925  0.922  0.92   0.913  0.909  0.901  0.879]
+    F score: [[ 0.929  0.921  0.91   0.901  0.883  0.851  0.785  0.673  0.476  0.164]
+     [ 0.927  0.92   0.908  0.9    0.882  0.851  0.785  0.673  0.476  0.164]
+     [ 0.926  0.919  0.907  0.899  0.882  0.851  0.785  0.673  0.476  0.164]
+     [ 0.924  0.916  0.905  0.897  0.88   0.849  0.785  0.673  0.476  0.164]
+     [ 0.92   0.914  0.903  0.895  0.878  0.847  0.783  0.671  0.475  0.164]
+     [ 0.918  0.912  0.901  0.894  0.877  0.846  0.782  0.671  0.475  0.164]
+     [ 0.912  0.907  0.898  0.89   0.874  0.843  0.781  0.67   0.475  0.164]
+     [ 0.908  0.903  0.895  0.888  0.871  0.84   0.78   0.67   0.475  0.164]
+     [ 0.899  0.896  0.888  0.882  0.866  0.836  0.776  0.668  0.474  0.164]
+     [ 0.878  0.877  0.872  0.869  0.855  0.829  0.77   0.663  0.471  0.164]]
+ 
+ 
      ### POR = None (consider all testing examples)
     Total GT: 2696. 
     Total prediction: [ 2273.  2221.  2166.  2111.  2055.  2000.  1945.  1875.  1786.  1684.]
