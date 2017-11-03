@@ -8,11 +8,10 @@ dataset_name2                = None            # Second dataset name. None if no
 perc_mb2                     = None            # Percentage of data from the second dataset in each minibatch
 class_mode                   = problem_type
 
-sequence_name                = 'SYNTHIA-SEQS-06'
-collect_data                 = False
+sequence_name                = 'SYNTHIA-SEQS-01'
 collect_data                 = False
 get_ground_truth_sequence_car_trajectory = False  # flag to get get_ground_truth_sequence_car_trajectory
-formatting_ground_truth_sequence_car_trajectory = False
+formatting_ground_truth_sequence_car_trajectory = True
 draw_seq                                = 'SYNTHIA-SEQS-06-NIGHT'   # which sequence to draw, need to set the above two flags to False
 
 
@@ -69,7 +68,7 @@ lstm_input_frame                        = 15
 lstm_predict_frame                      = 8
 
 # Parameters
-train_model                  = False            # Train the model
+train_model                  = True            # Train the model
 test_model                   = True           # Test the model
 pred_model                   = False           # Predict using the model
 
