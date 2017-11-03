@@ -348,18 +348,19 @@ def calculate_iou(test_gt_file, test_json_file, POR=None, draw=False):
                         currentAxis.add_patch(plt.Rectangle(*coords, fill=False, edgecolor='g', linewidth=1))
                         currentAxis.text(x, y, '%.2f' % (conf), color='g')
                 # Then we plot the false negative as red
-                fn = true_matched[:, 0] == 0
-                for idx_fn, fn_v in enumerate(fn):
-                    if fn_v:
-                        bt = boxes_true[int(idx_fn)]
-                        x, y, w, h, conf = bt.x, bt.y, bt.w, bt.h, bt.c
-                        x *= img.shape[1]
-                        y *= img.shape[0]
-                        w *= img.shape[1]
-                        h *= img.shape[0]
-                        coords = (x, y), w, h
-                        currentAxis.add_patch(plt.Rectangle(*coords, fill=False, edgecolor='r', linewidth=1))
-                        #currentAxis.text(xmin, ymin, 'FN', bbox={'facecolor': 'r', 'alpha': 0.5})
+                if len(boxes_true):
+                    fn = true_matched[:, 0] == 0
+                    for idx_fn, fn_v in enumerate(fn):
+                        if fn_v:
+                            bt = boxes_true[int(idx_fn)]
+                            x, y, w, h, conf = bt.x, bt.y, bt.w, bt.h, bt.c
+                            x *= img.shape[1]
+                            y *= img.shape[0]
+                            w *= img.shape[1]
+                            h *= img.shape[0]
+                            coords = (x, y), w, h
+                            currentAxis.add_patch(plt.Rectangle(*coords, fill=False, edgecolor='r', linewidth=1))
+                            #currentAxis.text(xmin, ymin, 'FN', bbox={'facecolor': 'r', 'alpha': 0.5})
             plt.draw()
             plt.waitforbuttonpress(3)
 
