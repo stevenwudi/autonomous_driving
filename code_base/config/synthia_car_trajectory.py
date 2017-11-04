@@ -16,7 +16,7 @@ draw_seq                                = 'SYNTHIA-SEQS-06-NIGHT'   # which sequ
 
 
 # Model
-model_name                   = 'fcn8'          # Model to use ['fcn8' | 'lenet' | 'alexNet' | 'vgg16' |  'vgg19' | 'resnet50' | 'InceptionV3']
+model_name                   = 'LSTM_ManyToMany'       # Model to use ['LSTM_ManyToMany', 'LSTM_To_FC']
 debug                        = False
 resize_train                 = (760, 1280)      # Resize the image during training (Height, Width) or None
 #random_size_crop             = (350*2, 460*2)      # Random size crop of the image during training
@@ -73,10 +73,21 @@ test_model                   = True           # Test the model
 pred_model                   = False           # Predict using the model
 
 # Training parameters
-
+test_epoch                   = 1
 weight_decay                 = 0.              # Weight decay or L2 parameter norm penalty
 n_epochs                     = 100            # Number of epochs during training
 cuda                         = False
 loss                         = 'MSE'
 optimizer                    = 'LBFGS'      # LBFGS','adam'
 learning_rate                = 0.1          # Training learning rate
+momentum                     = 0.9
+load_trained_model           = False
+#### LSTM training variables #################
+# LSTM_ManyToMany
+lstm_inputsize               = 6   # LSTM input: [x,y,w,h, d_min, d_max]
+lstm_hiddensize              = 50
+lstm_numlayers               = 2
+lstm_outputsize              = 6
+# LSTM_To_FC
+lstm_future                  = 8
+lstm_output_dim              = 6   # currently is [x,y,w,h,d_min, d_max] as lstm_inputsize

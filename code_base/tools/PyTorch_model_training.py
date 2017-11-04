@@ -73,7 +73,7 @@ def baseline_lstm(cf):
 
     train_input, train_target, valid_input, valid_target, test_input, test_target, data_mean, data_std = prepare_data(cf)
     # build the model
-    model = LSTM_ManyToMany(inputsize=6, hiddensize=50, numlayers=2, outputsize=6)
+    model = LSTM_ManyToMany(input_dim=6, hidden_size=50, num_layers=2, output_size=6)
     model.double()
     if cf.cuda:
         model.cuda()
@@ -118,10 +118,10 @@ def calc_seq_err_robust(results, rect_anno):
         res = results[batch_num]
         anno = rect_anno[batch_num]
 
-        centerGT = [[r[0], r[1]] for r in anno]
-        center = [[r[0], r[1]] for r in res]
+        centerGT = [[r[0], r[1], r[4]] for r in anno]
+        center = [[r[0], r[1], r[4]] for r in res]
 
-        errCenter = [ssd(center[i], centerGT[i]) for i in range(seq_length)]
+        errCenter = [ssd_2d(center[i], centerGT[i]) for i in range(seq_length)]
 
         iou_2d = calc_rect_int_2d(res, anno)
         errCoverage = np.zeros(seq_length)
@@ -138,8 +138,14 @@ def calc_seq_err_robust(results, rect_anno):
 
     return aveErrCoverage, aveErrCenter, errCoverage, errCenter
 
+def ssd_2d(x, y):
+    s = 0
+    for i in range(len(x)):
+        s += (x[i] - y[i]) ** 2
+    return np.sqrt(s)
 
-def ssd(x, y):
+
+def ssd_3d(x, y):
     s = 0
     for i in range(len(x)):
         s += (x[i] - y[i]) ** 2

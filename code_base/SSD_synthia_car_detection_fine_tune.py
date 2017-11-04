@@ -20,14 +20,14 @@ NUM_CLASSES = 1 + 1
 resize_train = (760, 1280)
 input_shape = (512, 512, 3)
 
-# import keras
-# from keras.preprocessing import image
-# from keras.applications.imagenet_utils import preprocess_input
-# from code_base.models.Keras_SSD import SSD512v2, BBoxUtility, Generator, MultiboxLoss
-# priors = pickle.load(
-#     open('/home/stevenwudi/PycharmProjects/autonomous_driving/code_base/models/prior_boxes_ssd512.pkl', 'rb'),
-#     encoding='latin1')
-# bbox_util = BBoxUtility(NUM_CLASSES, priors)
+import keras
+from keras.preprocessing import image
+from keras.applications.imagenet_utils import preprocess_input
+from code_base.models.Keras_SSD import SSD512v2, BBoxUtility, Generator, MultiboxLoss
+priors = pickle.load(
+    open('/home/stevenwudi/PycharmProjects/autonomous_driving/code_base/models/prior_boxes_ssd512.pkl', 'rb'),
+    encoding='latin1')
+bbox_util = BBoxUtility(NUM_CLASSES, priors)
 
 
 def combine_gt(annotation_1, annotation_2, merged_annotation):

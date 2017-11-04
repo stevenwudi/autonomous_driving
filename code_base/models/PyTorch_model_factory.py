@@ -1,5 +1,7 @@
 from code_base.models.PyTorch_fcn import FeatureResNet, SegResNet, iou
 from code_base.models.PyTorch_drn import drn_c_26, drn_d_22, DRNSeg, DRNSegF
+from code_base.models.PyTorch_PredictModels import LSTM_ManyToMany, LSTM_To_FC
+from code_base.tools.PyTorch_model_training import calc_seq_err_robust
 import torch
 from torchvision import models
 from torch import nn
@@ -15,9 +17,9 @@ import os
 import sys
 plt.switch_backend('agg')  # Allow plotting when running remotely
 
-def adjust_learning_rate(lr, optimizer, epoch):
+def adjust_learning_rate(lr, optimizer, epoch, decrease_epoch=50):
     """Sets the learning rate to the initial LR decayed by 10 every 30 epochs"""
-    lr = lr * (0.1 ** (epoch // 50))
+    lr = lr * (0.1 ** (epoch // decrease_epoch))
     for param_group in optimizer.param_groups:
         param_group['lr'] = lr
     return lr
@@ -101,7 +103,7 @@ class Model_Factory():
 
     def train(self, train_loader, epoch):
         lr = adjust_learning_rate(self.cf.learning_rate, self.optimiser, epoch)
-        print ('learning rate:', lr)
+        print('learning rate:', lr)
         self.net.train()
         for i, (input, target_one_hot, target, _) in enumerate(train_loader):
             self.optimiser.zero_grad()
@@ -173,3 +175,93 @@ class Model_Factory():
             pred = output.permute(0, 2, 3, 1).contiguous().view(-1, self.num_classes).max(1)[1].view(b, h, w)
             pred = pred.cpu().data.numpy()
             save_output_images(pred, filename, '/home/ty/code/autonomous_driving/Experiments/CityScape_semantic_segmentation')
+
+
+# Build the model
+class Model_Factory_LSTM():
+    def __init__(self, cf):
+        # If we load from a pretrained model
+        self.model_name = cf.model_name   #['LSTM_ManyToMany', 'LSTM_To_FC']
+        if cf.model_name == 'LSTM_ManyToMany':
+            self.net = LSTM_ManyToMany(input_dim=cf.lstm_inputsize,
+                                       hidden_size=cf.lstm_hiddensize,
+                                       num_layers=cf.lstm_numlayers,
+                                       output_size=cf.lstm_outputsize)
+        elif cf.model_name == 'LSTM_To_FC':
+            self.net = LSTM_To_FC(future=cf.LSTM_To_FC,
+                                  input_dim=cf.lstm_inputsize,
+                                  hidden_size=cf.lstm_hiddensize,
+                                  num_layers=cf.lstm_numlayers,
+                                  output_dim=cf.lstm_output_dim)
+        # Set the loss criterion
+        if cf.loss == 'MSE':
+            self.crit = nn.MSELoss()
+        self.net.double()
+        if cf.cuda and torch.cuda.is_available():
+            self.net = self.net.cuda()
+            self.net.cuda()
+            self.crit.cuda()
+
+        self.exp_dir = cf.savepath + '___' + datetime.now().strftime('%a, %d %b %Y-%m-%d %H:%M:%S')
+        os.mkdir(self.exp_dir)
+        # Enable log file
+        self.log_file = os.path.join(self.exp_dir, "logfile.log")
+        sys.stdout = Logger(self.log_file)
+
+        # we print the configuration file here so that the configuration is traceable
+        self.cf = cf
+        print(help(cf))
+
+        # Construct optimiser
+        if cf.load_trained_model:
+            print("Load from pretrained_model weight: "+cf.train_model_path)
+            self.net.load_state_dict(torch.load(cf.train_model_path))
+
+        # use LBFGS as optimizer since we can load the whole data to train
+        if cf.optimizer == 'LBFGS':
+            self.optimiser = optim.LBFGS(self.net.parameters(), lr=cf.learning_rate)
+        elif cf.optimizer == 'adam':
+            self.optimiser = optim.Adam(self.net.parameters(), lr=cf.learning_rate)
+        elif cf.optimizer == 'rmsprop':
+            self.optimiser = optim.RMSprop(self.net.parameters(), lr=cf.learning_rate, momentum=cf.momentum, weight_decay=cf.weight_decay)
+        elif cf.optimizer == 'sgd':
+            self.optimiser = optim.SGD(self.net.parameters(), lr=cf.learning_rate, momentum=cf.momentum, weight_decay=cf.weight_decay)
+
+        self.aveErrCenter, self.aveErrCoverage = [], []
+
+    def train(self, train_input, train_target, cf):
+        #print('learning rate:', lr)
+        # begin to train
+        def closure():
+            self.optimiser.zero_grad()
+            out = self.net(train_input)[0]
+            loss = self.crit(out, train_target)
+            print('loss: ', loss.data.numpy()[0])
+            loss.backward()
+            return loss
+
+        self.optimiser.step(closure)
+
+    def test(self, valid_input, valid_target, data_std, data_mean, cf, epoch):
+
+        pred = self.net(valid_input, future=cf.lstm_predict_frame)
+        loss = self.crit(pred[1], valid_target)
+        results = pred[1].data.numpy() * data_std + data_mean
+        rect_anno = valid_target.data.numpy() * data_std + data_mean
+        aveErrCoverage, aveErrCenter, errCoverage, errCenter = calc_seq_err_robust(results, rect_anno)
+        print('aveErrCoverage: %.4f, aveErrCenter: %.2f' % (aveErrCoverage, aveErrCenter))
+        print('valid loss:', loss.data.numpy()[0])
+        # TODO: 3D evaluation
+        # TODO: network saving and evaluation
+
+        # Save weights and scores
+        torch.save(self.net.state_dict(), os.path.join(self.exp_dir, str(epoch) + '_net.pth'))
+
+        # Plot scores
+        # self.aveErrCoverage.append(aveErrCoverage.mean())
+        # es = list(range(len(self.aveErrCoverage)))
+        # plt.plot(es, self.aveErrCoverage, 'b-')
+        # plt.xlabel('aveErrCoverage')
+        # plt.ylabel('Mean IoU')
+        # plt.savefig(os.path.join(self.exp_dir, 'ious.png'))
+        # plt.close()
