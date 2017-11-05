@@ -12,17 +12,17 @@ class LSTM_ManyToMany(nn.Module):
     So, it is very like the caption model in CS231n, but its input has no image features.
     It has 2 hidden layers, and the output layer is a linear layer.
     """
-    def __init__(self, input_dim, hidden_size, num_layers, output_size, cuda=True):
+    def __init__(self, input_dim, hidden_size, num_layers, output_dim, cuda=True):
         super(LSTM_ManyToMany, self).__init__()
         # some superParameters & input output dimensions
         self.input_dim = input_dim
         self.hidden_size = hidden_size
         self.num_layers = num_layers
-        self.output_size = output_size
+        self.output_dim = output_dim
         # build lstm layer, parameters are (input_dim,hidden_size,num_layers)
         self.lstm = nn.LSTM(self.input_dim, self.hidden_size, self.num_layers, batch_first=True)
         # build output layer, which is a linear layer
-        self.linear = nn.Linear(self.hidden_size, self.output_size)
+        self.linear = nn.Linear(self.hidden_size, self.output_dim)
         if cuda:
             self.dtype = torch.cuda.FloatTensor
         else:
@@ -105,11 +105,10 @@ class LSTM_To_FC(nn.Module):
         """
         input: The train data or test data, type is Variable, size is (batchSize, sequenceSize,featureSize)
         future: The number of predicting frames, but this parameter is invalid, it is determined by _init_
-        return: A list composed of 2 elements. The first element is the input data without any change, to do this is for plot.
-                The second element is the predicted data, type is Variable, Size is (batchSize, futureSequenceSize,featureSize)
+        return: A list composed of only one element, which is the predicted data, type is Variable, Size is (batchSize, futureSequenceSize, featureSize)
         """
         # the return content
-        outputs = [input]
+        outputs = []
         # init hidden state & cell state,  parameters are (numlayers, batchsize, hidden_size)
         h_0 = Variable(torch.zeros(self.num_layers, input.size(0), self.hidden_size).type(self.dtype), requires_grad=False)
         c_0 = Variable(torch.zeros(self.num_layers, input.size(0), self.hidden_size).type(self.dtype), requires_grad=False)
