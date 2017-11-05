@@ -12,7 +12,7 @@ class LSTM_ManyToMany(nn.Module):
     So, it is very like the caption model in CS231n, but its input has no image features.
     It has 2 hidden layers, and the output layer is a linear layer.
     """
-    def __init__(self, input_dim, hidden_size, num_layers, output_size):
+    def __init__(self, input_dim, hidden_size, num_layers, output_size, cuda=False):
         super(LSTM_ManyToMany, self).__init__()
         # some superParameters & input output dimensions
         self.input_dim = input_dim
@@ -23,6 +23,10 @@ class LSTM_ManyToMany(nn.Module):
         self.lstm = nn.LSTM(self.input_dim, self.hidden_size, self.num_layers, batch_first=True)
         # build output layer, which is a linear layer
         self.linear = nn.Linear(self.hidden_size, self.output_size)
+        if cuda:
+            self.dtype = torch.cuda.FloatTensor
+        else:
+            self.dtype = torch.FloatTensor
 
     def forward(self, input, future=0):
         """
@@ -34,8 +38,8 @@ class LSTM_ManyToMany(nn.Module):
         # the return content
         outputs = []
         # init hidden state & cell state
-        h_0 = Variable(torch.zeros(self.num_layers, input.size(0), self.hidden_size).double(), requires_grad=False)
-        c_0 = Variable(torch.zeros(self.num_layers, input.size(0), self.hidden_size).double(), requires_grad=False)
+        h_0 = Variable(torch.zeros(self.num_layers, input.size(0), self.hidden_size).type(self.dtype), requires_grad=False)
+        c_0 = Variable(torch.zeros(self.num_layers, input.size(0), self.hidden_size).type(self.dtype), requires_grad=False)
 
         # compute
         outputs_lstm, (hn, cn) = self.lstm(input, (h_0, c_0))
@@ -67,7 +71,7 @@ class LSTM_To_FC(nn.Module):
     This model use an LSTM to fuse features of all past frames into a single state, which inputs to a following Fully Connected model to predict next some frames' features.
     The lstm model can be seen as a encoder, while the FC model as a decoder.
     """
-    def __init__(self, future, input_dim, hidden_size, num_layers, output_dim):
+    def __init__(self, future, input_dim, hidden_size, num_layers, output_dim, cuda):
         """
         future: The number of predicting frames
         input_dim: The number of features in each frame
@@ -91,6 +95,10 @@ class LSTM_To_FC(nn.Module):
         self.linear1 = nn.Linear(self.hidden_size, self.linear1_output_size)
         self.nonlinear1 = nn.ReLU()
         self.linear2 = nn.Linear(self.linear1_output_size, self.output_size)
+        if cuda:
+            self.dtype = torch.cuda.FloatTensor
+        else:
+            self.dtype = torch.FloatTensor
 
     def forward(self, input, future=0):
         """
@@ -102,8 +110,8 @@ class LSTM_To_FC(nn.Module):
         # the return content
         outputs = [input]
         # init hidden state & cell state,  parameters are (numlayers, batchsize, hidden_size)
-        h_0 = Variable(torch.zeros(self.num_layers, input.size(0), self.hidden_size).double(), requires_grad=False)
-        c_0 = Variable(torch.zeros(self.num_layers, input.size(0), self.hidden_size).double(), requires_grad=False)
+        h_0 = Variable(torch.zeros(self.num_layers, input.size(0), self.hidden_size).type(self.dtype), requires_grad=False)
+        c_0 = Variable(torch.zeros(self.num_layers, input.size(0), self.hidden_size).type(self.dtype), requires_grad=False)
 
         # compute with train or test data,the output is hidden_state & cell_state
         # the hn1[-1] represents hidden_state in last lstm layer, and it involves all the past information through the recurrent process

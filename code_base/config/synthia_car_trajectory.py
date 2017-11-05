@@ -69,14 +69,14 @@ lstm_predict_frame                      = 8
 
 # Parameters
 train_model                  = True            # Train the model
-test_model                   = True           # Test the model
-pred_model                   = False           # Predict using the model
+valid_model                  = True           # Test the model
+test_model                   = True           # Predict using the model
 
 # Training parameters
 test_epoch                   = 1
 weight_decay                 = 0.              # Weight decay or L2 parameter norm penalty
 n_epochs                     = 100            # Number of epochs during training
-cuda                         = False
+cuda                         = True
 loss                         = 'MSE'
 optimizer                    = 'LBFGS'      # LBFGS','adam'
 learning_rate                = 0.1          # Training learning rate

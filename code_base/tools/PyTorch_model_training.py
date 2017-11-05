@@ -30,13 +30,24 @@ def prepare_data(cf):
     train_data, valid_data, test_data, data_mean, data_std = normalise_data(train_data, valid_data, test_data)
     # train_input = Variable(torch.from_numpy(train_data[:, :cf.lstm_input_frame, :]), requires_grad=False)
     # train_target = Variable(torch.from_numpy(train_data[:, cf.lstm_input_frame:, :]), requires_grad=False)
-    valid_input = Variable(torch.from_numpy(train_data[:, :cf.lstm_input_frame, :]), requires_grad=False)
-    valid_target = Variable(torch.from_numpy(train_data[:, cf.lstm_input_frame:, :]), requires_grad=False)
-    test_input = Variable(torch.from_numpy(train_data[:, :cf.lstm_input_frame, :]), requires_grad=False)
-    test_target = Variable(torch.from_numpy(train_data[:, cf.lstm_input_frame:, :]), requires_grad=False)
-    # Many to many input
-    train_input = Variable(torch.from_numpy(train_data[:, :-1, :]), requires_grad=False)
-    train_target = Variable(torch.from_numpy(train_data[:, 1:, :]), requires_grad=False)
+    if cf.cuda:
+        print('Data using CUDA')
+        dtype = torch.cuda.FloatTensor  # Uncomment this to run on GPU
+        valid_input = Variable(torch.from_numpy(valid_data[:, :cf.lstm_input_frame, :]).type(dtype).cuda(async=True), requires_grad=False)
+        valid_target = Variable(torch.from_numpy(valid_data[:, cf.lstm_input_frame:, :]).type(dtype).cuda(async=True), requires_grad=False)
+        test_input = Variable(torch.from_numpy(test_data[:, :cf.lstm_input_frame, :]).type(dtype).cuda(async=True), requires_grad=False)
+        test_target = Variable(torch.from_numpy(test_data[:, cf.lstm_input_frame:, :]).type(dtype).cuda(async=True),requires_grad=False)
+        # Many to many input
+        train_input = Variable(torch.from_numpy(train_data[:, :-1, :]).type(dtype).cuda(async=True), requires_grad=False)
+        train_target = Variable(torch.from_numpy(train_data[:, 1:, :]).type(dtype).cuda(async=True), requires_grad=False)
+    else:
+        valid_input = Variable(torch.from_numpy(train_data[:, :cf.lstm_input_frame, :]), requires_grad=False)
+        valid_target = Variable(torch.from_numpy(train_data[:, cf.lstm_input_frame:, :]), requires_grad=False)
+        test_input = Variable(torch.from_numpy(train_data[:, :cf.lstm_input_frame, :]), requires_grad=False)
+        test_target = Variable(torch.from_numpy(train_data[:, cf.lstm_input_frame:, :]), requires_grad=False)
+        # Many to many input
+        train_input = Variable(torch.from_numpy(train_data[:, :-1, :]), requires_grad=False)
+        train_target = Variable(torch.from_numpy(train_data[:, 1:, :]), requires_grad=False)
     # valid_input = Variable(torch.from_numpy(train_data[:, :-1, :]), requires_grad=False)
     # valid_target = Variable(torch.from_numpy(train_data[:, 1:, :]), requires_grad=False)
     # test_input = Variable(torch.from_numpy(train_data[:, :-1, :]), requires_grad=False)

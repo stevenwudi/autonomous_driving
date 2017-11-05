@@ -114,7 +114,6 @@ class Model_Factory():
             self.loss.backward()
             self.optimiser.step()
 
-
     def test(self, val_loader, epoch):
         self.net.eval()
         total_ious = []
@@ -186,21 +185,23 @@ class Model_Factory_LSTM():
             self.net = LSTM_ManyToMany(input_dim=cf.lstm_inputsize,
                                        hidden_size=cf.lstm_hiddensize,
                                        num_layers=cf.lstm_numlayers,
-                                       output_size=cf.lstm_outputsize)
+                                       output_size=cf.lstm_outputsize,
+                                       cuda=cf.cuda)
         elif cf.model_name == 'LSTM_To_FC':
             self.net = LSTM_To_FC(future=cf.LSTM_To_FC,
                                   input_dim=cf.lstm_inputsize,
                                   hidden_size=cf.lstm_hiddensize,
                                   num_layers=cf.lstm_numlayers,
-                                  output_dim=cf.lstm_output_dim)
+                                  output_dim=cf.lstm_output_dim,
+                                  cuda=cf.cuda)
         # Set the loss criterion
         if cf.loss == 'MSE':
             self.crit = nn.MSELoss()
-        self.net.double()
+        self.net.float()
         if cf.cuda and torch.cuda.is_available():
+            print('Using cuda')
             self.net = self.net.cuda()
-            self.net.cuda()
-            self.crit.cuda()
+            self.crit = self.crit.cuda()
 
         self.exp_dir = cf.savepath + '___' + datetime.now().strftime('%a, %d %b %Y-%m-%d %H:%M:%S')
         os.mkdir(self.exp_dir)
@@ -236,26 +237,41 @@ class Model_Factory_LSTM():
             self.optimiser.zero_grad()
             out = self.net(train_input)[0]
             loss = self.crit(out, train_target)
-            print('loss: ', loss.data.numpy()[0])
+            if cf.cuda:
+                print('loss: ', loss.data.cpu().numpy()[0])
+            else:
+                print('loss: ', loss.data.numpy()[0])
             loss.backward()
             return loss
 
         self.optimiser.step(closure)
 
-    def test(self, valid_input, valid_target, data_std, data_mean, cf, epoch):
-
+    def test(self, valid_input, valid_target, data_std, data_mean, cf, epoch=None):
         pred = self.net(valid_input, future=cf.lstm_predict_frame)
         loss = self.crit(pred[1], valid_target)
-        results = pred[1].data.numpy() * data_std + data_mean
-        rect_anno = valid_target.data.numpy() * data_std + data_mean
+        if cf.cuda:
+            results = pred[1].data.cpu().numpy() * data_std + data_mean
+            rect_anno = valid_target.data.cpu().numpy() * data_std + data_mean
+        else:
+            results = pred[1].data.numpy() * data_std + data_mean
+            rect_anno = valid_target.data.numpy() * data_std + data_mean
+
         aveErrCoverage, aveErrCenter, errCoverage, errCenter = calc_seq_err_robust(results, rect_anno)
         print('aveErrCoverage: %.4f, aveErrCenter: %.2f' % (aveErrCoverage, aveErrCenter))
-        print('valid loss:', loss.data.numpy()[0])
+        if cf.cuda:
+            print('valid loss:', loss.data.cpu().numpy()[0])
+        else:
+            print('valid loss:', loss.data.numpy()[0])
+
         # TODO: 3D evaluation
         # TODO: network saving and evaluation
 
         # Save weights and scores
-        torch.save(self.net.state_dict(), os.path.join(self.exp_dir, str(epoch) + '_net.pth'))
+        if epoch:
+            model_checkpoint = 'Epoch:%2d_net_aveErrCoverage:%.4f_aveErrCenter:%.2f___.pth' % (epoch, aveErrCoverage, aveErrCenter)
+        else:
+            model_checkpoint = 'Final_test:_aveErrCoverage:%.4f_aveErrCenter:%.2f.pth' % (aveErrCoverage, aveErrCenter)
+        torch.save(self.net.state_dict(), os.path.join(self.exp_dir, model_checkpoint))
 
         # Plot scores
         # self.aveErrCoverage.append(aveErrCoverage.mean())
