@@ -30,18 +30,29 @@ def prepare_data(cf):
     train_data, valid_data, test_data, data_mean, data_std = normalise_data(train_data, valid_data, test_data)
     # train_input = Variable(torch.from_numpy(train_data[:, :cf.lstm_input_frame, :]), requires_grad=False)
     # train_target = Variable(torch.from_numpy(train_data[:, cf.lstm_input_frame:, :]), requires_grad=False)
-    valid_input = Variable(torch.from_numpy(train_data[:, :cf.lstm_input_frame, :]), requires_grad=False)
-    valid_target = Variable(torch.from_numpy(train_data[:, cf.lstm_input_frame:, :]), requires_grad=False)
-    test_input = Variable(torch.from_numpy(train_data[:, :cf.lstm_input_frame, :]), requires_grad=False)
-    test_target = Variable(torch.from_numpy(train_data[:, cf.lstm_input_frame:, :]), requires_grad=False)
-    # Many to many input
-    train_input = Variable(torch.from_numpy(train_data[:, :-1, :]), requires_grad=False)
-    train_target = Variable(torch.from_numpy(train_data[:, 1:, :]), requires_grad=False)
+    if cf.cuda:
+        print('Data using CUDA')
+        dtype = torch.cuda.FloatTensor  # Uncomment this to run on GPU
+        valid_input = Variable(torch.from_numpy(valid_data[:, :cf.lstm_input_frame, :]).type(dtype).cuda(async=True), requires_grad=False)
+        valid_target = Variable(torch.from_numpy(valid_data[:, cf.lstm_input_frame:, :]).type(dtype).cuda(async=True), requires_grad=False)
+        test_input = Variable(torch.from_numpy(test_data[:, :cf.lstm_input_frame, :]).type(dtype).cuda(async=True), requires_grad=False)
+        test_target = Variable(torch.from_numpy(test_data[:, cf.lstm_input_frame:, :]).type(dtype).cuda(async=True),requires_grad=False)
+        # Many to many input
+        train_input = Variable(torch.from_numpy(train_data[:, :-1, :]).type(dtype).cuda(async=True), requires_grad=False)
+        train_target = Variable(torch.from_numpy(train_data[:, 1:, :]).type(dtype).cuda(async=True), requires_grad=False)
+    else:
+        valid_input = Variable(torch.from_numpy(train_data[:, :cf.lstm_input_frame, :]), requires_grad=False)
+        valid_target = Variable(torch.from_numpy(train_data[:, cf.lstm_input_frame:, :]), requires_grad=False)
+        test_input = Variable(torch.from_numpy(train_data[:, :cf.lstm_input_frame, :]), requires_grad=False)
+        test_target = Variable(torch.from_numpy(train_data[:, cf.lstm_input_frame:, :]), requires_grad=False)
+        # Many to many input
+        train_input = Variable(torch.from_numpy(train_data[:, :-1, :]), requires_grad=False)
+        train_target = Variable(torch.from_numpy(train_data[:, 1:, :]), requires_grad=False)
     # valid_input = Variable(torch.from_numpy(train_data[:, :-1, :]), requires_grad=False)
     # valid_target = Variable(torch.from_numpy(train_data[:, 1:, :]), requires_grad=False)
     # test_input = Variable(torch.from_numpy(train_data[:, :-1, :]), requires_grad=False)
     # test_target = Variable(torch.from_numpy(train_data[:, 1:, :]), requires_grad=False)
-    return train_input, train_target, valid_input, valid_target, test_input, test_target
+    return train_input, train_target, valid_input, valid_target, test_input, test_target, data_mean, data_std
 
 
 def get_criterion(cf):
@@ -71,9 +82,9 @@ def baseline_lstm(cf):
     np.random.seed(0)
     torch.manual_seed(0)
 
-    train_input, train_target, valid_input, valid_target, test_input, test_target = prepare_data(cf)
+    train_input, train_target, valid_input, valid_target, test_input, test_target, data_mean, data_std = prepare_data(cf)
     # build the model
-    model = LSTM_ManyToMany(inputsize=5, hiddensize=50, numlayers=2, outputsize=5)
+    model = LSTM_ManyToMany(input_dim=6, hidden_size=50, num_layers=2, output_size=6)
     model.double()
     if cf.cuda:
         model.cuda()
@@ -95,4 +106,81 @@ def baseline_lstm(cf):
         # begin to predict
         pred = model(valid_input, future=cf.lstm_predict_frame)
         loss = criterion(pred[1], valid_target)
+        results = pred[1].data.numpy() * data_std + data_mean
+        rect_anno = valid_target.data.numpy() * data_std + data_mean
+        aveErrCoverage, aveErrCenter, errCoverage, errCenter = calc_seq_err_robust(results, rect_anno)
+        print('aveErrCoverage: %.4f, aveErrCenter: %.2f' % (aveErrCoverage, aveErrCenter))
         print('valid loss:', loss.data.numpy()[0])
+        # TODO: 3D evaluation
+        # TODO: network saving and evaluation
+
+
+def calc_seq_err_robust(results, rect_anno):
+    """
+    :param results:
+    :param rect_anno: N*8*6: N is the batch number, 8 frames to predict(seq_length) and 6 is
+                    [centreX, centreY, height, width, d_min, d_max]
+    :return:
+    """
+
+    seq_length = results.shape[1]
+
+    for batch_num in range(len(results)):
+        res = results[batch_num]
+        anno = rect_anno[batch_num]
+
+        centerGT = [[r[0], r[1], r[4]] for r in anno]
+        center = [[r[0], r[1], r[4]] for r in res]
+
+        errCenter = [ssd_2d(center[i], centerGT[i]) for i in range(seq_length)]
+
+        iou_2d = calc_rect_int_2d(res, anno)
+        errCoverage = np.zeros(seq_length)
+        totalerrCoverage = 0
+        totalerrCenter = 0
+
+        for i in range(seq_length):
+            errCoverage[i] = iou_2d[i]
+            totalerrCoverage += errCoverage[i]
+            totalerrCenter += errCenter[i]
+
+        aveErrCoverage = totalerrCoverage / float(seq_length)
+        aveErrCenter = totalerrCenter / float(seq_length)
+
+    return aveErrCoverage, aveErrCenter, errCoverage, errCenter
+
+def ssd_2d(x, y):
+    s = 0
+    for i in range(len(x)):
+        s += (x[i] - y[i]) ** 2
+    return np.sqrt(s)
+
+
+def ssd_3d(x, y):
+    s = 0
+    for i in range(len(x)):
+        s += (x[i] - y[i]) ** 2
+    return np.sqrt(s)
+
+
+def calc_rect_int_2d(A, B):
+    leftA = [a[0] - a[2] / 2 for a in A]
+    bottomA = [a[1] - a[3] / 2 for a in A]
+    rightA = [a[0] + a[2]/2 for a in A]
+    topA = [a[1] + a[3]/2 for a in A]
+
+    leftB = [b[0] - b[2] / 2 for b in B]
+    bottomB = [b[1] - b[3] / 2 for b in B]
+    rightB = [b[0] + b[2] / 2 for b in B]
+    topB = [b[1] + b[3] / 2 for b in B]
+
+    overlap = []
+    length = min(len(leftA), len(leftB))
+    for i in range(length):
+        tmp = (max(0, min(rightA[i], rightB[i]) - max(leftA[i], leftB[i]) + 1)
+               * max(0, min(topA[i], topB[i]) - max(bottomA[i], bottomB[i]) + 1))
+        areaA = A[i][2] * A[i][3]
+        areaB = B[i][2] * B[i][3]
+        overlap.append(tmp / float(areaA + areaB - tmp))
+
+    return overlap

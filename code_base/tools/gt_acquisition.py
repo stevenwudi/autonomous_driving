@@ -172,6 +172,7 @@ def get_ground_truth_box(cf, instances, classes, depth, car_tracking_dict, i_fra
         height = bottom - top
         centreX, centreY = int((top+bottom)/2), int((left+right)/2)
         depth_min = depth[instance_image].min()
+        depth_max = depth[instance_image].max()
         depth_centre = depth[centreX, centreY]
         depth_mean = depth[instance_image].mean()
         if classes[centreX, centreY] == cf.classes['car']:
@@ -195,9 +196,9 @@ def get_ground_truth_box(cf, instances, classes, depth, car_tracking_dict, i_fra
             if cf.threshold_car_depth:
                 if instance_number_in_seq in car_tracking_dict:
                     # print('continue tracking the car')
-                    if int(img_name[:-4]) == (int(car_tracking_dict[instance_number_in_seq]['img_list'][-1][-1][:-4]) + 1):
+                    if int(img_name[:-4]) == (int(car_tracking_dict[instance_number_in_seq]['img_list'][-1][-1][:-4])+1):
                         car_tracking_dict[instance_number_in_seq]['tracking_rect'][-1].append(
-                            [centreX, centreY, height, width, depth_min, depth_centre, depth_mean])
+                            [centreX, centreY, height, width, depth_min, depth_max, depth_centre, depth_mean])
                         car_tracking_dict[instance_number_in_seq]['img_list'][-1].append(img_name)
                     else:
                         if instance_number_in_seq in instance_large:
@@ -208,7 +209,7 @@ def get_ground_truth_box(cf, instances, classes, depth, car_tracking_dict, i_fra
                             car_tracking_dict[instance_number_in_seq]['img_list'][-1].append(img_name)
                             car_tracking_dict[instance_number_in_seq]['tracking_rect'].append([])
                             car_tracking_dict[instance_number_in_seq]['tracking_rect'][-1].append(
-                                [centreX, centreY, height, width, depth_min, depth_centre, depth_mean])
+                                [centreX, centreY, height, width, depth_min, depth_max, depth_centre, depth_mean])
 
                 # else we initiate a instance_number_in_seq as car ID to start tracking
                 else:
@@ -223,13 +224,13 @@ def get_ground_truth_box(cf, instances, classes, depth, car_tracking_dict, i_fra
                         car_tracking_dict[instance_number_in_seq]['img_list'][0].append(img_name)
                         car_tracking_dict[instance_number_in_seq]['tracking_rect'] = [[]]
                         car_tracking_dict[instance_number_in_seq]['tracking_rect'][0].append(
-                            [centreX, centreY, height, width, depth_min, depth_centre, depth_mean])
+                            [centreX, centreY, height, width, depth_min, depth_max, depth_centre, depth_mean])
 
             else:
                 if instance_number_in_seq in car_tracking_dict:
                     # print('continue tracking the car')
                     if int(img_name[:-4]) == (int(car_tracking_dict[instance_number_in_seq]['img_list'][-1][-1][:-4]) + 1):
-                        car_tracking_dict[instance_number_in_seq]['tracking_rect'][-1].append([centreX, centreY, height, width, depth_min, depth_centre, depth_mean])
+                        car_tracking_dict[instance_number_in_seq]['tracking_rect'][-1].append([centreX, centreY, height, width, depth_min, depth_max, depth_centre, depth_mean])
                         car_tracking_dict[instance_number_in_seq]['img_list'][-1].append(img_name)
                     else:
                         #print("Tracked car not continuous! Investigate! image name: %s, car instance: %d" % (img_name, instance_number_in_seq))
@@ -240,7 +241,7 @@ def get_ground_truth_box(cf, instances, classes, depth, car_tracking_dict, i_fra
                             car_tracking_dict[instance_number_in_seq]['img_list'].append([])
                             car_tracking_dict[instance_number_in_seq]['img_list'][-1].append(img_name)
                             car_tracking_dict[instance_number_in_seq]['tracking_rect'].append([])
-                            car_tracking_dict[instance_number_in_seq]['tracking_rect'][-1].append([centreX, centreY, height, width, depth_min, depth_centre, depth_mean])
+                            car_tracking_dict[instance_number_in_seq]['tracking_rect'][-1].append([centreX, centreY, height, width, depth_min, depth_max,depth_centre, depth_mean])
 
                 # else we initiate a instance_number_in_seq as car ID to start tracking
                 else:
@@ -253,7 +254,7 @@ def get_ground_truth_box(cf, instances, classes, depth, car_tracking_dict, i_fra
                         car_tracking_dict[instance_number_in_seq]['img_list'] = [[]]
                         car_tracking_dict[instance_number_in_seq]['img_list'][0].append(img_name)
                         car_tracking_dict[instance_number_in_seq]['tracking_rect'] = [[]]
-                        car_tracking_dict[instance_number_in_seq]['tracking_rect'][0].append([centreX, centreY, height, width, depth_min, depth_centre, depth_mean])
+                        car_tracking_dict[instance_number_in_seq]['tracking_rect'][0].append([centreX, centreY, height, width, depth_min, depth_max, depth_centre, depth_mean])
 
     return car_tracking_dict
 
@@ -405,9 +406,9 @@ def formatting_ground_truth_sequence_car_trajectory(cf, sequence_name, time_step
                 for im_num in range(0, len(car_tracking_dict[instance_number_in_seq]['tracking_rect'][track_num])-total_frame+1, time_step):
                     features_temp = []
                     for frame_num in range(im_num, im_num+total_frame, time_step):
-                        [centreX, centreY, height, width, d_min, d_centre, d_mean] = \
-                        car_tracking_dict[instance_number_in_seq]['tracking_rect'][track_num][im_num]
-                        features_temp.append([centreX, centreY, height, width, d_min])
+                        [centreX, centreY, height, width, d_min, d_max, d_centre, d_mean] = \
+                        car_tracking_dict[instance_number_in_seq]['tracking_rect'][track_num][frame_num]
+                        features_temp.append([centreX, centreY, height, width, d_min, d_max])
                     features.append(np.asarray(features_temp))
 
     features = np.asarray(features)

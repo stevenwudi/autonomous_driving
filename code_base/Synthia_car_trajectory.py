@@ -11,22 +11,30 @@ matplotlib.use('TkAgg')
 from code_base.config.configuration import Configuration
 from code_base.tools.utils import HMS, configurationPATH
 from code_base.tools.gt_acquisition import gt_collection_examintion
-from code_base.tools.PyTorch_model_training import baseline_lstm
+from code_base.models.PyTorch_model_factory import Model_Factory_LSTM
+from code_base.tools.PyTorch_model_training import prepare_data
 
 
 def process(cf):
-
-    #
 
     # Create the data generators
     if cf.collect_data:
         print(' ---> Collecting data: ' + cf.sequence_name + ' <---')
         gt_collection_examintion(cf)
 
+    # Build model
+    print('\n > Building model...')
+    model = Model_Factory_LSTM(cf)
+    train_input, train_target, valid_input, valid_target, test_input, test_target, data_mean, data_std = prepare_data(cf)
+
     if cf.train_model:
         print(' ---> Training data: ' + cf.sequence_name + ' <---')
-        baseline_lstm(cf)
-
+        for epoch in range(1, cf.n_epochs + 1):
+            model.train(train_input, train_target, cf)
+            if cf.valid_model:
+                model.test(valid_input, valid_target, data_std, data_mean, cf, epoch)
+    if cf.test_model:
+        model.test(test_input, test_target, data_std, data_mean, cf)
     print(' ---> Finish experiment: ' + cf.exp_name + ' <---')
 
 

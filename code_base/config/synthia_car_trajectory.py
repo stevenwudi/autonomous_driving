@@ -10,16 +10,15 @@ dataset_name2                = None            # Second dataset name. None if no
 perc_mb2                     = None            # Percentage of data from the second dataset in each minibatch
 class_mode                   = problem_type
 
-sequence_name                = 'SYNTHIA-SEQS-06'
-collect_data                 = False
+sequence_name                = 'SYNTHIA-SEQS-01'
 collect_data                 = False
 get_ground_truth_sequence_car_trajectory = False  # flag to get get_ground_truth_sequence_car_trajectory
-formatting_ground_truth_sequence_car_trajectory = False
+formatting_ground_truth_sequence_car_trajectory = True
 draw_seq                                = 'SYNTHIA-SEQS-06-NIGHT'   # which sequence to draw, need to set the above two flags to False
 
 
 # Model
-model_name                   = 'fcn8'          # Model to use ['fcn8' | 'lenet' | 'alexNet' | 'vgg16' |  'vgg19' | 'resnet50' | 'InceptionV3']
+model_name                   = 'LSTM_ManyToMany'       # Model to use ['LSTM_ManyToMany', 'LSTM_To_FC']
 debug                        = False
 resize_train                 = (760, 1280)      # Resize the image during training (Height, Width) or None
 #random_size_crop             = (350*2, 460*2)      # Random size crop of the image during training
@@ -71,15 +70,26 @@ lstm_input_frame                        = 15
 lstm_predict_frame                      = 8
 
 # Parameters
-train_model                  = False            # Train the model
-test_model                   = True           # Test the model
-pred_model                   = False           # Predict using the model
+train_model                  = True            # Train the model
+valid_model                  = True           # Test the model
+test_model                   = True           # Predict using the model
 
 # Training parameters
-
+test_epoch                   = 1
 weight_decay                 = 0.              # Weight decay or L2 parameter norm penalty
 n_epochs                     = 100            # Number of epochs during training
-cuda                         = False
+cuda                         = True
 loss                         = 'MSE'
 optimizer                    = 'LBFGS'      # LBFGS','adam'
 learning_rate                = 0.1          # Training learning rate
+momentum                     = 0.9
+load_trained_model           = False
+#### LSTM training variables #################
+# LSTM_ManyToMany
+lstm_inputsize               = 6   # LSTM input: [x,y,w,h, d_min, d_max]
+lstm_hiddensize              = 50
+lstm_numlayers               = 2
+lstm_outputsize              = 6
+# LSTM_To_FC
+lstm_future                  = 8
+lstm_output_dim              = 6   # currently is [x,y,w,h,d_min, d_max] as lstm_inputsize

@@ -338,7 +338,7 @@ def calculate_iou(test_gt_file, test_json_file, POR=None, draw=False):
                 fp = true_matched_pred[:, 0] == 0
                 for idx_fp, fp_v in enumerate(fp):
                     if fp_v:
-                        bp = boxes_pred[int(idx_fp)]
+                        bp = boxes_pred[idx_fp]
                         x, y, w, h, conf = bp.x, bp.y, bp.w, bp.h, bp.c
                         x *= img.shape[1]
                         y *= img.shape[0]
@@ -352,7 +352,7 @@ def calculate_iou(test_gt_file, test_json_file, POR=None, draw=False):
                     fn = true_matched[:, 0] == 0
                     for idx_fn, fn_v in enumerate(fn):
                         if fn_v:
-                            bt = boxes_true[int(idx_fn)]
+                            bt = boxes_true[idx_fn]
                             x, y, w, h, conf = bt.x, bt.y, bt.w, bt.h, bt.c
                             x *= img.shape[1]
                             y *= img.shape[0]
