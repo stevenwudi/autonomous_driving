@@ -48,7 +48,7 @@ dataroot_dir                        = '/home/public/CITYSCAPE/'
 crop_size                           = 896
 workers                             = 8  #'Data loader workers'
 
-num_classes                         = 19
+num_classes                         = 12
 class_mode                          = 'segmentation'
 batch_size                          = 6
 
