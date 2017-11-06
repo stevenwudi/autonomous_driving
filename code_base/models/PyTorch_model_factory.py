@@ -197,13 +197,15 @@ class Model_Factory_LSTM():
         # Set the loss criterion
         if cf.loss == 'MSE':
             self.crit = nn.MSELoss()
+        elif cf.loss == 'SmoothL1Loss':
+            self.crit = nn.SmoothL1Loss()
         self.net.float()
         if cf.cuda and torch.cuda.is_available():
             print('Using cuda')
             self.net = self.net.cuda()
             self.crit = self.crit.cuda()
 
-        self.exp_dir = cf.savepath + '___' + datetime.now().strftime('%a, %d %b %Y-%m-%d %H:%M:%S')
+        self.exp_dir = cf.savepath + '_' + datetime.now().strftime('%a, %d %b %Y-%m-%d %H:%M:%S') + '_' + cf.model_name
         os.mkdir(self.exp_dir)
         # Enable log file
         self.log_file = os.path.join(self.exp_dir, "logfile.log")
@@ -227,8 +229,6 @@ class Model_Factory_LSTM():
             self.optimiser = optim.RMSprop(self.net.parameters(), lr=cf.learning_rate, momentum=cf.momentum, weight_decay=cf.weight_decay)
         elif cf.optimizer == 'sgd':
             self.optimiser = optim.SGD(self.net.parameters(), lr=cf.learning_rate, momentum=cf.momentum, weight_decay=cf.weight_decay)
-
-        self.aveErrCenter, self.aveErrCoverage = [], []
 
     def train(self, train_input, train_target, cf):
         #print('learning rate:', lr)
@@ -256,28 +256,38 @@ class Model_Factory_LSTM():
             results = pred[-1].data.numpy() * data_std + data_mean
             rect_anno = valid_target.data.numpy() * data_std + data_mean
 
-        aveErrCoverage, aveErrCenter, errCoverage, errCenter = calc_seq_err_robust(results, rect_anno)
-        print('aveErrCoverage: %.4f, aveErrCenter: %.2f' % (aveErrCoverage, aveErrCenter))
         if cf.cuda:
-            print('valid loss:', loss.data.cpu().numpy()[0])
+            print('Loss:', loss.data.cpu().numpy()[0])
         else:
-            print('valid loss:', loss.data.numpy()[0])
+            print('Loss:', loss.data.numpy()[0])
 
-        # TODO: 3D evaluation
-        # TODO: network saving and evaluation
+        aveErrCoverage, aveErrCenter, errCoverage, iou_2d, \
+        aveErrCoverage_realworld, aveErrCenter_realworld, errCenter_realworld, iou_3d = calc_seq_err_robust(results, rect_anno, cf.focal_length)
 
         # Save weights and scores
         if epoch:
-            model_checkpoint = 'Epoch:%2d_net_aveErrCoverage:%.4f_aveErrCenter:%.2f___.pth' % (epoch, aveErrCoverage, aveErrCenter)
+            print('############### VALID #############################################')
+            print('2D aveErrCoverage: %.4f, aveErrCenter: %.2f' % (aveErrCoverage, aveErrCenter))
+            print('3D aveErrCoverage_realworld: %.4f, aveErrCenter_realworld: %.4f' % (
+            aveErrCoverage_realworld, aveErrCenter_realworld))
+
+            model_checkpoint = 'Epoch:%2d_net_Coverage:%.4f_Center:%.2f_CoverageR:%.4f_CenterR:%.2f.PTH' % \
+                               (epoch, aveErrCoverage, aveErrCenter, aveErrCoverage_realworld, aveErrCenter_realworld)
         else:
-            model_checkpoint = 'Final_test:_aveErrCoverage:%.4f_aveErrCenter:%.2f.pth' % (aveErrCoverage, aveErrCenter)
+            print('############### TEST #############################################')
+            print('2D aveErrCoverage: %.4f, aveErrCenter: %.2f' % (aveErrCoverage, aveErrCenter))
+            print('3D aveErrCoverage_realworld: %.4f, aveErrCenter_realworld: %.4f' % (
+            aveErrCoverage_realworld, aveErrCenter_realworld))
+            model_checkpoint = 'Final_test:Coverage:%.4f_Center:%.2f_CoverageR:%.4f_CenterR:%.2f.PTH' % \
+                               (aveErrCoverage, aveErrCenter, aveErrCoverage_realworld, aveErrCenter_realworld)
+            # Plot scores
+            # self.aveErrCoverage.append(aveErrCoverage.mean())
+            # es = list(range(len(self.aveErrCoverage)))
+            # plt.plot(es, self.aveErrCoverage, 'b-')
+            # plt.xlabel('aveErrCoverage')
+            # plt.ylabel('Mean IoU')
+            # plt.savefig(os.path.join(self.exp_dir, 'ious.png'))
+            # plt.close()
         torch.save(self.net.state_dict(), os.path.join(self.exp_dir, model_checkpoint))
 
-        # Plot scores
-        # self.aveErrCoverage.append(aveErrCoverage.mean())
-        # es = list(range(len(self.aveErrCoverage)))
-        # plt.plot(es, self.aveErrCoverage, 'b-')
-        # plt.xlabel('aveErrCoverage')
-        # plt.ylabel('Mean IoU')
-        # plt.savefig(os.path.join(self.exp_dir, 'ious.png'))
-        # plt.close()
+
