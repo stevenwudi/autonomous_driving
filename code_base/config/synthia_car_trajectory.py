@@ -78,20 +78,19 @@ focal_length                 = 532.740352  # camera focal lense
 # Training parameters
 test_epoch                   = 1
 weight_decay                 = 0.              # Weight decay or L2 parameter norm penalty
-n_epochs                     = 3            # Number of epochs during training
+n_epochs                     = 50            # Number of epochs during training
 cuda                         = True
 loss                         = 'SmoothL1Loss'       # 'MSE', 'SmoothL1Loss'
 optimizer                    = 'LBFGS'      # LBFGS','adam'
 learning_rate                = 0.1          # Training learning rate
 momentum                     = 0.9
-load_trained_model           = True
-train_model_path             = '/home/stevenwudi/PycharmProjects/autonomous_driving/Experiments/car_trajectory_prediction/SYNTHIA-SEQS-01___Mon, 06 Nov 2017-11-06 16:08:14/Epoch:100_net_aveErrCoverage:0.8343_aveErrCenter:17.47___.pth'
+load_trained_model           = False
+train_model_path             = '/home/wzn/PycharmProjects/autonomous_driving/Experiments/car_trajectory_prediction/SYNTHIA-SEQS-01___Mon, 06 Nov 2017-11-06 16:08:14/Epoch:100_net_aveErrCoverage:0.8343_aveErrCenter:17.47___.pth'
 #### LSTM training variables #################
 # LSTM_ManyToMany
 lstm_inputsize               = 6   # LSTM input: [x,y,w,h, d_min, d_max]
-lstm_hiddensize              = 50
-lstm_hiddensize              = 50
-lstm_numlayers               = 2
+lstm_hiddensize              = 150
+lstm_numlayers               = 3
 lstm_outputsize              = 6
 # LSTM_To_FC
 lstm_output_dim              = 6   # currently is [x,y,w,h,d_min, d_max] as lstm_inputsize
