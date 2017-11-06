@@ -185,10 +185,10 @@ class Model_Factory_LSTM():
             self.net = LSTM_ManyToMany(input_dim=cf.lstm_inputsize,
                                        hidden_size=cf.lstm_hiddensize,
                                        num_layers=cf.lstm_numlayers,
-                                       output_size=cf.lstm_outputsize,
+                                       output_dim=cf.lstm_outputsize,
                                        cuda=cf.cuda)
         elif cf.model_name == 'LSTM_To_FC':
-            self.net = LSTM_To_FC(future=cf.LSTM_To_FC,
+            self.net = LSTM_To_FC(future=cf.lstm_predict_frame,
                                   input_dim=cf.lstm_inputsize,
                                   hidden_size=cf.lstm_hiddensize,
                                   num_layers=cf.lstm_numlayers,
@@ -248,12 +248,12 @@ class Model_Factory_LSTM():
 
     def test(self, valid_input, valid_target, data_std, data_mean, cf, epoch=None):
         pred = self.net(valid_input, future=cf.lstm_predict_frame)
-        loss = self.crit(pred[1], valid_target)
+        loss = self.crit(pred[-1], valid_target)
         if cf.cuda:
-            results = pred[1].data.cpu().numpy() * data_std + data_mean
+            results = pred[-1].data.cpu().numpy() * data_std + data_mean
             rect_anno = valid_target.data.cpu().numpy() * data_std + data_mean
         else:
-            results = pred[1].data.numpy() * data_std + data_mean
+            results = pred[-1].data.numpy() * data_std + data_mean
             rect_anno = valid_target.data.numpy() * data_std + data_mean
 
         aveErrCoverage, aveErrCenter, errCoverage, errCenter = calc_seq_err_robust(results, rect_anno)

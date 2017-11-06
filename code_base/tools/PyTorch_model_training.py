@@ -6,6 +6,7 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.autograd import Variable
 from code_base.models.PyTorch_PredictModels import LSTM_ManyToMany
+from code_base.models.PyTorch_PredictModels import LSTM_To_FC
 
 
 def normalise_data(train_data, valid_data, test_data):
@@ -38,16 +39,28 @@ def prepare_data(cf):
         test_input = Variable(torch.from_numpy(test_data[:, :cf.lstm_input_frame, :]).type(dtype).cuda(async=True), requires_grad=False)
         test_target = Variable(torch.from_numpy(test_data[:, cf.lstm_input_frame:, :]).type(dtype).cuda(async=True),requires_grad=False)
         # Many to many input
-        train_input = Variable(torch.from_numpy(train_data[:, :-1, :]).type(dtype).cuda(async=True), requires_grad=False)
-        train_target = Variable(torch.from_numpy(train_data[:, 1:, :]).type(dtype).cuda(async=True), requires_grad=False)
+        if cf.model_name == 'LSTM_ManyToMany':
+            train_input = Variable(torch.from_numpy(train_data[:, :-1, :]).type(dtype).cuda(async=True), requires_grad=False)
+            train_target = Variable(torch.from_numpy(train_data[:, 1:, :]).type(dtype).cuda(async=True), requires_grad=False)
+        elif cf.model_name == 'LSTM_To_FC':
+            train_input = Variable(torch.from_numpy(train_data[:, :cf.lstm_input_frame, :]).type(dtype).cuda(async=True),
+                                   requires_grad=False)
+            train_target = Variable(torch.from_numpy(train_data[:, cf.lstm_input_frame:, :]).type(dtype).cuda(async=True),
+                                    requires_grad=False)
     else:
-        valid_input = Variable(torch.from_numpy(train_data[:, :cf.lstm_input_frame, :]), requires_grad=False)
-        valid_target = Variable(torch.from_numpy(train_data[:, cf.lstm_input_frame:, :]), requires_grad=False)
-        test_input = Variable(torch.from_numpy(train_data[:, :cf.lstm_input_frame, :]), requires_grad=False)
-        test_target = Variable(torch.from_numpy(train_data[:, cf.lstm_input_frame:, :]), requires_grad=False)
+        valid_input = Variable(torch.from_numpy(valid_data[:, :cf.lstm_input_frame, :]), requires_grad=False)
+        valid_target = Variable(torch.from_numpy(valid_data[:, cf.lstm_input_frame:, :]), requires_grad=False)
+        test_input = Variable(torch.from_numpy(test_data[:, :cf.lstm_input_frame, :]), requires_grad=False)
+        test_target = Variable(torch.from_numpy(test_data[:, cf.lstm_input_frame:, :]), requires_grad=False)
         # Many to many input
-        train_input = Variable(torch.from_numpy(train_data[:, :-1, :]), requires_grad=False)
-        train_target = Variable(torch.from_numpy(train_data[:, 1:, :]), requires_grad=False)
+        if cf.model_name == 'LSTM_ManyToMany':
+            train_input = Variable(torch.from_numpy(train_data[:, :-1, :]), requires_grad=False)
+            train_target = Variable(torch.from_numpy(train_data[:, 1:, :]), requires_grad=False)
+        elif cf.model_name == 'LSTM_To_FC':
+            train_input = Variable(torch.from_numpy(train_data[:, :cf.lstm_input_frame, :]), requires_grad=False)
+            train_target = Variable(torch.from_numpy(train_data[:, cf.lstm_input_frame:, :]), requires_grad=False)
+
+
     # valid_input = Variable(torch.from_numpy(train_data[:, :-1, :]), requires_grad=False)
     # valid_target = Variable(torch.from_numpy(train_data[:, 1:, :]), requires_grad=False)
     # test_input = Variable(torch.from_numpy(train_data[:, :-1, :]), requires_grad=False)
@@ -84,7 +97,7 @@ def baseline_lstm(cf):
 
     train_input, train_target, valid_input, valid_target, test_input, test_target, data_mean, data_std = prepare_data(cf)
     # build the model
-    model = LSTM_ManyToMany(input_dim=6, hidden_size=50, num_layers=2, output_size=6)
+    model = LSTM_ManyToMany(input_dim=6, hidden_size=50, num_layers=2, output_dim=6)
     model.double()
     if cf.cuda:
         model.cuda()
@@ -105,8 +118,8 @@ def baseline_lstm(cf):
 
         # begin to predict
         pred = model(valid_input, future=cf.lstm_predict_frame)
-        loss = criterion(pred[1], valid_target)
-        results = pred[1].data.numpy() * data_std + data_mean
+        loss = criterion(pred[-1], valid_target)
+        results = pred[-1].data.numpy() * data_std + data_mean
         rect_anno = valid_target.data.numpy() * data_std + data_mean
         aveErrCoverage, aveErrCenter, errCoverage, errCenter = calc_seq_err_robust(results, rect_anno)
         print('aveErrCoverage: %.4f, aveErrCenter: %.2f' % (aveErrCoverage, aveErrCenter))

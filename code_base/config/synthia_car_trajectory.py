@@ -89,5 +89,4 @@ lstm_hiddensize              = 50
 lstm_numlayers               = 2
 lstm_outputsize              = 6
 # LSTM_To_FC
-lstm_future                  = 8
 lstm_output_dim              = 6   # currently is [x,y,w,h,d_min, d_max] as lstm_inputsize
