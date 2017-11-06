@@ -7,6 +7,8 @@ import time
 from datetime import datetime
 import matplotlib
 matplotlib.use('TkAgg')
+import matplotlib.pyplot as plt
+
 
 from code_base.config.configuration import Configuration
 from code_base.tools.utils import HMS, configurationPATH
@@ -28,13 +30,32 @@ def process(cf):
     train_input, train_target, valid_input, valid_target, test_input, test_target, data_mean, data_std = prepare_data(cf)
 
     if cf.train_model:
+        train_losses = []
+        valid_losses = []
         print(' ---> Training data: ' + cf.sequence_name + ' <---')
         for epoch in range(1, cf.n_epochs + 1):
-            model.train(train_input, train_target, cf)
+            train_losses += [model.train(train_input, train_target, cf)]
             if cf.valid_model:
-                model.test(valid_input, valid_target, data_std, data_mean, cf, epoch)
+                valid_losses += [model.test(valid_input, valid_target, data_std, data_mean, cf, epoch)]
+        print('---> Train losses:')
+        print(train_losses)
+        print('---> Valid losses:')
+        print(valid_losses)
+        # losses figure
+        plt.figure()
+        plt.title('Losses')
+        plt.xlabel('steps')
+        plt.ylabel('losses')
+        p1 = plt.plot(train_losses, color='b')
+        p2 = plt.plot(valid_losses, color='r')
+        plt.legend((p1[0], p2[0]), ('trainLosses', 'validLosses'))
+        figure_path = os.path.join(model.exp_dir, 'loss_figure.jpg')
+        plt.savefig(figure_path)
+
     if cf.test_model:
-        model.test(test_input, test_target, data_std, data_mean, cf)
+        test_loss = model.test(test_input, test_target, data_std, data_mean, cf)
+        print('---> Test losses:')
+        print(test_loss)
     print(' ---> Finish experiment: ' + cf.exp_name + ' <---')
 
 

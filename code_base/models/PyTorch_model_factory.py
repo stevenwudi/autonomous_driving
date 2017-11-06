@@ -244,8 +244,16 @@ class Model_Factory_LSTM():
                 print('loss: ', loss.data.numpy()[0])
             loss.backward()
             return loss
-
         self.optimiser.step(closure)
+        # output loss
+        out = self.net(train_input)[0]
+        loss = self.crit(out, train_target)
+        if cf.cuda:
+            return loss.data.cpu().numpy()[0]
+        else:
+            return loss.data.numpy()[0]
+
+
 
     def test(self, valid_input, valid_target, data_std, data_mean, cf, epoch=None):
         pred = self.net(valid_input, future=cf.lstm_predict_frame)
@@ -290,5 +298,9 @@ class Model_Factory_LSTM():
             # plt.savefig(os.path.join(self.exp_dir, 'ious.png'))
             # plt.close()
         torch.save(self.net.state_dict(), os.path.join(self.exp_dir, model_checkpoint))
+        if cf.cuda:
+            return loss.data.cpu().numpy()[0]
+        else:
+            return loss.data.numpy()[0]
 
 
