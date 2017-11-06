@@ -5,8 +5,6 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.autograd import Variable
-from code_base.models.PyTorch_PredictModels import LSTM_ManyToMany
-from code_base.models.PyTorch_PredictModels import LSTM_To_FC
 
 
 def normalise_data(train_data, valid_data, test_data):
@@ -29,8 +27,6 @@ def prepare_data(cf):
     valid_data = f['valid_data']
     test_data = f['test_data']
     train_data, valid_data, test_data, data_mean, data_std = normalise_data(train_data, valid_data, test_data)
-    # train_input = Variable(torch.from_numpy(train_data[:, :cf.lstm_input_frame, :]), requires_grad=False)
-    # train_target = Variable(torch.from_numpy(train_data[:, cf.lstm_input_frame:, :]), requires_grad=False)
     if cf.cuda:
         print('Data using CUDA')
         dtype = torch.cuda.FloatTensor  # Uncomment this to run on GPU
@@ -60,75 +56,10 @@ def prepare_data(cf):
             train_input = Variable(torch.from_numpy(train_data[:, :cf.lstm_input_frame, :]), requires_grad=False)
             train_target = Variable(torch.from_numpy(train_data[:, cf.lstm_input_frame:, :]), requires_grad=False)
 
-
-    # valid_input = Variable(torch.from_numpy(train_data[:, :-1, :]), requires_grad=False)
-    # valid_target = Variable(torch.from_numpy(train_data[:, 1:, :]), requires_grad=False)
-    # test_input = Variable(torch.from_numpy(train_data[:, :-1, :]), requires_grad=False)
-    # test_target = Variable(torch.from_numpy(train_data[:, 1:, :]), requires_grad=False)
     return train_input, train_target, valid_input, valid_target, test_input, test_target, data_mean, data_std
 
 
-def get_criterion(cf):
-    if cf.loss == 'MSE':
-        criterion = nn.MSELoss()
-    return criterion
-
-
-def get_optimisor(cf, model):
-    # use LBFGS as optimizer since we can load the whole data to train
-    if cf.optimizer == 'LBFGS':
-        optimiser = optim.LBFGS(model.parameters(), lr=cf.learning_rate)
-    elif cf.optimizer == 'adam':
-        optimiser = optim.Adam(model.parameters(), lr=cf.learning_rate)
-    elif cf.optimizer == 'rmsprop':
-        optimiser = optim.RMSprop(model.parameters(), lr=cf.learning_rate, momentum=cf.momentum,
-                                  weight_decay=cf.weight_decay)
-    elif cf.optimizer == 'sgd':
-        optimiser = optim.SGD(model.parameters(), lr=cf.learning_rate, momentum=cf.momentum,
-                              weight_decay=cf.weight_decay)
-
-    return optimiser
-
-
-def baseline_lstm(cf):
-    # set random seed to 0
-    np.random.seed(0)
-    torch.manual_seed(0)
-
-    train_input, train_target, valid_input, valid_target, test_input, test_target, data_mean, data_std = prepare_data(cf)
-    # build the model
-    model = LSTM_ManyToMany(input_dim=6, hidden_size=50, num_layers=2, output_dim=6)
-    model.double()
-    if cf.cuda:
-        model.cuda()
-    criterion = get_criterion(cf)
-    optimiser = get_optimisor(cf, model)
-
-    # begin to train
-    for e in range(cf.n_epochs):
-        print('STEP: ', e)
-        def closure():
-            optimiser.zero_grad()
-            out = model(train_input)[0]
-            loss = criterion(out, train_target)
-            print('loss: ', loss.data.numpy()[0])
-            loss.backward()
-            return loss
-        optimiser.step(closure)
-
-        # begin to predict
-        pred = model(valid_input, future=cf.lstm_predict_frame)
-        loss = criterion(pred[-1], valid_target)
-        results = pred[-1].data.numpy() * data_std + data_mean
-        rect_anno = valid_target.data.numpy() * data_std + data_mean
-        aveErrCoverage, aveErrCenter, errCoverage, errCenter = calc_seq_err_robust(results, rect_anno)
-        print('aveErrCoverage: %.4f, aveErrCenter: %.2f' % (aveErrCoverage, aveErrCenter))
-        print('valid loss:', loss.data.numpy()[0])
-        # TODO: 3D evaluation
-        # TODO: network saving and evaluation
-
-
-def calc_seq_err_robust(results, rect_anno):
+def calc_seq_err_robust(results, rect_anno, focal_length):
     """
     :param results:
     :param rect_anno: N*8*6: N is the batch number, 8 frames to predict(seq_length) and 6 is
@@ -142,36 +73,47 @@ def calc_seq_err_robust(results, rect_anno):
         res = results[batch_num]
         anno = rect_anno[batch_num]
 
-        centerGT = [[r[0], r[1], r[4]] for r in anno]
-        center = [[r[0], r[1], r[4]] for r in res]
+        centerGT = [[r[0], r[1]] for r in anno]
+        center = [[r[0], r[1]] for r in res]
 
         errCenter = [ssd_2d(center[i], centerGT[i]) for i in range(seq_length)]
 
+        centerGT_realworld = [[r[0]/focal_length*r[4], r[1]/focal_length*r[4], r[4], r[5]] for r in anno/100.]
+        center_realworld = [[r[0]/focal_length*r[4], r[1]/focal_length*r[4], r[4], r[5]] for r in res/100.]
+        errCenter_realworld = [ssd_3d(center_realworld[i], centerGT_realworld[i]) for i in range(seq_length)]
+
         iou_2d = calc_rect_int_2d(res, anno)
+        iou_3d = calc_rect_int_3d(res, anno, focal_length)
         errCoverage = np.zeros(seq_length)
         totalerrCoverage = 0
         totalerrCenter = 0
-
+        totalerrCoverage_realworld = 0
+        totalerrCenter_realworld = 0
         for i in range(seq_length):
-            errCoverage[i] = iou_2d[i]
-            totalerrCoverage += errCoverage[i]
             totalerrCenter += errCenter[i]
+            totalerrCoverage += iou_2d[i]
+            totalerrCenter_realworld += errCenter_realworld[i]
+            totalerrCoverage_realworld += iou_3d[i]
 
         aveErrCoverage = totalerrCoverage / float(seq_length)
         aveErrCenter = totalerrCenter / float(seq_length)
+        aveErrCoverage_realworld = totalerrCoverage_realworld / float(seq_length)
+        aveErrCenter_realworld = totalerrCenter_realworld / float(seq_length)
 
-    return aveErrCoverage, aveErrCenter, errCoverage, errCenter
+    return aveErrCoverage, aveErrCenter, errCoverage, iou_2d, \
+           aveErrCoverage_realworld, aveErrCenter_realworld, errCenter_realworld, iou_3d
+
 
 def ssd_2d(x, y):
     s = 0
-    for i in range(len(x)):
+    for i in range(2):
         s += (x[i] - y[i]) ** 2
     return np.sqrt(s)
 
 
 def ssd_3d(x, y):
     s = 0
-    for i in range(len(x)):
+    for i in range(3):
         s += (x[i] - y[i]) ** 2
     return np.sqrt(s)
 
@@ -195,5 +137,37 @@ def calc_rect_int_2d(A, B):
         areaA = A[i][2] * A[i][3]
         areaB = B[i][2] * B[i][3]
         overlap.append(tmp / float(areaA + areaB - tmp))
+
+    return overlap
+
+
+def calc_rect_int_3d(A, B, focal_length):
+
+    proj_A_All = [a[4]/focal_length for a in A]
+    proj_B_All = [b[4] / focal_length for b in B]
+
+    leftA = [proj_A*(a[0] - a[2] / 2) for (proj_A, a) in zip(proj_A_All, A)]
+    bottomA = [proj_A*(a[1] - a[3] / 2) for (proj_A, a) in zip(proj_A_All, A)]
+    rightA = [proj_A*(a[0] + a[2]/2) for (proj_A, a) in zip(proj_A_All, A)]
+    topA = [proj_A*(a[1] + a[3]/2) for (proj_A, a) in zip(proj_A_All, A)]
+    closest_A = [a[4] for a in A]
+    farthest_A = [a[5] for a in A]
+
+    leftB = [proj_B*(b[0] - b[2] / 2) for (proj_B, b) in zip(proj_B_All, B)]
+    bottomB = [proj_B*(b[1] - b[3] / 2) for (proj_B, b) in zip(proj_B_All, B)]
+    rightB = [proj_B*(b[0] + b[2] / 2) for (proj_B, b) in zip(proj_B_All, B)]
+    topB = [proj_B*(b[1] + b[3] / 2) for (proj_B, b) in zip(proj_B_All, B)]
+    closest_B = [b[4] for b in B]
+    farthest_B = [b[5] for b in B]
+
+    overlap = []
+    length = min(len(leftA), len(leftB))
+    for i in range(length):
+        tmp = (max(0, min(rightA[i], rightB[i]) - max(leftA[i], leftB[i])) *
+               max(0, min(topA[i], topB[i]) - max(bottomA[i], bottomB[i])) *
+               max(0, min(farthest_A[i], farthest_B[i]) - max(closest_A[i], closest_B[i])))
+        volumn_A = (proj_A_All[i] * A[i][2]) * (proj_A_All[i] * A[i][3]) * (farthest_A[i] - closest_A[i])
+        volumn_B = (proj_B_All[i] * B[i][2]) * (proj_B_All[i] * B[i][3]) * (farthest_B[i] - closest_B[i])
+        overlap.append(tmp / float(volumn_A + volumn_B - tmp))
 
     return overlap
