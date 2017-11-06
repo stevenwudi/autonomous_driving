@@ -197,6 +197,8 @@ class Model_Factory_LSTM():
         # Set the loss criterion
         if cf.loss == 'MSE':
             self.crit = nn.MSELoss()
+        elif cf.loss == 'SmoothL1':
+            self.crit = nn.SmoothL1Loss()
         self.net.float()
         if cf.cuda and torch.cuda.is_available():
             print('Using cuda')
