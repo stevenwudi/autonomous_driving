@@ -82,7 +82,7 @@ def show_DG_car_trajectory(DG, show_set='train'):
                 plt.figure()
                 show_landmarks_batch_car_trajectory(sample_batched, DG)
                 im_name_tmp = "-".join(sample_batched['img_name'][0].split("/")[-5:])
-                save_im_name = os.path.join('/home/stevenwudi/PycharmProjects/autonomous_driving/Experiments/car_trajectory_prediction/Figures', im_name_tmp)
+                save_im_name = os.path.join('/home/wzn/PycharmProjects/autonomous_driving/Experiments/car_trajectory_prediction/Figures', im_name_tmp)
                 plt.savefig(save_im_name, bbox_inches='tight', dpi=1000)
                 #plt.axis('off')
                 plt.ioff()

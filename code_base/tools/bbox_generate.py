@@ -41,8 +41,8 @@ if __name__ == '__main__':
                ]
     car_dict_list = []
     for folder in folders:
-        gt_dir = '/home/stevenwudi/PycharmProjects/autonomous_driving/Datasets/' + folder +'/GT/LABELS/Stereo_Left/Omni_F'
-        data_dir = '/home/stevenwudi/PycharmProjects/autonomous_driving/Datasets/' + folder +'/RGB/Stereo_Left/Omni_F'
+        gt_dir = '/home/wzn/PycharmProjects/autonomous_driving/Datasets/' + folder +'/GT/LABELS/Stereo_Left/Omni_F'
+        data_dir = '/home/wzn/PycharmProjects/autonomous_driving/Datasets/' + folder +'/RGB/Stereo_Left/Omni_F'
         images = os.listdir(gt_dir)
         images.sort()
 
