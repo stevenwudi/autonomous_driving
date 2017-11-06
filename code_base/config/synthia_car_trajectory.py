@@ -2,7 +2,7 @@
 problem_type                 = 'car_trajectory_prediction'  # ['classification' | 'detection' | 'segmentation']
 #dataset_name                 = 'synthia_rand_cityscapes'        # Dataset
 
-local_path                   = '/home/stevenwudi/PycharmProjects/autonomous_driving'
+local_path                   = '/home/wzn/PycharmProjects/autonomous_driving'
 shared_path                  = '/home/public/synthia'
 dataset_name2                = None            # Second dataset name. None if not Domain Adaptation
 perc_mb2                     = None            # Percentage of data from the second dataset in each minibatch
@@ -16,7 +16,7 @@ draw_seq                                = 'SYNTHIA-SEQS-06-NIGHT'   # which sequ
 
 
 # Model
-model_name                   = 'LSTM_ManyToMany'       # Model to use ['LSTM_ManyToMany', 'LSTM_To_FC']
+model_name                   = 'LSTM_To_FC'       # Model to use ['LSTM_ManyToMany', 'LSTM_To_FC']
 debug                        = False
 resize_train                 = (760, 1280)      # Resize the image during training (Height, Width) or None
 #random_size_crop             = (350*2, 460*2)      # Random size crop of the image during training
@@ -32,7 +32,7 @@ shuffle_valid                = False           # Whether to shuffle the validati
 shuffle_test                 = False           # Whether to shuffle the testing data
 
 #############################
-dataroot_dir                        = '/home/stevenwudi/PycharmProjects/autonomous_driving/Datasets'
+dataroot_dir                        = '/home/wzn/PycharmProjects/autonomous_driving/Datasets'
 data_type                           = 'RGB'
 data_stereo                         = 'Stereo_Left'
 data_camera                         = 'Omni_F'
