@@ -56,7 +56,7 @@ class LSTM_ManyToMany(nn.Module):
             output_linear = outputs_linear[:, -1, :]  # the last output during test
             size = output_linear.size()
             output_linear = output_linear.resize(size[0], 1, size[1])
-            for i in range(future):
+            for i in range(future-1):
                 output_lstm, (h_t, c_t) = self.lstm(output_linear, (h_t, c_t))
                 output_linear = self.linear(output_lstm)
                 outputs_pre += [output_linear.squeeze(1)]
