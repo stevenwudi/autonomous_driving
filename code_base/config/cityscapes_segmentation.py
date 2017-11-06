@@ -37,8 +37,7 @@ seed_test                    = 1924            # Random seed for the testing shu
 optimizer                    = 'sgd'       # Optimizer
 
 learning_rate                = 0.001  #0.001, 0.0001          # Training learning rate
-momentum                     = 0.99  #0.9
-weight_decay                 = 1e-4              # Weight decay or L2 parameter norm penalty
+momentumweight_decay                 = 1e-4              # Weight decay or L2 parameter norm penalty
 n_epochs                     = 250            # Number of epochs during training
 
 

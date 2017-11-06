@@ -20,14 +20,14 @@ NUM_CLASSES = 1 + 1
 resize_train = (760, 1280)
 input_shape = (512, 512, 3)
 
-import keras
-from keras.preprocessing import image
-from keras.applications.imagenet_utils import preprocess_input
-from code_base.models.Keras_SSD import SSD512v2, BBoxUtility, Generator, MultiboxLoss
-priors = pickle.load(
-    open('/home/stevenwudi/PycharmProjects/autonomous_driving/code_base/models/prior_boxes_ssd512.pkl', 'rb'),
-    encoding='latin1')
-bbox_util = BBoxUtility(NUM_CLASSES, priors)
+# import keras
+# from keras.preprocessing import image
+# from keras.applications.imagenet_utils import preprocess_input
+# from code_base.models.Keras_SSD import SSD512v2, BBoxUtility, Generator, MultiboxLoss
+# priors = pickle.load(
+#     open('/home/stevenwudi/PycharmProjects/autonomous_driving/code_base/models/prior_boxes_ssd512.pkl', 'rb'),
+#     encoding='latin1')
+# bbox_util = BBoxUtility(NUM_CLASSES, priors)
 
 
 def combine_gt(annotation_1, annotation_2, merged_annotation):
@@ -376,6 +376,34 @@ def calculate_iou(test_gt_file, test_json_file, POR=None, draw=False):
     print('F score: %s' % (np.array_str(f)))
 
 
+def collect_front_and_rear_gt(annotation_1, annotation_2, save_dir, image_interval=50):
+    from PIL import Image
+    import scipy.misc
+    annotations_list_1 = json.load(open(annotation_1, 'r'))
+    annotations_list_2 = json.load(open(annotation_2, 'r'))
+    print(len(annotations_list_1), len(annotations_list_2))
+    car_count = 0
+    for i in range(0, len(annotations_list_1), image_interval):
+        img = Image.open(annotations_list_1[i]['image_path']+'/'+annotations_list_1[i]['image_name'])
+        img = np.array(img)
+        for bb_idx, bb in enumerate(annotations_list_1[i]['boundingbox']):
+            img_car = img[bb[1]:bb[3], bb[0]:bb[2]]
+            img_name = str(car_count) + '.png'
+            print(img_name)
+            car_count += 1
+            scipy.misc.imsave(os.path.join(save_dir, img_name), img_car)
+
+    for i in range(0, len(annotations_list_2), image_interval):
+        img = Image.open(annotations_list_2[i]['image_path']+'/'+annotations_list_2[i]['image_name'])
+        img = np.array(img)
+        for bb_idx, bb in enumerate(annotations_list_2[i]['boundingbox']):
+            img_car = img[bb[1]:bb[3], bb[0]:bb[2]]
+            img_name = str(car_count) + '.png'
+            print(img_name)
+            car_count += 1
+            scipy.misc.imsave(os.path.join(save_dir, img_name), img_car)
+
+
 def ssd_synthia_car_fine_tune():
     """
     The scirpt to calling different modules for fine-tuning/verifying SSD
@@ -388,8 +416,14 @@ def ssd_synthia_car_fine_tune():
         annotations_url_2 = '/home/public/synthia/SYNTHIA-SEQS-01-VALIDATE-shuffle.json'
         combine_gt(annotations_url_1, annotations_url_2, merged_annotation)
 
-    gt_file = '/home/public/synthia/ssd_car_fine_tune/ssd_car_fine_tune_gt-shuffle.pkl'
+    if True:
+        print('collect front and rear cars')
+        annotations_url_1 = '/home/public/synthia/SYNTHIA-SEQS-01-TRAIN-shuffle.json'
+        annotations_url_2 = '/home/public/synthia/SYNTHIA-SEQS-01-VALIDATE-shuffle.json'
+        save_dir = '/home/stevenwudi/PycharmProjects/autonomous_driving/Experiments/SEQ_01_SEQ_06_cars'
+        collect_front_and_rear_gt(annotations_url_1, annotations_url_2, save_dir, image_interval=50)
 
+    gt_file = '/home/public/synthia/ssd_car_fine_tune/ssd_car_fine_tune_gt-shuffle.pkl'
     if False:
         print('Training annotation conversion')
         converting_gt(merged_annotation, gt_file, POR=1e-3)
@@ -414,7 +448,7 @@ def ssd_synthia_car_fine_tune():
     if False:
         test_ssd512(test_gt_file, model_checkpoint, test_json_file)
     # A separate file for accepting gt file and predicted json fil
-    if True:
+    if False:
         calculate_iou(test_gt_file, test_json_file, POR=2e-3, draw=True)
     """
     This is the network results train by SSD512 (with 0.05% POR trained)

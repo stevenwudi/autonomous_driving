@@ -53,19 +53,15 @@ class Model_Factory():
             pretrained_net.load_state_dict(models.resnet34(pretrained=True).state_dict())
             self.net = SegResNet(cf.num_classes, pretrained_net).cuda()
         elif cf.model_name == 'drn_c_26':
-
             self.net = DRNSeg('drn_c_26', cf.num_classes, pretrained=True, linear_up=True)
-
-            # self.net = drn_c_26(num_classes=cf.num_classes, pretrained=cf.pretrained_drn_c_26)
-
         elif cf.model_name == 'drn_d_22':
             self.net = DRNSeg('drn_d_22', cf.num_classes, pretrained=True, linear_up=False)
         elif cf.model_name == 'drn_d_38':
             self.net = DRNSeg('drn_d_38', cf.num_classes, pretrained=True, linear_up=False)
         # Set the loss criterion
-        self.crit = nn.NLLLoss2d(ignore_index=19).cuda()
+        self.crit = nn.NLLLoss2d(ignore_index=cf.ignore_index).cuda()
 
-        self.exp_dir = cf.savepath + '___' + datetime.now().strftime('%a, %d %b %Y-%m-%d %H:%M:%S')
+        self.exp_dir = cf.savepath + '___' + datetime.now().strftime('%a, %d %b %Y-%m-%d %H:%M:%S') + '_' + cf.model_name
         os.mkdir(self.exp_dir)
         # Enable log file
         self.log_file = os.path.join(self.exp_dir, "logfile.log")
@@ -96,6 +92,9 @@ class Model_Factory():
             self.optimiser = optim.RMSprop(params, lr=cf.learning_rate, momentum=cf.momentum, weight_decay=cf.weight_decay)
         elif cf.optimizer == 'sgd':
             self.optimiser = optim.SGD(params, lr=cf.learning_rate, momentum=cf.momentum, weight_decay=cf.weight_decay)
+        elif cf.optimizer == 'adam':
+            self.optimiser = optim.Adam(params, lr=cf.learning_rate, weight_decay=cf.weight_decay)
+
         self.scores, self.mean_scores = [], []
 
         if torch.cuda.is_available():
@@ -105,9 +104,9 @@ class Model_Factory():
         lr = adjust_learning_rate(self.cf.learning_rate, self.optimiser, epoch)
         print('learning rate:', lr)
         self.net.train()
-        for i, (input, target_one_hot, target, _) in enumerate(train_loader):
+        for i, (input, target) in enumerate(train_loader):
             self.optimiser.zero_grad()
-            input, target, target_one_hot = Variable(input.cuda(async=True)), Variable(target.cuda(async=True)), Variable(target_one_hot.cuda(async=True))
+            input, target = Variable(input.cuda(async=True)), Variable(target.cuda(async=True))
             output = F.log_softmax(self.net(input))
             self.loss = self.crit(output, target)
             print(epoch, i, self.loss.data[0])
@@ -117,7 +116,7 @@ class Model_Factory():
     def test(self, val_loader, epoch):
         self.net.eval()
         total_ious = []
-        for i, (input, _, target, _) in enumerate(val_loader):
+        for i, (input, target) in enumerate(val_loader):
             input, target = Variable(input.cuda(async=True), volatile=True), Variable(target.cuda(async=True), volatile=True)
             output = F.log_softmax(self.net(input))
             b, _, h, w = output.size()
