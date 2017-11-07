@@ -88,9 +88,9 @@ load_trained_model           = True
 train_model_path             = '/home/stevenwudi/PycharmProjects/autonomous_driving/Experiments/car_trajectory_prediction/SYNTHIA-SEQS-01___Mon, 06 Nov 2017-11-06 16:08:14/Epoch:100_net_aveErrCoverage:0.8343_aveErrCenter:17.47___.pth'
 #### LSTM training variables #################
 # LSTM_ManyToMany
-lstm_inputsize               = 6   # LSTM input: [x,y,w,h, d_min, d_max]
-lstm_hiddensize              = 50
-lstm_numlayers               = 2
-lstm_outputsize              = 6
+lstm_input_dims               = [6, 150, 150]    # [layer1_input_dim, layer2_input_dim,...]  layer1_input_dim:[x,y,w,h, d_min, d_max]
+lstm_hidden_sizes             = [150, 150, 150]    # [layer1_hidden_size, layer2_hidden_size,...]
+outlayer_input_dim            = 150          # outlayer's input dim.Generally, identify to hidden_sizes[-1]
+outlayer_output_dim           = 6            # outlayer output: [x,y,w,h, d_min, d_max]
 # LSTM_To_FC
-lstm_output_dim              = 6   # currently is [x,y,w,h,d_min, d_max] as lstm_inputsize
+lstm_output_dim               = 6   # currently is [x,y,w,h,d_min, d_max] as lstm_inputsize
