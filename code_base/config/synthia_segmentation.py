@@ -8,14 +8,14 @@ local_path                   = '/home/stevenwudi/PycharmProjects/autonomous_driv
 shared_path                  = '/home/public/synthia'
 sequence_name                = dataset_name
 dataroot_dir                 = '/home/stevenwudi/PycharmProjects/autonomous_driving/Datasets'
-load_trained_model           = False
+
 # Model
 model_name                   = 'drn_d_38'  # Model to use ['fcn8' | 'lenet' | 'alexNet' | 'vgg16' |  'vgg19' | 'resnet50' | 'InceptionV3']
 freeze_layers_from           = None            # Freeze layers from 0 to this layer during training (Useful for finetunning) [None | 'base_model' | Layer_id]
 show_model                   = False           # Show the architecture layers
 load_imageNet                = False           # Load Imagenet weights and normalize following imagenet procedure
-load_pretrained              = False           # Load a pretrained model for doing finetuning
-weights_file                 = 'weights.hdf5'  # Training weight file name
+load_trained_model           = True           # Load a pretrained model for doing finetuning
+train_model_path             = '/home/stevenwudi/PycharmProjects/autonomous_driving/Experiments/segmentation/SYNTHIA_RAND_CVPR16___Tue, 07 Nov 2017-11-07 16:31:48_drn_d_38/epoch_1_mIOU:.0.554515_net.pth'  # Training weight file name
 
 # Parameters
 train_model                  = True            # Train the model
@@ -31,7 +31,7 @@ debug_n_epochs               = 3               # N of training epochs in debug m
 
 # Batch sizes
 
-workers                      = 8
+workers                      = 4
 batch_size_train             = 10              # Batch size during training
 batch_size_valid             = 10              # Batch size during validation
 batch_size_test              = 10              # Batch size during testing
@@ -59,7 +59,7 @@ seed_test                    = 1924            # Random seed for the testing shu
 
 # Training parameters
 optimizer                    = 'sgd'       # Optimizer
-learning_rate                = 0.001          # Training learning rate
+learning_rate                = 0.0001          # Training learning rate
 weight_decay                 = 0.              # Weight decay or L2 parameter norm penalty
 n_epochs                     = 25            # Number of epochs during training
 momentum                     = 0.9
@@ -106,10 +106,10 @@ num_classes                           = len(classes)   # we don't want void clas
 void_class                          = [len(classes) + 1]
 create_split                        = False
 ignore_index                        = 0
-batch_size                          = 4
+test_epoch                          = 1
+batch_size                          = 8
 crop_size                           = 720
 train_ratio                         = 0.9
-cb_weights_method                   = 'rare_freq_cost'   # Label weight balance [None | 'median_freq_cost' | 'rare_freq_cost']
-cb_weights                          = [1.65697855,   0.23748228,   0.29841721,
-         0.63769955,   9.23991394,   1.66974087,   6.60188582,
-         0.92809024,  19.85701845,   2.60712632,  14.72396384]
+cb_weights_method                   = None #'rare_freq_cost'   # Label weight balance [None | 'median_freq_cost' | 'rare_freq_cost']
+cb_weights                          = [1.65697855,   0.23748228,   0.29841721, 0.63769955,   9.23991394,   1.66974087,
+                                       6.60188582, 0.92809024,  19.85701845,   2.60712632,  14.72396384]

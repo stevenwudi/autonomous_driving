@@ -10,6 +10,10 @@ from torch.autograd import Variable
 def normalise_data(train_data, valid_data, test_data):
     data_mean = train_data[:, :, :].mean(axis=0).mean(axis=0)
     data_std = train_data[:, :, :].std(axis=0).mean(axis=0)
+    valid_data_mean = valid_data[:, :, :].mean(axis=0).mean(axis=0)
+    valid_data_std = valid_data[:, :, :].std(axis=0).mean(axis=0)
+    test_data_mean = test_data[:, :, :].mean(axis=0).mean(axis=0)
+    test_data_std = test_data[:, :, :].std(axis=0).mean(axis=0)
 
     train_data -= data_mean
     train_data /= data_std

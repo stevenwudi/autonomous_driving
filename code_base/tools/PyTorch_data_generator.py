@@ -16,9 +16,9 @@ from PIL import Image
 import torch
 from torch.utils.data import Dataset, DataLoader
 import matplotlib
-matplotlib.use('TkAgg')
-from matplotlib import pyplot as plt
-from torchvision import transforms as T
+# matplotlib.use('TkAgg')
+# from matplotlib import pyplot as plt
+# from torchvision import transforms as T
 # Ignore warnings
 import warnings
 
@@ -133,11 +133,8 @@ class Dataset_Generators_Synthia():
 
 
 class ImageDataGenerator_Synthia(Dataset):
-    """ Image Data"""
-
     def __init__(self, root_dir, dataset_split, cf, crop=True, flip=True):
         """
-
         :param root_dir: Directory will all the images
         :param label_dir: Directory will all the label images
         :param transform:  (callable, optional): Optional tra
@@ -148,15 +145,19 @@ class ImageDataGenerator_Synthia(Dataset):
         #     lines = tuple(l.split() for l in text_file.readlines())
         self.image_dir = os.path.join(root_dir, 'RGB')
         self.label_dir = os.path.join(root_dir, 'GTTXT')
-        image_files = os.listdir(self.image_dir)
+        image_files = sorted(os.listdir(self.image_dir))
+        # if img_name not in ['ap_000_02-11-2015_18-02-19_000062_3_Rand_2.png',
+        #                     'ap_000_02-11-2015_18-02-19_000129_2_Rand_16.png',
+        #                     'ap_000_01-11-2015_19-20-57_000008_1_Rand_0.png']
         train_num = int(len(image_files) * cf.train_ratio)
         if dataset_split == 'train':
             self.image_files = image_files[:train_num]
             self.image_num = train_num
+            print('Total training number is: %d'%train_num)
         elif dataset_split == 'valid':
             self.image_files = image_files[train_num:]
-            self.image_num = len(image_files)  - train_num
-
+            self.image_num = len(image_files) - train_num
+            print('Total valid number is: %d' % self.image_num)
         self.crop = crop
         self.crop_size = cf.crop_size
         self.flip = flip
@@ -170,11 +171,20 @@ class ImageDataGenerator_Synthia(Dataset):
     def __getitem__(self, item):
         # Load images and perform augmentations with PIL
         img_name = os.path.join(self.image_dir, self.image_files[item])
-        input = Image.open(img_name)
+
+        try:
+            input = Image.open(img_name)
+        except IOError:
+            # unfortunately, some images are corrupted. Hence, we need to manually exclude them.
+            print("Image failed loading: ", img_name)
 
         label_name = os.path.join(self.label_dir, self.image_files[item][:-4] + '.txt')
-        with open(label_name) as text_file:  # can throw FileNotFoundError
-            lines = tuple(l.split() for l in text_file.readlines())
+        try:
+            with open(label_name) as text_file:  # can throw FileNotFoundError
+                lines = tuple(l.split() for l in text_file.readlines())
+        except IOError:
+            # unfortunately, some images are corrupted. Hence, we need to manually exclude them.
+            print("Label failed loading: ", img_name)
 
         target = np.asarray(lines).astype('int32')
         target[target == -1] = 0
@@ -186,8 +196,13 @@ class ImageDataGenerator_Synthia(Dataset):
         if self.crop:
             w, h = input.size
             x1, y1 = random.randint(0, w - self.crop_size), random.randint(0, h - self.crop_size)
-            input, target = input.crop((x1, y1, x1 + self.crop_size, y1 + self.crop_size)), \
-                            target.crop((x1, y1, x1 + self.crop_size, y1 + self.crop_size))
+            try:
+                input, target = input.crop((x1, y1, x1 + self.crop_size, y1 + self.crop_size)), \
+                                target.crop((x1, y1, x1 + self.crop_size, y1 + self.crop_size))
+            except IOError:
+                # unfortunately, some images are corrupted. Hence, we need to manually exclude them.
+                print("image failed loading: ", img_name)
+                # ap_000_01-11-2015_19-20-57_000008_1_Rand_0.png
         # Random horizontal flip
         if self.flip:
             if random.random() < 0.5:
