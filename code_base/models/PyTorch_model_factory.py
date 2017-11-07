@@ -182,10 +182,10 @@ class Model_Factory_LSTM():
         # If we load from a pretrained model
         self.model_name = cf.model_name   #['LSTM_ManyToMany', 'LSTM_To_FC']
         if cf.model_name == 'LSTM_ManyToMany':
-            self.net = LSTM_ManyToMany(input_dim=cf.lstm_inputsize,
-                                       hidden_size=cf.lstm_hiddensize,
-                                       num_layers=cf.lstm_numlayers,
-                                       output_dim=cf.lstm_outputsize,
+            self.net = LSTM_ManyToMany(input_dim=cf.lstm_input_dims,
+                                       hidden_size=cf.lstm_hidden_sizes,
+                                       outlayer_input_dim=cf.outlayer_input_dim,
+                                       outlayer_output_dim=cf.outlayer_output_dim,
                                        cuda=cf.cuda)
         elif cf.model_name == 'LSTM_To_FC':
             self.net = LSTM_To_FC(future=cf.lstm_predict_frame,
