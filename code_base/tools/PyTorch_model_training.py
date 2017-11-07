@@ -28,7 +28,7 @@ def prepare_data(cf):
     test_data = f['test_data']
 
     #--------> to test data shuffle
-    np.random.seed(1)
+    np.random.seed(10)
     train_size = train_data.shape[0]
     valid_size = valid_data.shape[0]
 
