@@ -9,6 +9,12 @@ import imutils
 import json
 import h5py
 from code_base.tools.PyTorch_data_generator_car_trajectory import Dataset_Generators_Synthia_Car_trajectory
+import pickle
+from scipy.misc import imresize
+# Slow import from below!
+from keras.applications.imagenet_utils import preprocess_input
+from code_base.models.Keras_SSD import SSD512v2, BBoxUtility
+import collections
 
 
 def convert_key_to_string(car_tracking_dict):
@@ -464,4 +470,148 @@ def gt_collection_examintion(cf):
         f.create_dataset('test_data', data=test_data)
         f.close()
     # Finish
+    print(' ---> Finish experiment: ' + cf.exp_name + ' <---')
+
+
+def car_detection(cf):
+    # Create the data generators
+    cf.batch_size_train = 1  # because we want to read every single image sequentially
+    dataset_path_list = cf.dataset_path
+    processed_list = os.listdir(cf.savepath)
+    if cf.formatting_ground_truth_sequence_car_trajectory:
+        train_features_all, val_features_all, test_features_all = [], [], []
+    for dataset_path in dataset_path_list:
+        sequence_name = dataset_path.split('/')[-1]
+        cf.dataset_path = dataset_path
+        DG = Dataset_Generators_Synthia_Car_trajectory(cf)
+        if cf.get_sequence_car_detection:
+            # now we count the number of pixels for each instances
+            priors = pickle.load(open(cf.ssd_prior_boxes, 'rb'), encoding='latin1')
+            bbox_util = BBoxUtility(cf.ssd_number_classes, priors, nms_thresh=0.45)
+            ### load model ###
+            model = SSD512v2(cf.ssd_input_shape, num_classes=cf.ssd_number_classes)
+            model.load_weights(cf.ssd_model_checkpoint, by_name=True)
+
+            if sequence_name+'.json' not in processed_list:
+                get_sequence_car_detection(DG, cf, sequence_name, model, bbox_util)
+    print(' ---> Finish experiment: ' + cf.exp_name + ' <---')
+
+
+def get_sequence_car_detection(DG, cf, sequence_name, model, bbox_util, show_set='train'):
+    """
+     # Let's instantiate this class the iterate through the data samples.
+    # For the paper "End-to-end Learning of Driving Models from Large-scale Video Datasets" cvpr2017 (oral)
+    they use 3 seconds(9 frames) to predict  1 frame (3Hz)
+    Here, Synthia dataset is 5 Hz.
+    According to http://copradar.com/redlight/factors/, we need to predict next 1.5 second
+    Hence it's 1.5*5 ~ 8 frames.
+    We will use 3*5=15 to predict next 8 frames.
+    :param DG:
+    :param show_set:
+    :return:
+    """
+    print("Processing sequence: "+cf.dataset_path)
+    train_set = DG.dataloader[show_set]
+    car_tracking_dict = {}
+    for i_batch, sample_batched in enumerate(train_set):
+        if i_batch == 0:
+            print('image, classes, instances and depth sizes are:')
+            print(sample_batched['image'].size(),
+                  sample_batched['classes'].size(),
+                  sample_batched['instances'].size(),
+                  sample_batched['depth'].size())
+        if i_batch % 100 == 0:
+            print("Processing batch: %d" % i_batch)
+
+        instances_torch = sample_batched['instances'][0]
+        classes_torch = sample_batched['classes'][0]
+        depth_torch = sample_batched['depth'][0]
+        image_torch = sample_batched['image'][0]
+        input_image = image_torch.numpy().astype('uint8')
+        instances = instances_torch.numpy().astype('uint8')
+        classes = classes_torch.numpy().astype('uint8')
+        depth = depth_torch.numpy()
+        img_name = sample_batched['img_name'][0]  # because for GT construction, the batch size is always 1
+        car_tracking_dict = get_car_detection_box(cf, input_image, car_tracking_dict, img_name, model, bbox_util)
+
+    # we sort the dict by keys
+    car_tracking_dict_sorted = collections.OrderedDict(sorted(car_tracking_dict.items()))
+    json_file_path = os.path.join(cf.savepath, sequence_name+'.json')
+    with open(json_file_path, 'w') as fp:
+        json.dump(car_tracking_dict_sorted, fp, indent=4)
+    print('Saving: '+json_file_path)
+    return car_tracking_dict
+
+
+def get_car_detection_box(cf, input_image, car_tracking_dict, img_name, model, bbox_util):
+
+    ssd_input = imresize(input_image, cf.ssd_input_shape[:2])
+    inputs = preprocess_input(np.expand_dims(ssd_input, axis=0).astype('float64'))
+    preds = model.predict(inputs, batch_size=1, verbose=1)
+    results = bbox_util.detection_out(preds)
+    detected_rect = []
+    if len(results[0]):
+        # TODO: check which image has no detection
+        det_conf = results[0][:, 1]
+        det_xmin = results[0][:, 2]
+        det_ymin = results[0][:, 3]
+        det_xmax = results[0][:, 4]
+        det_ymax = results[0][:, 5]
+
+        # Get detections with confidence higher than 0.6.
+        top_indices = [i for i, conf in enumerate(det_conf) if conf >= cf.ssd_conf]
+        top_conf = det_conf[top_indices]
+        top_xmin = det_xmin[top_indices]
+        top_ymin = det_ymin[top_indices]
+        top_xmax = det_xmax[top_indices]
+        top_ymax = det_ymax[top_indices]
+
+        for j in range(len(top_indices)):
+            detected_rect.append([top_xmin[j], top_ymin[j], top_xmax[j], top_ymax[j], top_conf[j]])
+
+    # Create figure and axes
+    if cf.draw_flag:
+        fig = plt.figure(1)
+        fig.clear()
+        tracking_figure_axes = fig.add_subplot(111, aspect='equal')
+        tracking_figure_axes.imshow(input_image.transpose(1, 2, 0))
+        _, W, H = input_image.shape
+        for dr in detected_rect:
+            x1, y1, x2, y2, _ = dr
+            x1_i, y1_i, x2_i, y2_i = x1 * H, y1 * W, x2 * H, y2 * W
+            tracking_rect = Rectangle(
+                xy=(x1_i, y1_i),
+                width=x2_i - x1_i,
+                height=y2_i - y1_i,
+                facecolor='none',
+                edgecolor='g',
+            )
+            tracking_figure_axes.add_patch(tracking_rect)
+        plt.waitforbuttonpress(0.01)
+
+    car_tracking_dict[img_name] = detected_rect
+    return car_tracking_dict
+
+
+def car_tracking(cf):
+    # Create the data generators
+    cf.batch_size_train = 1  # because we want to read every single image sequentially
+    dataset_path_list = cf.dataset_path
+    processed_list = os.listdir(cf.savepath)
+    if cf.formatting_ground_truth_sequence_car_trajectory:
+        train_features_all, val_features_all, test_features_all = [], [], []
+    for dataset_path in dataset_path_list:
+        sequence_name = dataset_path.split('/')[-1]
+        cf.dataset_path = dataset_path
+        DG = Dataset_Generators_Synthia_Car_trajectory(cf)
+        if cf.get_sequence_car_detection:
+            # now we count the number of pixels for each instances
+            priors = pickle.load(open(cf.ssd_prior_boxes, 'rb'), encoding='latin1')
+            bbox_util = BBoxUtility(cf.ssd_number_classes, priors, nms_thresh=0.45)
+            ### load model ###
+            model = SSD512v2(cf.ssd_input_shape, num_classes=cf.ssd_number_classes)
+            model.load_weights(cf.ssd_model_checkpoint, by_name=True)
+
+            if sequence_name+'.json' not in processed_list:
+                get_sequence_car_detection(DG, cf, sequence_name, model, bbox_util)
     print(' ---> Finish experiment: ' + cf.exp_name + ' <---')
