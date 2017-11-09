@@ -16,7 +16,7 @@ draw_seq                                = 'SYNTHIA-SEQS-06-NIGHT'   # which sequ
 
 
 # Model
-model_name                   = 'LSTM_ManyToMany'       # Model to use ['LSTM_ManyToMany', 'LSTM_To_FC']
+model_name                   = 'LSTM_To_FC'       # Model to use ['LSTM_ManyToMany', 'LSTM_To_FC']
 debug                        = False
 resize_train                 = (760, 1280)      # Resize the image during training (Height, Width) or None
 #random_size_crop             = (350*2, 460*2)      # Random size crop of the image during training
