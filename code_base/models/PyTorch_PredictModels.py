@@ -131,7 +131,7 @@ class LSTM_To_FC(nn.Module):
         else:
             self.dtype = torch.FloatTensor
 
-    def forward(self, input):
+    def forward(self, input, future=0):
         """
         input: The train data or test data, type is Variable, size is (batchSize, sequenceSize,featureSize)
         future: The number of predicting frames, but this parameter is invalid, it is determined by _init_
