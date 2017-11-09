@@ -18,7 +18,6 @@ class LSTM_ManyToMany(nn.Module):
         :param hidden_sizes: a list involves each lstm_layer's hidden_size
         :param outlayer_input_dim:
         :param outlayer_output_dim:
-        :param output_dim: a scalar value representing the output dim
         :param cuda: whetuer or not to use cuda
         '''
         super(LSTM_ManyToMany, self).__init__()
@@ -31,7 +30,6 @@ class LSTM_ManyToMany(nn.Module):
         # build lstm layer, parameters are (input_dim,hidden_size,num_layers)
         for i, input_dim in enumerate(self.input_dims):
             self.__setattr__('lstm' + str(i), nn.LSTM(input_size=input_dim, hidden_size=self.hidden_sizes[i], num_layers=1, batch_first=True))
-            # self.lstm[i] = nn.LSTM(input_size=input_dim, hidden_size=self.hidden_sizes[i], num_layers=1, batch_first=True)
 
 
         # build output layer, which is a linear layer
@@ -54,20 +52,17 @@ class LSTM_ManyToMany(nn.Module):
         # batch size, for init hidden state & cell state
         batch_size = input.size(0)
 
-        # init hidden state & cell state
-        # h0 = {}
-        # c0 = {}
-
         # hidden state & cell state for t=seq_len, size as h0 or c0
-        # hn = {}
-        # cn = {}
+        hn = []
+        cn = []
         # compute
         input_t = input
         for i in range(0, len(self.hidden_sizes)):
+            # init hidden state & cell state
             h0 = Variable(torch.zeros(1, batch_size, self.hidden_sizes[i]).type(self.dtype), requires_grad=False)
             c0 = Variable(torch.zeros(1, batch_size, self.hidden_sizes[i]).type(self.dtype), requires_grad=False)
             lstm = self.__getattr__('lstm'+str(i))
-            output_t, (hn, cn) = lstm(input_t, (h0, c0))
+            output_t, (hn[i], cn[i]) = lstm(input_t, (h0, c0))
             input_t = output_t
         outputs_linear = self.linear(input_t)
 
@@ -85,7 +80,8 @@ class LSTM_ManyToMany(nn.Module):
             output_linear = output_linear.resize(size[0], 1, size[1])
             for j in range(future-1):
                 input_t = output_linear
-                for i in range(1, len(self.hidden_sizes) + 1):
+                for i in range(0, len(self.hidden_sizes)):
+                    lstm = self.__getattr__('lstm' + str(i))
                     output_t, (ht[i], ct[i]) = self.lstm[i](input_t, (ht[i], ct[i]))
                     input_t = output_t
                 output_linear = self.linear(input_t)
