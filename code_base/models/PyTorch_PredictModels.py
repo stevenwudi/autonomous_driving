@@ -179,8 +179,8 @@ class CNN_LSTM_To_FC(nn.Module):
                                                                                       'kernel_size': ,
                                                                                       'stride': ,
                                                                                       'padding': }
-        :param input_dims: a list involves each lstm_layer's input_dim
-        :param hidden_sizes: a list involves each lstm_layer's hidden_size
+        :param input_dims: a list involving each lstm_layer's input_dim
+        :param hidden_sizes: a list involving each lstm_layer's hidden_size
         :param future_frame: the number of predicting frames
         :param output_dim: the number of features in each predicting frame
         :param cuda: whether or not to use GPU
