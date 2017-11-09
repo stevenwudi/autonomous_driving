@@ -28,9 +28,9 @@ class LSTM_ManyToMany(nn.Module):
         self.outlayer_input_dim = outlayer_input_dim
         self.outlayer_output_dim = outlayer_output_dim
         # build lstm layer, parameters are (input_dim,hidden_size,num_layers)
-        self.lstm = {}
+        self.lstm = []
         for i, input_dim in enumerate(self.input_dims):
-            self.lstm[i+1] = nn.LSTM(input_size=input_dim, hidden_size=self.hidden_sizes[i], num_layers=1, batch_first=True)
+            self.lstm[i] = nn.LSTM(input_size=input_dim, hidden_size=self.hidden_sizes[i], num_layers=1, batch_first=True)
 
         # build output layer, which is a linear layer
         self.linear = nn.Linear(in_features=self.outlayer_input_dim, out_features=self.outlayer_output_dim)
@@ -59,7 +59,7 @@ class LSTM_ManyToMany(nn.Module):
         cn = {}
         # compute
         input_t = input
-        for i in range(1, len(self.hidden_sizes)+1):
+        for i in range(0, len(self.hidden_sizes)):
             h0[i] = Variable(torch.zeros(1, batch_size, self.hidden_size[i]).type(self.dtype), requires_grad=False)
             c0[i] = Variable(torch.zeros(1, batch_size, self.hidden_size[i]).type(self.dtype), requires_grad=False)
             output_t, (hn[i], cn[i]) = self.lstm[i](input_t, (h0[i], c0[i]))
