@@ -66,7 +66,7 @@ class LSTM_ManyToMany(nn.Module):
         for i in range(0, len(self.hidden_sizes)):
             h0 = Variable(torch.zeros(1, batch_size, self.hidden_sizes[i]).type(self.dtype), requires_grad=False)
             c0 = Variable(torch.zeros(1, batch_size, self.hidden_sizes[i]).type(self.dtype), requires_grad=False)
-            lstm = self.__getattribute__('lstm'+str(i))
+            lstm = self.__getattr__('lstm'+str(i))
             output_t, (hn, cn) = lstm(input_t, (h0, c0))
             input_t = output_t
         outputs_linear = self.linear(input_t)
