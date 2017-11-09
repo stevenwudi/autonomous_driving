@@ -53,8 +53,8 @@ class LSTM_ManyToMany(nn.Module):
         batch_size = input.size(0)
 
         # hidden state & cell state for t=seq_len, size as h0 or c0
-        hn = []
-        cn = []
+        hn = {}
+        cn = {}
         # compute
         input_t = input
         for i in range(0, len(self.hidden_sizes)):
