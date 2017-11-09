@@ -27,10 +27,12 @@ class LSTM_ManyToMany(nn.Module):
         self.hidden_sizes = hidden_sizes
         self.outlayer_input_dim = outlayer_input_dim
         self.outlayer_output_dim = outlayer_output_dim
+
         # build lstm layer, parameters are (input_dim,hidden_size,num_layers)
-        self.lstm = []
         for i, input_dim in enumerate(self.input_dims):
-            self.lstm += [nn.LSTM(input_size=input_dim, hidden_size=self.hidden_sizes[i], num_layers=1, batch_first=True)]
+            self.__setattr__('lstm' + str(i), nn.LSTM(input_size=input_dim, hidden_size=self.hidden_sizes[i], num_layers=1, batch_first=True))
+            # self.lstm[i] = nn.LSTM(input_size=input_dim, hidden_size=self.hidden_sizes[i], num_layers=1, batch_first=True)
+
 
         # build output layer, which is a linear layer
         self.linear = nn.Linear(in_features=self.outlayer_input_dim, out_features=self.outlayer_output_dim)
@@ -51,18 +53,21 @@ class LSTM_ManyToMany(nn.Module):
         outputs = []
         # batch size, for init hidden state & cell state
         batch_size = input.size(0)
-        # # init hidden state & cell state
+
+        # init hidden state & cell state
         # h0 = {}
         # c0 = {}
+
         # hidden state & cell state for t=seq_len, size as h0 or c0
-        hn = {}
-        cn = {}
+        # hn = {}
+        # cn = {}
         # compute
         input_t = input
         for i in range(0, len(self.hidden_sizes)):
             h0 = Variable(torch.zeros(1, batch_size, self.hidden_sizes[i]).type(self.dtype), requires_grad=False)
             c0 = Variable(torch.zeros(1, batch_size, self.hidden_sizes[i]).type(self.dtype), requires_grad=False)
-            output_t, (hn[i], cn[i]) = self.lstm[i](input_t, (h0, c0))
+            lstm = self.__getattribute__('lstm'+str(i))
+            output_t, (hn, cn) = lstm(input_t, (h0, c0))
             input_t = output_t
         outputs_linear = self.linear(input_t)
 
