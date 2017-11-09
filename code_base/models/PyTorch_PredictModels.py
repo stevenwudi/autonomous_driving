@@ -81,7 +81,7 @@ class LSTM_ManyToMany(nn.Module):
                 input_t = output_linear
                 for i in range(0, len(self.hidden_sizes)):
                     lstm = self.__getattr__('lstm' + str(i))
-                    output_t, (ht[i], ct[i]) = self.lstm[i](input_t, (ht[i], ct[i]))
+                    output_t, (ht[i], ct[i]) = lstm(input_t, (ht[i], ct[i]))
                     input_t = output_t
                 output_linear = self.linear(input_t)
                 outputs_pre += [output_linear.squeeze(1)]
