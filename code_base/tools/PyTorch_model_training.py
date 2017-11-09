@@ -44,17 +44,17 @@ def prepare_data(cf):
             train_target = Variable(torch.from_numpy(train_data[:, cf.lstm_input_frame:, :]).type(dtype).cuda(async=True),
                                     requires_grad=False)
     else:
-        valid_input = Variable(torch.from_numpy(valid_data[:, :cf.lstm_input_frame, :]), requires_grad=False)
-        valid_target = Variable(torch.from_numpy(valid_data[:, cf.lstm_input_frame:, :]), requires_grad=False)
-        test_input = Variable(torch.from_numpy(test_data[:, :cf.lstm_input_frame, :]), requires_grad=False)
-        test_target = Variable(torch.from_numpy(test_data[:, cf.lstm_input_frame:, :]), requires_grad=False)
+        valid_input = Variable(torch.from_numpy(valid_data[:, :cf.lstm_input_frame, :]).float(), requires_grad=False)
+        valid_target = Variable(torch.from_numpy(valid_data[:, cf.lstm_input_frame:, :]).float(), requires_grad=False)
+        test_input = Variable(torch.from_numpy(test_data[:, :cf.lstm_input_frame, :]).float(), requires_grad=False)
+        test_target = Variable(torch.from_numpy(test_data[:, cf.lstm_input_frame:, :]).float(), requires_grad=False)
         # Many to many input
         if cf.model_name == 'LSTM_ManyToMany':
-            train_input = Variable(torch.from_numpy(train_data[:, :-1, :]), requires_grad=False)
-            train_target = Variable(torch.from_numpy(train_data[:, 1:, :]), requires_grad=False)
+            train_input = Variable(torch.from_numpy(train_data[:, :-1, :]).float(), requires_grad=False)
+            train_target = Variable(torch.from_numpy(train_data[:, 1:, :]).float(), requires_grad=False)
         elif cf.model_name == 'LSTM_To_FC':
-            train_input = Variable(torch.from_numpy(train_data[:, :cf.lstm_input_frame, :]), requires_grad=False)
-            train_target = Variable(torch.from_numpy(train_data[:, cf.lstm_input_frame:, :]), requires_grad=False)
+            train_input = Variable(torch.from_numpy(train_data[:, :cf.lstm_input_frame, :]).float(), requires_grad=False)
+            train_target = Variable(torch.from_numpy(train_data[:, cf.lstm_input_frame:, :]).float(), requires_grad=False)
 
     return train_input, train_target, valid_input, valid_target, test_input, test_target, data_mean, data_std
 
