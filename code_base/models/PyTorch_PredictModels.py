@@ -204,7 +204,7 @@ class CNN_LSTM_To_FC(nn.Module):
                              nn.LSTM(input_size=input_dim, hidden_size=self.hidden_sizes[i], num_layers=1,
                                      batch_first=True))
 
-        # fully connected part;
+        # fully connected part
         self.future_frame = future_frame
         self.output_dim = output_dim
         self.output_size = self.future_frame * self.output_dim
@@ -223,7 +223,7 @@ class CNN_LSTM_To_FC(nn.Module):
     def forward(self, trajectorys, images, future=0 ):
         '''
         :param trajectorys: The moving path train data or test data, type is Variable, size is (batchSize, sequenceSize,featureSize).
-        :param images: the input images, may be semantic segmentation or RGB. size as (N, Cin, Hin, Win)
+        :param images: the input images, may be semantic segmentation or RGB. size as (batchSize, sequenceSize, Cin, Hin, Win)
         :param future: The number of predicting frames, but this parameter is invalid, it is determined by _init_
         :return: A list composed of only one element, which is the predicted data, type is Variable, Size is (batchSize, futureSequenceSize, featureSize)
         '''
@@ -232,19 +232,26 @@ class CNN_LSTM_To_FC(nn.Module):
         outputs = []
 
         # cnn part:
-        cnned_images = self.conv(images) # cnned_images' size as (N, Cout, Hout, Wout)
-
+        images_data = []
+        for i in range(0, len(images)):
+            cnned_image = self.conv(images[i])
+            image_data = cnned_image.resize(cnned_image.size(0), cnned_image[0].numel())
+            images_data.append(image_data)
+        images_data = torch.stack(images_data, dim=0)
 
         # lstm part:
         # compute with train or test data,the output is hidden_state & cell_state
         # the hn represents hidden_state in each lstm layer, and it involves all the past information through the recurrent process
-        batch_size = input.size(0)
-        input_t = input
+        batch_size = trajectorys.size(0)
+        input_t = trajectorys
         for i in range(0, len(self.hidden_sizes)):
             # init hidden state & cell state, parameters are (numlayers, batchsize, hidden_size)
             h0 = Variable(torch.zeros(1, batch_size, self.hidden_sizes[i]).type(self.dtype), requires_grad=False)
             c0 = Variable(torch.zeros(1, batch_size, self.hidden_sizes[i]).type(self.dtype), requires_grad=False)
             lstm = self.__getattr__('lstm' + str(i))
+            # input images_data to second hiddenlayer
+            if i==1:
+                input_t = torch.cat([input_t, images_data], dim=2)
             output_t, (hn, cn) = lstm(input_t, (h0, c0))
             input_t = output_t
 
