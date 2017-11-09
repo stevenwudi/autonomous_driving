@@ -78,7 +78,7 @@ focal_length                 = 532.740352  # camera focal lense
 # Training parameters
 test_epoch                   = 1
 weight_decay                 = 0.              # Weight decay or L2 parameter norm penalty
-n_epochs                     = 50            # Number of epochs during training
+n_epochs                     = 30            # Number of epochs during training
 cuda                         = True
 loss                         = 'SmoothL1Loss'       # 'MSE', 'SmoothL1Loss'
 optimizer                    = 'LBFGS'      # LBFGS','adam'
