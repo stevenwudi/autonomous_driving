@@ -15,7 +15,6 @@ class Configuration():
         print(self.config_path)
         cf = imp.load_source('config', self.config_path)
         dataset_path = os.path.join(cf.local_path, 'Datasets')
-        shared_dataset_path = os.path.join(cf.shared_path)
         experiments_path = os.path.join(cf.local_path, 'Experiments')
         shared_experiments_path = os.path.join(cf.shared_path, 'Experiments')
 
@@ -70,7 +69,7 @@ class Configuration():
                     os.mkdir(cf.savepath)
 
             else:
-                cf.dataset_path = os.path.join(dataset_path, self.sequence_name)
+                cf.dataset_path = os.path.join(dataset_path, cf.problem_type, cf.sequence_name)
                 # Create output folders
                 cf.savepath = os.path.join(experiments_path, cf.exp_name, cf.dataset_name)
 
@@ -81,8 +80,8 @@ class Configuration():
                     os.mkdir(experiments_path)
                 if not os.path.exists(os.path.join(experiments_path, cf.exp_name)):
                     os.mkdir(os.path.join(experiments_path, cf.exp_name))
-                if not os.path.exists(cf.savepath):
-                    os.mkdir(cf.savepath)
+                # if not os.path.exists(cf.savepath):
+                #     os.mkdir(cf.savepath)
         else:
             cf.dataset_path = os.path.join(dataset_path, cf.problem_type, cf.dataset_name)
         return cf

@@ -1,18 +1,21 @@
 # Dataset
 problem_type                 = 'segmentation'  # ['classification' | 'detection' | 'segmentation']
-dataset_name                 = 'synthia_rand_cityscapes'        # Dataset
 dataset_name                 = 'SYNTHIA_RAND_CVPR16'
 dataset_name2                = None            # Second dataset name. None if not Domain Adaptation
 perc_mb2                     = None            # Percentage of data from the second dataset in each minibatch
 class_mode                   = problem_type
+local_path                   = '/home/stevenwudi/PycharmProjects/autonomous_driving'
+shared_path                  = '/home/public/synthia'
+sequence_name                = dataset_name
+dataroot_dir                 = '/home/stevenwudi/PycharmProjects/autonomous_driving/Datasets'
 
 # Model
-model_name                   = 'fcn8'          # Model to use ['fcn8' | 'lenet' | 'alexNet' | 'vgg16' |  'vgg19' | 'resnet50' | 'InceptionV3']
+model_name                   = 'drn_d_38'  # Model to use ['fcn8' | 'lenet' | 'alexNet' | 'vgg16' |  'vgg19' | 'resnet50' | 'InceptionV3']
 freeze_layers_from           = None            # Freeze layers from 0 to this layer during training (Useful for finetunning) [None | 'base_model' | Layer_id]
 show_model                   = False           # Show the architecture layers
 load_imageNet                = False           # Load Imagenet weights and normalize following imagenet procedure
-load_pretrained              = False           # Load a pretrained model for doing finetuning
-weights_file                 = 'weights.hdf5'  # Training weight file name
+load_trained_model           = True           # Load a pretrained model for doing finetuning
+train_model_path             = '/home/stevenwudi/PycharmProjects/autonomous_driving/Experiments/segmentation/SYNTHIA_RAND_CVPR16___Tue, 07 Nov 2017-11-07 16:31:48_drn_d_38/epoch_1_mIOU:.0.554515_net.pth'  # Training weight file name
 
 # Parameters
 train_model                  = True            # Train the model
@@ -27,6 +30,8 @@ debug_images_test            = 30              # N images for testing in debug m
 debug_n_epochs               = 3               # N of training epochs in debug mode
 
 # Batch sizes
+
+workers                      = 4
 batch_size_train             = 10              # Batch size during training
 batch_size_valid             = 10              # Batch size during validation
 batch_size_test              = 10              # Batch size during testing
@@ -53,56 +58,11 @@ seed_valid                   = 1924            # Random seed for the validation 
 seed_test                    = 1924            # Random seed for the testing shuffle
 
 # Training parameters
-optimizer                    = 'adam'       # Optimizer
+optimizer                    = 'sgd'       # Optimizer
 learning_rate                = 0.0001          # Training learning rate
 weight_decay                 = 0.              # Weight decay or L2 parameter norm penalty
 n_epochs                     = 25            # Number of epochs during training
-
-# Callback save results
-save_results_enabled         = False           # Enable the Callback
-save_results_nsamples        = 5               # Number of samples to save
-save_results_batch_size      = 5               # Size of the batch
-
-
-# Callback early stoping
-earlyStopping_enabled        = True            # Enable the Callback
-earlyStopping_monitor        = 'val_jaccard'   # Metric to monitor
-earlyStopping_mode           = 'max'           # Mode ['max' | 'min']
-earlyStopping_patience       = 100             # Max patience for the early stopping
-earlyStopping_verbose        = 0               # Verbosity of the early stopping
-
-# Callback model check point
-checkpoint_enabled           = True            # Enable the Callback
-checkpoint_monitor           = 'val_jaccard'   # Metric to monitor
-checkpoint_mode              = 'max'           # Mode ['max' | 'min']
-checkpoint_save_best_only    = True            # Save best or last model
-checkpoint_save_weights_only = True            # Save only weights or also model
-checkpoint_verbose           = 0               # Verbosity of the checkpoint
-
-# Callback plot
-plotHist_enabled             = True            # Enable the Callback
-plotHist_verbose             = 0               # Verbosity of the callback
-
-# Callback LR decay scheduler
-lrDecayScheduler_enabled     = False           # Enable the Callback
-lrDecayScheduler_epochs      = [5, 10, 20]     # List of epochs were decay is applied or None for all epochs
-lrDecayScheduler_rate        = 2               # Decay rate (new_lr = lr / decay_rate). Usually between 2 and 10.
-
-# Callback learning rate scheduler
-LRScheduler_enabled          = True             # Enable the Callback
-LRScheduler_batch_epoch      = 'batch'          # Schedule the LR each 'batch' or 'epoch'
-LRScheduler_type             = 'poly'         # Type of scheduler ['linear' | 'step' | 'square' | 'sqrt' | 'poly']
-LRScheduler_M                = 75000            # Number of iterations/epochs expected until convergence
-LRScheduler_decay            = 0.1              # Decay for 'step' method
-LRScheduler_S                = 10000            # Step for the 'step' method
-LRScheduler_power            = 0.9              # Power for te poly method
-
-# Callback TensorBoard
-TensorBoard_enabled          = True             # Enable the Callback
-TensorBoard_histogram_freq   = 1                # Frequency (in epochs) at which to compute activation histograms for the layers of the model. If set to 0, histograms won't be computed.
-TensorBoard_write_graph      = True             # Whether to visualize the graph in Tensorboard. The log file can become quite large when write_graph is set to True.
-TensorBoard_write_images     = False            # Whether to write model weights to visualize as image in Tensorboard.
-TensorBoard_logs_folder      = None             #
+momentum                     = 0.9
 
 # Data augmentation for training and normalization
 norm_imageNet_preprocess           = False  # Normalize following imagenet procedure
@@ -142,10 +102,14 @@ classes                             = {'void': 0, 'sky': 1, 'building': 2, 'road
                                        'sidewalk': 4, 'fence': 5, 'vegetation': 6,
                                        'pole': 7, 'car': 8, 'sign': 9, 'pedestrian': 10,
                                        'cyclist': 11}
-n_classes                           = len(classes)
+num_classes                           = len(classes)   # we don't want void class
 void_class                          = [len(classes) + 1]
 create_split                        = False
-cb_weights_method                   = 'rare_freq_cost'   # Label weight balance [None | 'median_freq_cost' | 'rare_freq_cost']
-cb_weights                          = [5.31950559,   1.65697855,   0.23748228,   0.29841721,
-         0.63769955,   9.23991394,   1.66974087,   6.60188582,
-         0.92809024,  19.85701845,   2.60712632,  14.72396384]
+ignore_index                        = 0
+test_epoch                          = 1
+batch_size                          = 8
+crop_size                           = 720
+train_ratio                         = 0.9
+cb_weights_method                   = None #'rare_freq_cost'   # Label weight balance [None | 'median_freq_cost' | 'rare_freq_cost']
+cb_weights                          = [1.65697855,   0.23748228,   0.29841721, 0.63769955,   9.23991394,   1.66974087,
+                                       6.60188582, 0.92809024,  19.85701845,   2.60712632,  14.72396384]
