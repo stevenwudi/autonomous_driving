@@ -54,7 +54,7 @@ def prepare_data(cf):
     valid_images = Variable(torch.zeros(valid_input.size(0), valid_input.size(1), 1, 100, 100).type(dtype), requires_grad=False)
     test_images = Variable(torch.zeros(test_input.size(0), test_input.size(1), 1, 100, 100).type(dtype), requires_grad=False)
 
-    return train_images, valid_images, test_images, train_input, train_target, valid_input, valid_target, test_input, test_target, data_mean, data_std,train_images
+    return train_images, valid_images, test_images, train_input, train_target, valid_input, valid_target, test_input, test_target, data_mean, data_std
 
 
 def calc_seq_err_robust(results, rect_anno, focal_length):
