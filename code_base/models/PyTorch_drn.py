@@ -314,6 +314,7 @@ def drn_d_105(pretrained=False, **kwargs):
         model.load_state_dict(model_zoo.load_url(model_urls['drn-d-105']))
     return model
 
+
 def fill_up_weights(up):
     w = up.weight.data
     f = math.ceil(w.size(2) / 2)
@@ -324,6 +325,7 @@ def fill_up_weights(up):
 
     for c in range(1, w.size(0)):
         w[c, 0, :, :] = w[0, 0, :, :]
+
 
 class DRNSeg(nn.Module):
     def __init__(self, model_name, num_classes, pretrained_model=None, pretrained=True, linear_up = False, train_model_path = None):
@@ -358,6 +360,7 @@ class DRNSeg(nn.Module):
         y = self.up(x)
         return y
 
+
 class DRNSegF(nn.Module):
     def __init__(self, model, num_classes):
         super(DRNSegF, self).__init__()
@@ -379,6 +382,7 @@ class DRNSegF(nn.Module):
         x = self.seg(x)
         y = self.up(x)
         return y
+
 
 if __name__ == '__main__':
     model = DRNSeg('drn_c_26', 20, pretrained=True)

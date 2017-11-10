@@ -70,9 +70,7 @@ def main():
     shared_experiments_path = os.path.join(shared_path, 'Experiments')
 
     # Load configuration files
-    configuration = Configuration(arguments.config_path, arguments.exp_name,
-                                  dataset_path, shared_dataset_path,
-                                  experiments_path, shared_experiments_path)
+    configuration = Configuration(arguments.config_path)
     cf = configuration.load()
     configurationPATH(cf)
 
