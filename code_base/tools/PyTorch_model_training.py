@@ -39,7 +39,7 @@ def prepare_data(cf):
     all_data = all_data.astype(float)
     np.random.shuffle(all_data)
     # train_data = all_data[:train_size, :, :]
-    train_data = all_data[:500, :, :]
+    train_data = all_data[:512, :, :]
     valid_data = all_data[train_size:train_size+valid_size, :, :]
     test_data = all_data[train_size+valid_size:, :, :]
     # --------< to test data shuffle
