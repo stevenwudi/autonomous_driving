@@ -38,7 +38,8 @@ def prepare_data(cf):
     all_data = np.concatenate((train_data, valid_data, test_data), axis=0)
     all_data = all_data.astype(float)
     np.random.shuffle(all_data)
-    train_data = all_data[:train_size, :, :]
+    # train_data = all_data[:train_size, :, :]
+    train_data = all_data[:500, :, :]
     valid_data = all_data[train_size:train_size+valid_size, :, :]
     test_data = all_data[train_size+valid_size:, :, :]
     # --------< to test data shuffle
@@ -69,9 +70,9 @@ def prepare_data(cf):
 
 
     # images: the input images, may be semantic segmentation or RGB. size as (batchSize, sequenceSize, Cin, Hin, Win)
-    train_images = Variable(torch.zeros(train_input.size(0), train_input.size(1), 1, 100, 100).type(dtype), requires_grad=False)
-    valid_images = Variable(torch.zeros(valid_input.size(0), valid_input.size(1), 1, 100, 100).type(dtype), requires_grad=False)
-    test_images = Variable(torch.zeros(test_input.size(0), test_input.size(1), 1, 100, 100).type(dtype), requires_grad=False)
+    train_images = Variable(torch.zeros(train_input.size(0), train_input.size(1), 1, 10, 10).type(dtype), requires_grad=False)
+    valid_images = Variable(torch.zeros(valid_input.size(0), valid_input.size(1), 1, 10, 10).type(dtype), requires_grad=False)
+    test_images = Variable(torch.zeros(test_input.size(0), test_input.size(1), 1, 10, 10).type(dtype), requires_grad=False)
 
     return train_images, valid_images, test_images, train_input, train_target, valid_input, valid_target, test_input, test_target, data_mean, data_std
 
