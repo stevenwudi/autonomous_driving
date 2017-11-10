@@ -1,7 +1,8 @@
 import argparse
 import os
 import sys
-os.environ('CUDA_VISIBLE_DEVICES')='1'
+import os
+os.environ['CUDA_VISIBLE_DEVICES']='3'
 # Di Wu add the following really ugly code so that python can find the path
 sys.path.append(os.getcwd())
 import time
