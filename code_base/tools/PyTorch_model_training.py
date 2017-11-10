@@ -30,6 +30,21 @@ def prepare_data(cf):
     train_data = f['train_data']
     valid_data = f['valid_data']
     test_data = f['test_data']
+
+    # --------> to test data shuffle
+    np.random.seed(10)
+    train_size = train_data.shape[0]
+    valid_size = valid_data.shape[0]
+
+    all_data = np.concatenate((train_data, valid_data, test_data), axis=0)
+    all_data = all_data.astype(float)
+    np.random.shuffle(all_data)
+    # train_data = all_data[:train_size, :, :]
+    train_data = all_data[:512, :, :]
+    valid_data = all_data[train_size:train_size + valid_size, :, :]
+    test_data = all_data[train_size + valid_size:, :, :]
+    # --------< to test data shuffle     
+
     train_data, valid_data, test_data, data_mean, data_std = normalise_data(train_data, valid_data, test_data)
 
     if cf.cuda:
