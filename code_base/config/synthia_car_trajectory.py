@@ -16,7 +16,7 @@ draw_seq                                = 'SYNTHIA-SEQS-06-NIGHT'   # which sequ
 
 
 # Model
-model_name                   = 'LSTM_To_FC'       # Model to use ['LSTM_ManyToMany', 'LSTM_To_FC']
+model_name                   = 'LSTM_ManyToMany'       # Model to use ['LSTM_ManyToMany', 'LSTM_To_FC', 'CNN_LSTM_To_FC']
 debug                        = False
 resize_train                 = (760, 1280)      # Resize the image during training (Height, Width) or None
 #random_size_crop             = (350*2, 460*2)      # Random size crop of the image during training
@@ -93,7 +93,19 @@ lstm_hidden_sizes             = [150, 150, 150]    # [layer1_hidden_size, layer2
 outlayer_input_dim            = 150          # outlayer's input dim.Generally, identify to hidden_sizes[-1]
 outlayer_output_dim           = 6            # outlayer output: [x,y,w,h, d_min, d_max]
 # LSTM_To_FC
-lstmToFc_input_dims           = [6, 50, 100]              # [layer1_input_dim, layer2_input_dim,...]  layer1_input_dim:[x,y,w,h, d_min, d_max]
-lstmToFc_hidden_sizes         = [50, 100, 200]            # [layer1_hidden_size, layer2_hidden_size,...]
+lstmToFc_input_dims           = [6, 100, 300]              # [layer1_input_dim, layer2_input_dim,...]  layer1_input_dim:[x,y,w,h, d_min, d_max]
+lstmToFc_hidden_sizes         = [100, 300, 300]            # [layer1_hidden_size, layer2_hidden_size,...]
 lstmToFc_future               = lstm_predict_frame        # the number of predicting frames
 lstmToFc_output_dim           = 6               # outlayer output: [x,y,w,h, d_min, d_max]
+# CNN_LSTM_To_FC
+def cnnDict(in_channels, out_channels, kernel_size, stride, padding):
+    return {'in_channels': in_channels, 'out_channels': out_channels, 'kernel_size': kernel_size, 'stride': stride, 'padding': padding}
+cnnLstmToFc_conv_paras        = [cnnDict(1,2,3,1,1), cnnDict(2,4,3,1,1),cnnDict(4,4,2,2,0)]              # a list composed of dicts representing parameters of each conv, {'in_channels': ,
+                                                                                      # 'out_channels': ,
+                                                                                      # 'kernel_size': ,
+                                                                                      # 'stride': ,
+                                                                                      # 'padding': }
+cnnLstmToFc_input_dims        = [6, 200, 300]              # a list involving each lstm_layer's input_dim
+cnnLstmToFc_hidden_sizes      = [100, 300, 300]              # a list involving each lstm_layer's hidden_size
+cnnLstmToFc_future            = lstm_predict_frame # the number of predicting frames
+cnnLstmToFc_output_dim        = 6               # outlayer output: [x,y,w,h, d_min, d_max]
