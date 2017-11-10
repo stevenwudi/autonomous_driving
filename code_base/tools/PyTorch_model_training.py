@@ -27,36 +27,34 @@ def prepare_data(cf):
     valid_data = f['valid_data']
     test_data = f['test_data']
     train_data, valid_data, test_data, data_mean, data_std = normalise_data(train_data, valid_data, test_data)
+
     if cf.cuda:
         print('Data using CUDA')
         dtype = torch.cuda.FloatTensor  # Uncomment this to run on GPU
-        valid_input = Variable(torch.from_numpy(valid_data[:, :cf.lstm_input_frame, :]).type(dtype).cuda(async=True), requires_grad=False)
-        valid_target = Variable(torch.from_numpy(valid_data[:, cf.lstm_input_frame:, :]).type(dtype).cuda(async=True), requires_grad=False)
-        test_input = Variable(torch.from_numpy(test_data[:, :cf.lstm_input_frame, :]).type(dtype).cuda(async=True), requires_grad=False)
-        test_target = Variable(torch.from_numpy(test_data[:, cf.lstm_input_frame:, :]).type(dtype).cuda(async=True),requires_grad=False)
-        # Many to many input
-        if cf.model_name == 'LSTM_ManyToMany':
-            train_input = Variable(torch.from_numpy(train_data[:, :-1, :]).type(dtype).cuda(async=True), requires_grad=False)
-            train_target = Variable(torch.from_numpy(train_data[:, 1:, :]).type(dtype).cuda(async=True), requires_grad=False)
-        elif cf.model_name == 'LSTM_To_FC':
-            train_input = Variable(torch.from_numpy(train_data[:, :cf.lstm_input_frame, :]).type(dtype).cuda(async=True),
-                                   requires_grad=False)
-            train_target = Variable(torch.from_numpy(train_data[:, cf.lstm_input_frame:, :]).type(dtype).cuda(async=True),
-                                    requires_grad=False)
     else:
-        valid_input = Variable(torch.from_numpy(valid_data[:, :cf.lstm_input_frame, :]).float(), requires_grad=False)
-        valid_target = Variable(torch.from_numpy(valid_data[:, cf.lstm_input_frame:, :]).float(), requires_grad=False)
-        test_input = Variable(torch.from_numpy(test_data[:, :cf.lstm_input_frame, :]).float(), requires_grad=False)
-        test_target = Variable(torch.from_numpy(test_data[:, cf.lstm_input_frame:, :]).float(), requires_grad=False)
-        # Many to many input
-        if cf.model_name == 'LSTM_ManyToMany':
-            train_input = Variable(torch.from_numpy(train_data[:, :-1, :]).float(), requires_grad=False)
-            train_target = Variable(torch.from_numpy(train_data[:, 1:, :]).float(), requires_grad=False)
-        elif cf.model_name == 'LSTM_To_FC':
-            train_input = Variable(torch.from_numpy(train_data[:, :cf.lstm_input_frame, :]).float(), requires_grad=False)
-            train_target = Variable(torch.from_numpy(train_data[:, cf.lstm_input_frame:, :]).float(), requires_grad=False)
+        dtype = torch.FloatTensor
 
-    return train_input, train_target, valid_input, valid_target, test_input, test_target, data_mean, data_std
+    valid_input = Variable(torch.from_numpy(valid_data[:, :cf.lstm_input_frame, :]).type(dtype), requires_grad=False)
+    valid_target = Variable(torch.from_numpy(valid_data[:, cf.lstm_input_frame:, :]).type(dtype), requires_grad=False)
+    test_input = Variable(torch.from_numpy(test_data[:, :cf.lstm_input_frame, :]).type(dtype), requires_grad=False)
+    test_target = Variable(torch.from_numpy(test_data[:, cf.lstm_input_frame:, :]).type(dtype), requires_grad=False)
+    # Many to many input
+    if cf.model_name == 'LSTM_ManyToMany':
+        train_input = Variable(torch.from_numpy(train_data[:, :-1, :]).type(dtype), requires_grad=False)
+        train_target = Variable(torch.from_numpy(train_data[:, 1:, :]).type(dtype), requires_grad=False)
+    else:
+        train_input = Variable(torch.from_numpy(train_data[:, :cf.lstm_input_frame, :]).type(dtype),
+                                requires_grad=False)
+        train_target = Variable(torch.from_numpy(train_data[:, cf.lstm_input_frame:, :]).type(dtype),
+                                requires_grad=False)
+
+
+    # images: the input images, may be semantic segmentation or RGB. size as (batchSize, sequenceSize, Cin, Hin, Win)
+    train_images = Variable(torch.zeros(train_input.size(0), train_input.size(1), 1, 100, 100).type(dtype), requires_grad=False)
+    valid_images = Variable(torch.zeros(valid_input.size(0), valid_input.size(1), 1, 100, 100).type(dtype), requires_grad=False)
+    test_images = Variable(torch.zeros(test_input.size(0), test_input.size(1), 1, 100, 100).type(dtype), requires_grad=False)
+
+    return train_images, valid_images, test_images, train_input, train_target, valid_input, valid_target, test_input, test_target, data_mean, data_std,train_images
 
 
 def calc_seq_err_robust(results, rect_anno, focal_length):

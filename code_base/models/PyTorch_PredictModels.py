@@ -193,7 +193,7 @@ class CNN_LSTM_To_FC(nn.Module):
                                   nn.Conv2d(**self.convparas[1]),
                                   nn.ReLU(),
                                   nn.Conv2d(**self.convparas[2]),
-                                  nn.ReLU
+                                  nn.ReLU()
                                   )
 
         # lstm part; build lstm layer, parameters are (input_dim,hidden_size,num_layers)
@@ -220,7 +220,7 @@ class CNN_LSTM_To_FC(nn.Module):
         else:
             self.dtype = torch.FloatTensor
 
-    def forward(self, trajectorys, images, future=0 ):
+    def forward(self, images, trajectorys, future=0 ):
         '''
         :param trajectorys: The moving path train data or test data, type is Variable, size is (batchSize, sequenceSize,featureSize).
         :param images: the input images, may be semantic segmentation or RGB. size as (batchSize, sequenceSize, Cin, Hin, Win)
@@ -228,21 +228,23 @@ class CNN_LSTM_To_FC(nn.Module):
         :return: A list composed of only one element, which is the predicted data, type is Variable, Size is (batchSize, futureSequenceSize, featureSize)
         '''
 
+        batch_size = trajectorys.size(0)
+        sequenceSize = trajectorys.size(1)
         # the return content
         outputs = []
 
         # cnn part:
-        images_data = []
-        for i in range(0, len(images)):
-            cnned_image = self.conv(images[i])
-            image_data = cnned_image.resize(cnned_image.size(0), cnned_image[0].numel())
-            images_data.append(image_data)
+        # images_data = []
+        # for i in range(0, len(images)):
+        images_data = [self.conv(image).view(sequenceSize, -1) for image in images]
+
+            # images_data.append(image_data)
         images_data = torch.stack(images_data, dim=0)
 
         # lstm part:
         # compute with train or test data,the output is hidden_state & cell_state
         # the hn represents hidden_state in each lstm layer, and it involves all the past information through the recurrent process
-        batch_size = trajectorys.size(0)
+
         input_t = trajectorys
         for i in range(0, len(self.hidden_sizes)):
             # init hidden state & cell state, parameters are (numlayers, batchsize, hidden_size)
