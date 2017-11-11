@@ -117,10 +117,12 @@ lstmToFc_input_dims           = [6, 100, 300]              # [layer1_input_dim, 
 lstmToFc_hidden_sizes         = [100, 300, 300]            # [layer1_hidden_size, layer2_hidden_size,...]
 lstmToFc_future               = lstm_predict_frame        # the number of predicting frames
 lstmToFc_output_dim           = 6               # outlayer output: [x,y,w,h, d_min, d_max]
+
 # CNN_LSTM_To_FC
+cnn_class_num                 = 15
 def cnnDict(in_channels, out_channels, kernel_size, stride, padding):
     return {'in_channels': in_channels, 'out_channels': out_channels, 'kernel_size': kernel_size, 'stride': stride, 'padding': padding}
-cnnLstmToFc_conv_paras        = [cnnDict(1,2,3,1,1), cnnDict(2,4,3,1,1),cnnDict(4,4,2,2,0)]              # a list composed of dicts representing parameters of each conv, {'in_channels': ,
+cnnLstmToFc_conv_paras        = [cnnDict(cnn_class_num,2,3,1,1), cnnDict(2,4,3,1,1),cnnDict(4,4,2,2,0)]              # a list composed of dicts representing parameters of each conv, {'in_channels': ,
                                                                                       # 'out_channels': ,
                                                                                       # 'kernel_size': ,
                                                                                       # 'stride': ,
