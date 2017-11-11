@@ -11,10 +11,9 @@ import h5py
 from code_base.tools.PyTorch_data_generator_car_trajectory import Dataset_Generators_Synthia_Car_trajectory
 import pickle
 from scipy.misc import imresize
-# Slow import from below!
-from keras.applications.imagenet_utils import preprocess_input
-from code_base.models.Keras_SSD import SSD512v2, BBoxUtility
-import collections
+from skimage.filters import threshold_otsu
+from skimage.filters import threshold_yen
+from skimage.filters import threshold_li
 
 
 def convert_key_to_string(car_tracking_dict):
@@ -412,12 +411,14 @@ def formatting_ground_truth_sequence_car_trajectory(cf, sequence_name, time_step
                 for im_num in range(0, len(car_tracking_dict[instance_number_in_seq]['tracking_rect'][track_num])-total_frame+1, time_step):
                     features_temp = []
                     for frame_num in range(im_num, im_num+total_frame, time_step):
+                        feature_img_name = sequence_name + '/' + car_tracking_dict[instance_number_in_seq]['img_list'][track_num][frame_num]
                         [centreX, centreY, height, width, d_min, d_max, d_centre, d_mean] = \
                         car_tracking_dict[instance_number_in_seq]['tracking_rect'][track_num][frame_num]
-                        features_temp.append([centreX, centreY, height, width, d_min, d_max])
-                    features.append(np.asarray(features_temp))
+                        features_temp.append([centreX, centreY, height, width, d_min, d_max, feature_img_name])
+                    #features.append(np.asarray(features_temp))
+                    features.append(features_temp)
 
-    features = np.asarray(features)
+    #features = np.asarray(features)
     num_total_seq = len(features)
     train_len = int(num_total_seq * 0.8)
     valid_len = int(num_total_seq * 0.1)
@@ -442,7 +443,7 @@ def gt_collection_examintion(cf):
         if cf.get_ground_truth_sequence_car_trajectory:
             if sequence_name+'.json' not in processed_list:
                 get_ground_truth_sequence_car_trajectory(DG, cf, sequence_name)
-        elif cf.formatting_ground_truth_sequence_car_trajectory:
+        if cf.formatting_ground_truth_sequence_car_trajectory:
             train_features, val_features, test_features = formatting_ground_truth_sequence_car_trajectory(cf,
                                                                                                          sequence_name)
             train_features_all.append(train_features)
@@ -463,23 +464,31 @@ def gt_collection_examintion(cf):
         if not os.path.exists(cf.shared_path):
             os.mkdir(cf.shared_path)
             os.mkdir(save_dir)
-
-        f = h5py.File(os.path.join(save_dir, cf.sequence_name + ".hdf5"), "w")
-        f.create_dataset('train_data', data=train_data)
-        f.create_dataset('valid_data', data=valid_data)
-        f.create_dataset('test_data', data=test_data)
-        f.close()
+            import pickle
+            with open(os.path.join(save_dir, cf.sequence_name + "_train.npy"), 'wb') as fp:
+                pickle.dump(train_data, fp)
+            with open(os.path.join(save_dir, cf.sequence_name + "_valid.npy"), 'wb') as fp:
+                pickle.dump(valid_data, fp)
+            with open(os.path.join(save_dir, cf.sequence_name + "_test.npy"), 'wb') as fp:
+                pickle.dump(test_data, fp)
+        # f = h5py.File(os.path.join(save_dir, cf.sequence_name + ".hdf5"), "w")
+        # f.create_dataset('train_data', data=[x.encode('utf8') for x in train_data])
+        # f.create_dataset('valid_data', data=valid_data)
+        # f.create_dataset('test_data', data=test_data)
+        # f.close()
     # Finish
+    # Total train length is 10291, valid length is 1275, test length is 1294.
     print(' ---> Finish experiment: ' + cf.exp_name + ' <---')
 
 
 def car_detection(cf):
+    # Slow import from below!
+    from code_base.models.Keras_SSD import SSD512v2, BBoxUtility
+
     # Create the data generators
     cf.batch_size_train = 1  # because we want to read every single image sequentially
     dataset_path_list = cf.dataset_path
     processed_list = os.listdir(cf.savepath)
-    if cf.formatting_ground_truth_sequence_car_trajectory:
-        train_features_all, val_features_all, test_features_all = [], [], []
     for dataset_path in dataset_path_list:
         sequence_name = dataset_path.split('/')[-1]
         cf.dataset_path = dataset_path
@@ -510,6 +519,7 @@ def get_sequence_car_detection(DG, cf, sequence_name, model, bbox_util, show_set
     :param show_set:
     :return:
     """
+    import collections
     print("Processing sequence: "+cf.dataset_path)
     train_set = DG.dataloader[show_set]
     car_tracking_dict = {}
@@ -544,6 +554,7 @@ def get_sequence_car_detection(DG, cf, sequence_name, model, bbox_util, show_set
 
 
 def get_car_detection_box(cf, input_image, car_tracking_dict, img_name, model, bbox_util):
+    from keras.applications.imagenet_utils import preprocess_input
 
     ssd_input = imresize(input_image, cf.ssd_input_shape[:2])
     inputs = preprocess_input(np.expand_dims(ssd_input, axis=0).astype('float64'))
@@ -598,20 +609,294 @@ def car_tracking(cf):
     cf.batch_size_train = 1  # because we want to read every single image sequentially
     dataset_path_list = cf.dataset_path
     processed_list = os.listdir(cf.savepath)
-    if cf.formatting_ground_truth_sequence_car_trajectory:
-        train_features_all, val_features_all, test_features_all = [], [], []
     for dataset_path in dataset_path_list:
         sequence_name = dataset_path.split('/')[-1]
         cf.dataset_path = dataset_path
         DG = Dataset_Generators_Synthia_Car_trajectory(cf)
-        if cf.get_sequence_car_detection:
+        if cf.get_sequence_car_tracking:
             # now we count the number of pixels for each instances
-            priors = pickle.load(open(cf.ssd_prior_boxes, 'rb'), encoding='latin1')
-            bbox_util = BBoxUtility(cf.ssd_number_classes, priors, nms_thresh=0.45)
-            ### load model ###
-            model = SSD512v2(cf.ssd_input_shape, num_classes=cf.ssd_number_classes)
-            model.load_weights(cf.ssd_model_checkpoint, by_name=True)
-
             if sequence_name+'.json' not in processed_list:
-                get_sequence_car_detection(DG, cf, sequence_name, model, bbox_util)
+                get_sequence_car_tracking(DG, cf, sequence_name)
     print(' ---> Finish experiment: ' + cf.exp_name + ' <---')
+
+
+def get_sequence_car_tracking(DG, cf, sequence_name, show_set='train'):
+    """
+    We track all the frames with car larger than 0.2% Pixel Occupancy Rate
+    :param DG:
+    :param show_set:
+    :return:
+    """
+    print("Processing sequence: "+cf.dataset_path)
+    train_set = DG.dataloader[show_set]
+
+    car_detection_path_list = cf.savepath.split('/')
+    car_detection_path_list[-2] = 'car_detection'  # this is a hard coded script, sorry
+    with open(os.path.join('/'.join(car_detection_path_list), sequence_name+'.json'), 'r') as fp:
+        car_detect_dict = json.load(fp)
+
+    car_tracking_dict = {}
+    for i_batch, sample_batched in enumerate(train_set):
+        if i_batch == 0:
+            print('image, classes, instances and depth sizes are:')
+            print(sample_batched['image'].size(),
+                  sample_batched['classes'].size(),
+                  sample_batched['instances'].size(),
+                  sample_batched['depth'].size())
+        if i_batch % 100 == 0:
+            print("Processing batch: %d" % i_batch)
+
+        instances_torch = sample_batched['instances'][0]
+        classes_torch = sample_batched['classes'][0]
+        depth_torch = sample_batched['depth'][0]
+        image_torch = sample_batched['image'][0]
+        input_image = image_torch.numpy().astype('uint8')
+        instances = instances_torch.numpy().astype('uint8')
+        classes = classes_torch.numpy().astype('uint8')
+        depth = depth_torch.numpy()
+        img_name = sample_batched['img_name'][0]  # because for GT construction, the batch size is always 1
+        car_tracking_dict = get_car_tracking_box(cf, input_image, depth, car_tracking_dict, img_name, car_detect_dict)
+
+    # we sort the dict by keys
+    car_tracking_dict_sorted = collections.OrderedDict(sorted(car_tracking_dict.items()))
+    json_file_path = os.path.join(cf.savepath, sequence_name+'.json')
+    with open(json_file_path, 'w') as fp:
+        json.dump(car_tracking_dict_sorted, fp, indent=4)
+    print('Saving: '+json_file_path)
+
+    return car_tracking_dict
+
+
+def get_car_tracking_box(cf, input_image, depth, car_tracking_dict, img_name, car_detect_dict):
+    from code_base.tools.yolo_utils import box_iou, BoundBox
+    if cf.tracker == 'dlib_dsst':
+        import dlib
+    elif cf.tracker == 'ECO_HC':
+        import time
+        import matlab.engine
+        tic = time.time()
+        # Start MATLAB Engine for Python
+        print("start up matlab engine")
+        eng = matlab.engine.start_matlab()
+        eng.addpath('./ECO')
+        print("Elapsed time is " + str(time.time() - tic) + " seconds.")
+        tic = time.time()
+    elif cf.tracker == 'KCF':
+        import cv2
+        KCF_tracker = cv2.Tracker_create('KCF')
+
+    h, w = depth.shape
+    # this is a brand new sequence with brand new car to track
+    if len(car_tracking_dict) == 0 and img_name in car_detect_dict.keys():
+        CAR_ID = 0
+        detected_boundingboxes = car_detect_dict[img_name]
+        for bb in detected_boundingboxes:
+            xmin, ymin, xmax, ymax, _ = bb
+            h, w = depth.shape
+            xdmin, ydmin, xdmax, ydmax = max(0, int(xmin*w)), max(0, int(ymin*h)), min(w, int(xmax*w)), min(h, int(ymax*h))
+
+            if (ymax - ymin) * (xmax - xmin) > cf.threshold_car_POR_start:
+                print('we start a new tracking list')
+                car_tracking_dict[CAR_ID] = {}
+                car_tracking_dict[CAR_ID]['start_frame'] = img_name
+                car_tracking_dict[CAR_ID]['end_frame'] = None
+                car_tracking_dict[CAR_ID]['tracking_rect'] = []
+                car_tracking_dict[CAR_ID]['img_list'] = []
+                car_tracking_dict[CAR_ID]['img_list'].append(img_name)
+                car_tracking_dict[CAR_ID]['last_matched_detection_frame'] = img_name
+                # we use: http://scikit-image.org/docs/dev/auto_examples/xx_applications/plot_thresholding.html
+                # for depth thresholding
+                if cf.depth_threshold_method == 'yen':
+                    thresh = threshold_yen(depth[ydmin:ydmax, xdmin:xdmax])
+                elif cf.depth_threshold_method == 'ostu':
+                    thresh = threshold_otsu(depth[ydmin:ydmax, xdmin:xdmax])
+                elif cf.depth_threshold_method == 'li':
+                    thresh = threshold_li(depth[ydmin:ydmax, xdmin:xdmax])
+                car_mask = depth[ydmin:ydmax, xdmin:xdmax] < thresh
+                depth_min = depth[ydmin:ydmax, xdmin:xdmax][car_mask].min()
+                depth_max = depth[ydmin:ydmax, xdmin:xdmax][car_mask].max()
+                car_tracking_dict[CAR_ID]['tracking_rect'].append([xmin, ymin, xmax, ymax, depth_min, depth_max])
+                if cf.tracker == 'dlib_dsst':
+                    car_tracking_dict[CAR_ID]['tracker'] = dlib.correlation_tracker()
+                    car_tracking_dict[CAR_ID]['tracker'].start_track(input_image.transpose(1, 2, 0), dlib.rectangle(xdmin, ydmin, xdmax, ydmax))
+                elif cf.tracker == 'KCF':
+                    bbox = (xdmin, ydmin, xdmax-xdmin, ydmax-ydmin)
+                    car_tracking_dict[CAR_ID]['tracker'] = KCF_tracker.init(input_image.transpose(1, 2, 0), bbox)
+                CAR_ID += 1
+
+    else:
+        boxes_true = []
+        boxes_pred = []
+        for car_idx in car_tracking_dict.keys():
+            bx = BoundBox(1)
+            if not car_tracking_dict[car_idx]['end_frame']:
+                if cf.tracker == 'dlib_dsst':
+                    car_tracking_dict[car_idx]['tracker'].update(input_image.transpose(1, 2, 0))
+                    pos = car_tracking_dict[car_idx]['tracker'].get_position()
+                    bx.x, bx.y, bx.c = pos.left(), pos.top(), car_idx
+                    bx.w, bx.h = pos.width(), pos.height()
+                elif cf.tracker == 'KCF':
+                    ok, bbox = KCF_tracker.update(input_image.transpose(1, 2, 0))
+                    bx.x, bx.y, bx.c = bbox[0], bbox[1], car_idx
+                    bx.w, bx.h = bbox[2], bbox[3]
+                boxes_pred.append(bx)
+
+        if img_name in car_detect_dict.keys():
+            detected_boundingboxes = car_detect_dict[img_name]
+        else:
+            # there is no detected car in this frame
+            detected_boundingboxes = []
+        for bb in detected_boundingboxes:
+            xmin, ymin, xmax, ymax, _ = bb
+            xdmin, ydmin, xdmax, ydmax = max(0, int(xmin * w)), max(0, int(ymin * h)), \
+                                         min(w, int(xmax * w)), min(h, int(ymax * h))
+            gx = BoundBox(1)
+            gx.x, gx.y, gx.c = xdmin, ydmin, 1
+            gx.w, gx.h = (xdmax - xdmin), (ydmax - ydmin)
+            # we count all GT boxes
+            boxes_true.append(gx)
+
+        # we check whether the boundingbox overlaps with detection result
+        matched_iou = np.zeros(shape=len(boxes_true))
+        matched_idx = np.zeros(shape=len(boxes_true))
+        for ib, bx in enumerate(boxes_pred):
+            for t, gx in enumerate(boxes_true):
+                iou_new = box_iou(gx, bx)
+                if iou_new > cf.iou_threshold:
+                    matched_iou[t] = iou_new
+                    matched_idx[t] = bx.c
+            if matched_iou.sum() > 0:
+                t_idx = np.argmax(matched_iou)
+                gx = boxes_true[t_idx]
+                print('IOU: %.3f, We update tracked cars: %d' % (matched_iou[t_idx], matched_idx[t_idx]))
+
+                if cf.tracker == 'dlib_dsst':
+                    car_tracking_dict[matched_idx[t_idx]]['tracker'].start_track(
+                        input_image.transpose(1, 2, 0), dlib.rectangle(gx.x, gx.y, gx.w + gx.x, gx.h + gx.y))
+                elif cf.tracker == 'KCF':
+                    bbox = (int(gx.x), int(gx.y), int(gx.w), int(gx.h))
+                    car_tracking_dict[matched_idx[t_idx]]['tracker'].init(
+                        input_image.transpose(1, 2, 0), bbox)
+
+                car_tracking_dict[matched_idx[t_idx]]['last_matched_detection_frame'] = img_name
+                if len(np.nonzero(matched_iou)) > 1:
+                    print('More than one overlap of image: %s' % img_name)
+
+        # We check whether there is a new car appear:
+        for not_machted_idx, iou_value in enumerate(matched_iou):
+            if iou_value == 0:
+                gx = boxes_true[not_machted_idx]
+                if gx.w * gx.h > cf.threshold_car_POR_start * np.prod(cf.im_size):
+                    print('we start a new tracking list')
+                    xdmin, ydmin, xdmax, ydmax = gx.x, gx.y, gx.x + gx.w, gx.y + gx.h
+                    xmin, ymin, xmax, ymax = xdmin / w, ydmin / h, xdmax / w, ydmax / h
+                    CAR_ID = max(list(car_tracking_dict.keys())) + 1
+                    car_tracking_dict[CAR_ID] = {}
+                    car_tracking_dict[CAR_ID]['start_frame'] = img_name
+                    car_tracking_dict[CAR_ID]['end_frame'] = None
+                    car_tracking_dict[CAR_ID]['tracking_rect'] = []
+                    car_tracking_dict[CAR_ID]['img_list'] = []
+                    car_tracking_dict[CAR_ID]['img_list'].append(img_name)
+                    car_tracking_dict[CAR_ID]['last_matched_detection_frame'] = img_name
+                    # we use: http://scikit-image.org/docs/dev/auto_examples/xx_applications/plot_thresholding.html
+                    # for depth thresholding
+                    if cf.depth_threshold_method == 'yen':
+                        thresh = threshold_yen(depth[ydmin:ydmax, xdmin:xdmax])
+                    elif cf.depth_threshold_method == 'ostu':
+                        thresh = threshold_otsu(depth[ydmin:ydmax, xdmin:xdmax])
+                    elif cf.depth_threshold_method == 'li':
+                        thresh = threshold_li(depth[ydmin:ydmax, xdmin:xdmax])
+                    car_mask = depth[ydmin:ydmax, xdmin:xdmax] < thresh
+                    depth_min = depth[ydmin:ydmax, xdmin:xdmax][car_mask].min()
+                    depth_max = depth[ydmin:ydmax, xdmin:xdmax][car_mask].max()
+                    car_tracking_dict[CAR_ID]['tracking_rect'].append([xmin, ymin, xmax, ymax, depth_min, depth_max])
+                    if cf.tracker == 'dlib_dsst':
+                        car_tracking_dict[CAR_ID]['tracker'] = dlib.correlation_tracker()
+                        car_tracking_dict[CAR_ID]['tracker'].start_track(input_image.transpose(1, 2, 0), dlib.rectangle(xdmin, ydmin, xdmax, ydmax))
+                    elif cf.tracker == 'KCF':
+                        bbox = (xdmin, ydmin, xdmax-xdmin, ydmax-ydmin)
+                        car_tracking_dict[CAR_ID]['tracker'] = KCF_tracker.init(input_image.transpose(1, 2, 0), bbox)
+
+        # we update the tracked dictionary here:
+        for car_idx in car_tracking_dict.keys():
+            if not car_tracking_dict[car_idx]['end_frame']:
+                if cf.tracker == 'dlib_dsst':
+                    pos = car_tracking_dict[car_idx]['tracker'].get_position()
+                    xdmin, ydmin, xdmax, ydmax = int(pos.left()), int(pos.top()), int(pos.left() + pos.width()), int(
+                        pos.top() + pos.height())
+                elif cf.tracker == 'KCF':
+                    ok, bbox = KCF_tracker.update(input_image.transpose(1, 2, 0))
+                    xdmin, ydmin, xdmax, ydmax = int(bbox[0]), int(bbox[1]), int(bbox[0] + bbox[2]), int(bbox[1] + bbox[3])
+
+                xdmin, ydmin, xdmax, ydmax = max(0, xdmin), max(0, ydmin), min(w, xdmax), min(h, ydmax)
+                if cf.depth_threshold_method == 'yen':
+                    thresh = threshold_yen(depth[ydmin:ydmax, xdmin:xdmax])
+                elif cf.depth_threshold_method == 'ostu':
+                    thresh = threshold_otsu(depth[ydmin:ydmax, xdmin:xdmax])
+                elif cf.depth_threshold_method == 'li':
+                    thresh = threshold_li(depth[ydmin:ydmax, xdmin:xdmax])
+                car_mask = depth[ydmin:ydmax, xdmin:xdmax] < thresh
+                depth_min = depth[ydmin:ydmax, xdmin:xdmax][car_mask].min()
+                depth_max = depth[ydmin:ydmax, xdmin:xdmax][car_mask].max()
+
+                xmin, ymin, xmax, ymax  = xdmin/w, ydmin/h, xdmax/w, ydmax/h
+                car_tracking_dict[car_idx]['tracking_rect'].append([xmin, ymin, xmax, ymax, depth_min, depth_max])
+                car_tracking_dict[car_idx]['img_list'].append(img_name)
+
+                # if there is more than 3 frames we didn't detection such object target, we stop tracking this id
+                if int(img_name[:-4]) - int(car_tracking_dict[car_idx]['last_matched_detection_frame'][:-4]) > cf.minimum_detection_length:
+                    car_tracking_dict[car_idx]['end_frame'] = img_name
+
+    # We draw the visualisation here
+    if cf.draw_flag:
+        fig = plt.figure(1)
+        fig.clear()
+        tracking_figure_axes = fig.add_subplot(111, aspect='equal')
+        tracking_figure_axes.set_title('Green: detecion; Red: tracking. Image: %s' % img_name)
+        tracking_figure_axes.imshow(input_image.transpose(1, 2, 0))
+        for car_idx in car_tracking_dict.keys():
+            if not car_tracking_dict[car_idx]['end_frame']:
+                if cf.tracker == 'dlib_dsst':
+                    pos = car_tracking_dict[car_idx]['tracker'].get_position()
+                    tracking_rect = Rectangle(
+                        xy=(pos.left(), pos.top()),
+                        width=pos.width(),
+                        height=pos.height(),
+                        facecolor='none',
+                        edgecolor='r',
+                    )
+                    tracking_figure_axes.add_patch(tracking_rect)
+                    tracking_figure_axes.annotate(str(car_idx), xy=(pos.left(), pos.top() + 20), color='red')
+                elif cf.tracker == 'KCF':
+                    ok, bbox = KCF_tracker.update(input_image.transpose(1, 2, 0))
+                    tracking_rect = Rectangle(
+                        xy=(int(bbox[0]), int(bbox[1])),
+                        width=int(bbox[2]),
+                        height=int(bbox[3]),
+                        facecolor='none',
+                        edgecolor='r',
+                    )
+                    tracking_figure_axes.add_patch(tracking_rect)
+                    tracking_figure_axes.annotate(str(car_idx), xy=(int(bbox[0]), int(bbox[1])+20), color='red')
+
+        # we draw detected boundingboxes:
+        detected_boundingboxes = car_detect_dict[img_name]
+        for bb in detected_boundingboxes:
+            xmin, ymin, xmax, ymax, _ = bb
+            h, w = depth.shape
+            xdmin, ydmin, xdmax, ydmax = max(0, int(xmin * w)), max(0, int(ymin * h)), \
+                                         min(w, int(xmax * w)), min(h, int(ymax * h))
+            if (ymax - ymin) * (xmax - xmin) > cf.threshold_car_POR_end:
+                tracking_rect = Rectangle(
+                    xy=(xdmin, ydmin),
+                    width=(xdmax - xdmin),
+                    height=(ydmax - ydmin),
+                    facecolor='none',
+                    edgecolor='g',
+                )
+                tracking_figure_axes.add_patch(tracking_rect)
+                tracking_figure_axes.add_patch(tracking_rect)
+
+        plt.waitforbuttonpress(0.01)
+
+    return car_tracking_dict

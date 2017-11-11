@@ -1,23 +1,44 @@
-# Dataset
-problem_type                 = 'car_trajectory_prediction'  # ['classification' | 'detection' | 'segmentation']
-#dataset_name                 = 'synthia_rand_cityscapes'        # Dataset
+############################# Overall logic here
+problem_type                 = 'car_trajectory_prediction'  # ['car_tracking', 'car_detection', 'car_trajectory_prediction']
+sequence_name                = 'SYNTHIA-SEQS-01'
 
+car_detection                = False
+car_tracking                 = True
+tracker                      = 'dlib_dsst'  #['dlib_dsst', 'ECO_HC', 'KCF']
+draw_flag                    = True
+car_detection_method         = 'ssd512'
+get_sequence_car_detection   = True
+get_sequence_car_tracking    = True
+depth_threshold_method       = 'yen'   #['yen', 'ostu', 'li'
+iou_threshold                = 0.3
+start_tracking_idx           = 850
+threshold_car_POR_start      = 2e-3  # threshold for car start tracking using pixel occupant rate
+threshold_car_POR_end        = 1e-3  # threshold for car start tracking using pixel occupant rate
+minimum_detection_length     = 3
+
+####  SSD parameters (currently, we only suppose keras with Tensorflow backend, TODO: use Pytorch!
+ssd_prior_boxes              = '/home/stevenwudi/PycharmProjects/autonomous_driving/code_base/models/prior_boxes_ssd512.pkl'
+ssd_number_classes           = 2
+ssd_model_checkpoint         = '/home/public/synthia/ssd_car_fine_tune/weights_512.54-0.19.hdf5'
+ssd_input_shape              = (512, 512, 3)
+ssd_conf                     = 0.5
+
+
+# Dataset
 local_path                   = '/home/stevenwudi/PycharmProjects/autonomous_driving'
 shared_path                  = '/home/public/synthia'
 dataset_name2                = None            # Second dataset name. None if not Domain Adaptation
 perc_mb2                     = None            # Percentage of data from the second dataset in each minibatch
 class_mode                   = problem_type
-
-sequence_name                = 'SYNTHIA-SEQS-01'
 collect_data                 = False
-get_ground_truth_sequence_car_trajectory = False  # flag to get get_ground_truth_sequence_car_trajectory
+get_ground_truth_sequence_car_trajectory = True  # flag to get get_ground_truth_sequence_car_trajectory
 formatting_ground_truth_sequence_car_trajectory = True
 draw_seq                                = 'SYNTHIA-SEQS-06-NIGHT'   # which sequence to draw, need to set the above two flags to False
-
 
 # Model
 model_name                   = 'LSTM_ManyToMany'       # Model to use ['LSTM_ManyToMany', 'LSTM_To_FC']
 debug                        = False
+im_size                      = (760, 1280)
 resize_train                 = (760, 1280)      # Resize the image during training (Height, Width) or None
 #random_size_crop             = (350*2, 460*2)      # Random size crop of the image during training
 batch_size_train             = 1              # Batch size during training
@@ -57,8 +78,7 @@ cb_weights                          = [5.31950559,   1.65697855,   0.23748228,  
          0.63769955,   9.23991394,   1.66974087,   6.60188582,
          0.92809024,  19.85701845,   2.60712632,  14.72396384]
 
-threshold_car_POR_start                 = 2e-3  # threshold for car start tracking using pixel occupant rate
-threshold_car_POR_end                   = 1e-3  # threshold for car start tracking using pixel occupant rate
+
 threshold_car_depth                     = False  # flag for deciding depth as the start of car tracking
 threshold_car_depth_start               = 2000  # threshold for car start tracking using depth
 threshold_car_depth_end                 = 3000  # threshold for car end tracking using depth
@@ -84,7 +104,7 @@ loss                         = 'SmoothL1Loss'       # 'MSE', 'SmoothL1Loss'
 optimizer                    = 'LBFGS'      # LBFGS','adam'
 learning_rate                = 0.1          # Training learning rate
 momentum                     = 0.9
-load_trained_model           = True
+load_trained_model           = False
 train_model_path             = '/home/stevenwudi/PycharmProjects/autonomous_driving/Experiments/car_trajectory_prediction/SYNTHIA-SEQS-01___Mon, 06 Nov 2017-11-06 16:08:14/Epoch:100_net_aveErrCoverage:0.8343_aveErrCenter:17.47___.pth'
 #### LSTM training variables #################
 # LSTM_ManyToMany
