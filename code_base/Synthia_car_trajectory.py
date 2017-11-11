@@ -14,7 +14,7 @@ from code_base.config.configuration import Configuration
 from code_base.tools.utils import HMS, configurationPATH
 from code_base.tools.gt_acquisition import gt_collection_examintion
 from code_base.models.PyTorch_model_factory import Model_Factory_LSTM
-from code_base.tools.PyTorch_model_training import prepare_data
+from code_base.tools.PyTorch_model_training import prepare_data, prepare_data_image_list
 
 
 def process(cf):
@@ -25,10 +25,10 @@ def process(cf):
         gt_collection_examintion(cf)
 
     # Build model
+    train_input, train_target, valid_input, valid_target, test_input, test_target, data_mean, data_std = prepare_data_image_list(cf)
+
     print('\n > Building model...')
     model = Model_Factory_LSTM(cf)
-    train_images, valid_images, test_images, train_input, train_target, valid_input, valid_target, test_input, test_target, data_mean, data_std = prepare_data(cf)
-
 
     if cf.train_model:
         train_losses = []
