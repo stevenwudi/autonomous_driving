@@ -17,6 +17,7 @@
 !/paper/cvpr2018/egbib.bib
 !/paper/cvpr2018/ieee.bst
 !/paper/cvpr2018/cvpr.sty
+<<<<<<< HEAD
 
 
 000115.png
@@ -26,6 +27,11 @@ testforwzn.py
 
 
 
+||||||| merged common ancestors
+
+=======
+!/paper/cvpr2018/figures
+>>>>>>> upstream/master
 # ECO matlab folder ignore
 /code_base/ECO/
 /code_base/ECO/feature_extraction/networks
