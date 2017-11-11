@@ -18,9 +18,16 @@
 !/paper/cvpr2018/ieee.bst
 !/paper/cvpr2018/cvpr.sty
 
+
 000115.png
 000115-GTLable.png
 taskForWzn
 testforwzn.py
 
+
+
+# ECO matlab folder ignore
+/code_base/ECO/
+/code_base/ECO/feature_extraction/networks
+/code_base/ECO/sequences
 
