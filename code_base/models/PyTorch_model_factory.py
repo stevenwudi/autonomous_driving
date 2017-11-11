@@ -1,6 +1,6 @@
 from code_base.models.PyTorch_fcn import FeatureResNet, SegResNet, iou
 from code_base.models.PyTorch_drn import drn_c_26, drn_d_22, DRNSeg, DRNSegF
-from code_base.models.PyTorch_PredictModels import LSTM_ManyToMany, LSTM_To_FC
+from code_base.models.PyTorch_PredictModels import *
 from code_base.tools.PyTorch_model_training import calc_seq_err_robust
 import torch
 from torchvision import models
@@ -185,23 +185,30 @@ class Model_Factory_LSTM():
         # If we load from a pretrained model
         self.model_name = cf.model_name   #['LSTM_ManyToMany', 'LSTM_To_FC']
         if cf.model_name == 'LSTM_ManyToMany':
-            self.net = LSTM_ManyToMany(input_dim=cf.lstm_inputsize,
-                                       hidden_size=cf.lstm_hiddensize,
-                                       num_layers=cf.lstm_numlayers,
-                                       output_dim=cf.lstm_outputsize,
+            self.net = LSTM_ManyToMany(input_dims=cf.lstm_input_dims,
+                                       hidden_sizes=cf.lstm_hidden_sizes,
+                                       outlayer_input_dim=cf.outlayer_input_dim,
+                                       outlayer_output_dim=cf.outlayer_output_dim,
                                        cuda=cf.cuda)
         elif cf.model_name == 'LSTM_To_FC':
-            self.net = LSTM_To_FC(future=cf.lstm_predict_frame,
-                                  input_dim=cf.lstm_inputsize,
-                                  hidden_size=cf.lstm_hiddensize,
-                                  num_layers=cf.lstm_numlayers,
-                                  output_dim=cf.lstm_output_dim,
+            self.net = LSTM_To_FC(input_dims=cf.lstmToFc_input_dims,
+                                  hidden_sizes=cf.lstmToFc_hidden_sizes,
+                                  future_frame=cf.lstmToFc_future,
+                                  output_dim=cf.lstmToFc_output_dim,
                                   cuda=cf.cuda)
+        elif cf.model_name == 'CNN_LSTM_To_FC':
+            self.net = CNN_LSTM_To_FC(conv_paras=cf.cnnLstmToFc_conv_paras,
+                                      input_dims=cf.cnnLstmToFc_input_dims,
+                                      hidden_sizes=cf.cnnLstmToFc_hidden_sizes,
+                                      future_frame=cf.cnnLstmToFc_future,
+                                      output_dim=cf.cnnLstmToFc_output_dim,
+                                      cuda=cf.cuda)
         # Set the loss criterion
         if cf.loss == 'MSE':
             self.crit = nn.MSELoss()
         elif cf.loss == 'SmoothL1Loss':
             self.crit = nn.SmoothL1Loss()
+
         self.net.float()
         if cf.cuda and torch.cuda.is_available():
             print('Using cuda')
@@ -233,24 +240,42 @@ class Model_Factory_LSTM():
         elif cf.optimizer == 'sgd':
             self.optimiser = optim.SGD(self.net.parameters(), lr=cf.learning_rate, momentum=cf.momentum, weight_decay=cf.weight_decay)
 
-    def train(self, train_input, train_target, cf):
+    def train(self, train_images, train_input, train_target, cf):
         #print('learning rate:', lr)
         # begin to train
-        def closure():
-            self.optimiser.zero_grad()
-            out = self.net(train_input)[0]
-            loss = self.crit(out, train_target)
-            if cf.cuda:
-                print('loss: ', loss.data.cpu().numpy()[0])
-            else:
-                print('loss: ', loss.data.numpy()[0])
-            loss.backward()
-            return loss
+        if cf.model_name == 'CNN_LSTM_To_FC':
+            input = tuple([train_images, train_input])
+        else:
+            input = tuple([train_input])
 
-        self.optimiser.step(closure)
+        if cf.optimizer == 'LBFGS':
+            def closure():
+                self.optimiser.zero_grad()
+                out = self.net(*input)[0]
+                loss = self.crit(out, train_target)
+                if cf.cuda:
+                    print('loss: ', loss.data.cpu().numpy()[0])
+                else:
+                    print('loss: ', loss.data.numpy()[0])
+                loss.backward()
+                return loss
+            self.optimiser.step(closure)
 
-    def test(self, valid_input, valid_target, data_std, data_mean, cf, epoch=None):
-        pred = self.net(valid_input, future=cf.lstm_predict_frame)
+        # output loss
+        out = self.net(*input)[0]
+        loss = self.crit(out, train_target)
+        if cf.cuda:
+            return loss.data.cpu().numpy()[0]
+        else:
+            return loss.data.numpy()[0]
+
+    def test(self,valid_images ,valid_input, valid_target, data_std, data_mean, cf, epoch=None):
+        if cf.model_name == 'CNN_LSTM_To_FC':
+            input = tuple([valid_images, valid_input])
+        else:
+            input = tuple([valid_input])
+
+        pred = self.net(*input, future=cf.lstm_predict_frame)
         loss = self.crit(pred[-1], valid_target)
         if cf.cuda:
             results = pred[-1].data.cpu().numpy() * data_std + data_mean
@@ -292,5 +317,9 @@ class Model_Factory_LSTM():
             # plt.savefig(os.path.join(self.exp_dir, 'ious.png'))
             # plt.close()
         torch.save(self.net.state_dict(), os.path.join(self.exp_dir, model_checkpoint))
+        if cf.cuda:
+            return loss.data.cpu().numpy()[0]
+        else:
+            return loss.data.numpy()[0]
 
 

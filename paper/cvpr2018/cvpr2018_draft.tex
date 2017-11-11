@@ -7,7 +7,9 @@
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{bm}
+
 %\usepackage{subcaption}
+
 %\usepackage{slashbox}
 \usepackage{color}
 \usepackage[english]{babel}
@@ -30,7 +32,7 @@ Shenzhen University\thanks{Shenzhen Key Lab of Advanced Telecommunication and In
 %%%%%%%%% ABSTRACT
 \begin{abstract}
 TODO: abstract
-This guide is patterned after my ìDoing well in your coursesî, a post I wrote a long time ago on some of the tips/tricks Iíve developed during my undergrad. Iíve received nice comments about that guide, so in the same spirit, now that my PhD has come to an end I wanted to compile a similar retrospective document in hopes that it might be helpful to some. Unlike the undergraduate guide, this one was much more difficult to write because there is significantly more variation in how one can traverse the PhD experience. Therefore, many things are likely contentious and a good fraction will be specific to what Iím familiar with (Computer Science / Machine Learning / Computer Vision research). But disclaimers are boring, lets get to it!
+This guide is patterned after my ‚ÄúDoing well in your courses‚Äù, a post I wrote a long time ago on some of the tips/tricks I‚Äôve developed during my undergrad. I‚Äôve received nice comments about that guide, so in the same spirit, now that my PhD has come to an end I wanted to compile a similar retrospective document in hopes that it might be helpful to some. Unlike the undergraduate guide, this one was much more difficult to write because there is significantly more variation in how one can traverse the PhD experience. Therefore, many things are likely contentious and a good fraction will be specific to what I‚Äôm familiar with (Computer Science / Machine Learning / Computer Vision research). But disclaimers are boring, lets get to it!
 \end{abstract}
 %%%%%%%%% BODY TEXT
 %%% Andrje Karpathy's blog: http://karpathy.github.io/2016/09/07/phd/
@@ -133,6 +135,9 @@ This dataset is a large collection of images with high variability due to change
 %%% ZN: write related works for Recurrent Networks (used in the context of autonomous driving)
 \textbf{\emph{4. Recurrent Networks (used in the context of autonomous driving)}}
 
+
+Recently, RNN(recurrent network) and its variant LSTM(long short-term memory) have been successfully used in autonomous driving, due to its advantages for modeling sequential data in vision problems. Most of these works exploit LSTM as component of an end-to-end driving model. ~\cite{xu2017end} used the combination of a fully-convolutional network and an LSTM to learn from large-scale vehicle action data, to predict future egomotion including multi-modal discrete and continuous driving behaviors. ~\cite{kim2017interpretable} used a LSTM network to predict the inverse turning radius and generate a heat map of attention at each timestep conditioned on the previous hidden states and a current convolutional feature cube. ~\cite{duself} used 3D convolutional layers to extract visual features, then fed them into LSTM layers to capture the sequential relation. In addition to using deep features, ~\cite{koutnik2013evolving} trained a large recurrent neural network using a reinforcement learning approach to map images directly to steering angles, with the purpose to keep the car on track.
+
 ~\cite{xu2017end}: End-to-end learning of driving models from large-scale video dataset.
 
 ~\cite{behl2017bounding} Bounding Boxes, Segmentations and Object Coordinates: How Important is Recognition for 3D Scene Flow Estimation in Autonomous Driving Scenarios?
@@ -140,6 +145,7 @@ This dataset is a large collection of images with high variability due to change
 ~\cite{chen2015deepdriving} DeepDriving: Learning Affordance for Direct Perception
 
 ~\cite{kim2017interpretable} Interpretable Learning for Self-driving cars
+
 
 
 \section{Proposed Algorithm}
@@ -154,6 +160,7 @@ We compare two state-of-the-art trackers (given the time vs. accuracy) of the tr
 \subsection{trajectory prediction}
 
 We compare two temporal models based on LSTM cells for predicting the car trajectory.
+
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
