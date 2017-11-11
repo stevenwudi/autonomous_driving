@@ -17,7 +17,7 @@
 !/paper/cvpr2018/egbib.bib
 !/paper/cvpr2018/ieee.bst
 !/paper/cvpr2018/cvpr.sty
-
+!/paper/cvpr2018/figures
 # ECO matlab folder ignore
 /code_base/ECO/
 /code_base/ECO/feature_extraction/networks
