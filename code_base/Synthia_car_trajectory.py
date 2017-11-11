@@ -14,7 +14,7 @@ from code_base.config.configuration import Configuration
 from code_base.tools.utils import HMS, configurationPATH
 from code_base.tools.gt_acquisition import gt_collection_examintion
 from code_base.models.PyTorch_model_factory import Model_Factory_LSTM
-from code_base.tools.PyTorch_model_training import prepare_data, prepare_data_image_list
+from code_base.tools.PyTorch_data_generator import DataGenerator_Synthia_car_trajectory
 
 
 def process(cf):
@@ -24,8 +24,8 @@ def process(cf):
         print(' ---> Collecting data: ' + cf.sequence_name + ' <---')
         gt_collection_examintion(cf)
 
-    # Build model
-    train_input, train_target, valid_input, valid_target, test_input, test_target, data_mean, data_std = prepare_data_image_list(cf)
+    print('Create dataloader')
+    DG = DataGenerator_Synthia_car_trajectory(cf)
 
     print('\n > Building model...')
     model = Model_Factory_LSTM(cf)
