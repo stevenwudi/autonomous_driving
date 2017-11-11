@@ -10,7 +10,7 @@ import numpy as np
 import pickle
 import random
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "3"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 import matplotlib.pyplot as plt
 
@@ -19,15 +19,16 @@ random.seed(1000)
 NUM_CLASSES = 1 + 1
 resize_train = (760, 1280)
 input_shape = (512, 512, 3)
+nms_thresh = 0.45
 
-import keras
-from keras.preprocessing import image
-from keras.applications.imagenet_utils import preprocess_input
-from code_base.models.Keras_SSD import SSD512v2, BBoxUtility, Generator, MultiboxLoss
-priors = pickle.load(
-    open('/home/stevenwudi/PycharmProjects/autonomous_driving/code_base/models/prior_boxes_ssd512.pkl', 'rb'),
-    encoding='latin1')
-bbox_util = BBoxUtility(NUM_CLASSES, priors)
+# import keras
+# from keras.preprocessing import image
+# from keras.applications.imagenet_utils import preprocess_input
+# from code_base.models.Keras_SSD import SSD512v2, BBoxUtility, Generator, MultiboxLoss
+# priors = pickle.load(
+#     open('/home/stevenwudi/PycharmProjects/autonomous_driving/code_base/models/prior_boxes_ssd512.pkl', 'rb'),
+#     encoding='latin1')
+# bbox_util = BBoxUtility(NUM_CLASSES, priors, nms_thresh=nms_thresh)
 
 
 def combine_gt(annotation_1, annotation_2, merged_annotation):
@@ -283,10 +284,18 @@ def calculate_iou(test_gt_file, test_json_file, POR=None, draw=False):
     gt = pickle.load(open(test_gt_file, 'rb'))
     gt_dict = gt_classification_convert(gt)
 
+    ##################
     conf_threshold = np.linspace(0.5, 0.95, num=10)
     mAP_threshold = np.linspace(0.5, 0.95, num=10)
     tp = np.zeros(shape=(len(conf_threshold), len(mAP_threshold)))
     total_pred = np.zeros(len(conf_threshold))
+    ##################
+    # tp = 0
+    # total_pred = 0
+    # detection_threshold = 0.5
+    # iou_threshold = 0.5
+    ##################
+
     total_true = 0
     for i, k in enumerate(gt_dict.keys()):
         boxes_true = []
@@ -310,13 +319,13 @@ def calculate_iou(test_gt_file, test_json_file, POR=None, draw=False):
 
         for c, detection_threshold in enumerate(conf_threshold):
             true_matched_pred = np.zeros(shape=(len(boxes_pred), len(mAP_threshold)))
+            true_matched = np.zeros(shape=(len(boxes_true), len(mAP_threshold)))
             for ib, bx in enumerate(boxes_pred):
                 if POR and bx.w * bx.h < POR:
                     continue
                 if bx.c < detection_threshold:
                     continue
                 total_pred[c] += 1
-                true_matched = np.zeros(shape=(len(boxes_true), len(mAP_threshold)))
                 for u, iou_threshold in enumerate(mAP_threshold):
                     for t, gx in enumerate(boxes_true):
                         if true_matched[t, u]:
@@ -326,6 +335,24 @@ def calculate_iou(test_gt_file, test_json_file, POR=None, draw=False):
                             true_matched_pred[ib, u] = 1
                             tp[c, u] += 1.
                             break
+
+        # true_matched = np.zeros(shape=len(boxes_true))
+        # true_matched_pred = np.zeros(shape=len(boxes_pred))
+        # for ib, bx in enumerate(boxes_pred):
+        #     if POR and bx.w * bx.h < POR:
+        #         continue
+        #     if bx.c < detection_threshold:
+        #         continue
+        #     total_pred += 1
+        #
+        #     for t, gx in enumerate(boxes_true):
+        #         if true_matched[t]:
+        #             break
+        #         if box_iou(gx, bx) > iou_threshold:
+        #             true_matched[t] = 1
+        #             true_matched_pred[ib] = 1
+        #             tp += 1
+        #             break
 
         if draw:
             # we only draw conf=0.5, mAP(oou)=0.5) with false postive and false negative
@@ -376,6 +403,34 @@ def calculate_iou(test_gt_file, test_json_file, POR=None, draw=False):
     print('F score: %s' % (np.array_str(f)))
 
 
+def collect_front_and_rear_gt(annotation_1, annotation_2, save_dir, image_interval=50):
+    from PIL import Image
+    import scipy.misc
+    annotations_list_1 = json.load(open(annotation_1, 'r'))
+    annotations_list_2 = json.load(open(annotation_2, 'r'))
+    print(len(annotations_list_1), len(annotations_list_2))
+    car_count = 0
+    for i in range(0, len(annotations_list_1), image_interval):
+        img = Image.open(annotations_list_1[i]['image_path']+'/'+annotations_list_1[i]['image_name'])
+        img = np.array(img)
+        for bb_idx, bb in enumerate(annotations_list_1[i]['boundingbox']):
+            img_car = img[bb[1]:bb[3], bb[0]:bb[2]]
+            img_name = str(car_count) + '.png'
+            print(img_name)
+            car_count += 1
+            scipy.misc.imsave(os.path.join(save_dir, img_name), img_car)
+
+    for i in range(0, len(annotations_list_2), image_interval):
+        img = Image.open(annotations_list_2[i]['image_path']+'/'+annotations_list_2[i]['image_name'])
+        img = np.array(img)
+        for bb_idx, bb in enumerate(annotations_list_2[i]['boundingbox']):
+            img_car = img[bb[1]:bb[3], bb[0]:bb[2]]
+            img_name = str(car_count) + '.png'
+            print(img_name)
+            car_count += 1
+            scipy.misc.imsave(os.path.join(save_dir, img_name), img_car)
+
+
 def ssd_synthia_car_fine_tune():
     """
     The scirpt to calling different modules for fine-tuning/verifying SSD
@@ -388,8 +443,14 @@ def ssd_synthia_car_fine_tune():
         annotations_url_2 = '/home/public/synthia/SYNTHIA-SEQS-01-VALIDATE-shuffle.json'
         combine_gt(annotations_url_1, annotations_url_2, merged_annotation)
 
-    gt_file = '/home/public/synthia/ssd_car_fine_tune/ssd_car_fine_tune_gt-shuffle.pkl'
+    if False:
+        print('collect front and rear cars')
+        annotations_url_1 = '/home/public/synthia/SYNTHIA-SEQS-01-TRAIN-shuffle.json'
+        annotations_url_2 = '/home/public/synthia/SYNTHIA-SEQS-01-VALIDATE-shuffle.json'
+        save_dir = '/home/stevenwudi/PycharmProjects/autonomous_driving/Experiments/SEQ_01_SEQ_06_cars'
+        collect_front_and_rear_gt(annotations_url_1, annotations_url_2, save_dir, image_interval=50)
 
+    gt_file = '/home/public/synthia/ssd_car_fine_tune/ssd_car_fine_tune_gt-shuffle.pkl'
     if False:
         print('Training annotation conversion')
         converting_gt(merged_annotation, gt_file, POR=1e-3)
@@ -410,13 +471,19 @@ def ssd_synthia_car_fine_tune():
         # Examine test data
         examine_ssd512(test_gt_file, model_checkpoint)
 
-    test_json_file = '/home/public/synthia/ssd_car_fine_tune/ssd_car_test-shuffle.json'
+    test_json_file = '/home/public/synthia/ssd_car_fine_tune/ssd_car_test-shuffle_nms_'+str(nms_thresh)+'.json'
     if False:
         test_ssd512(test_gt_file, model_checkpoint, test_json_file)
     # A separate file for accepting gt file and predicted json fil
     if True:
-        calculate_iou(test_gt_file, test_json_file, POR=2e-3, draw=True)
+        calculate_iou(test_gt_file, test_json_file, POR=2e-3, draw=False)
+
+        test_gt_file = '/home/public/synthia/ssd_car_fine_tune/ssd_car_test_gt-shuffle.pkl'
+        test_json_file = '/home/public/synthia/ssd_car_test_faster-shuffle.json'
+
+        calculate_iou(test_gt_file, test_json_file, POR=2e-3, draw=False)
     """
+<<<<<<< HEAD
     This is the network results train by SSD512 (with 0.05% POR trained)
     Conf: [ 0.5   0.55  0.6   0.65  0.7   0.75  0.8   0.85  0.9   0.95]
     
@@ -472,22 +539,43 @@ def ssd_synthia_car_fine_tune():
      [ 0.668  0.614  0.578  0.561  0.548  0.531  0.496  0.426  0.302  0.105]]
     
     POR = 2e-3
+=======
+    ############################# SSD512 NMS 0.6 ###########################
+     Conf: [ 0.5   0.55  0.6   0.65  0.7   0.75  0.8   0.85  0.9   0.95]
+>>>>>>> 419d28c4e27b82c4cfef6a3aa01425cf29929973
     Total GT: 1433. 
-    Total prediction: [ 1438.  1428.  1421.  1413.  1403.  1398.  1384.  1374.  1348.  1305.]
-    Precision: [ 0.928  0.926  0.924  0.922  0.919  0.917  0.91   0.906  0.898  0.876]
-    Recall: [ 0.931  0.929  0.927  0.925  0.922  0.92   0.913  0.909  0.901  0.879]
-    F score: [[ 0.929  0.921  0.91   0.901  0.883  0.851  0.785  0.673  0.476  0.164]
-     [ 0.927  0.92   0.908  0.9    0.882  0.851  0.785  0.673  0.476  0.164]
-     [ 0.926  0.919  0.907  0.899  0.882  0.851  0.785  0.673  0.476  0.164]
-     [ 0.924  0.916  0.905  0.897  0.88   0.849  0.785  0.673  0.476  0.164]
-     [ 0.92   0.914  0.903  0.895  0.878  0.847  0.783  0.671  0.475  0.164]
-     [ 0.918  0.912  0.901  0.894  0.877  0.846  0.782  0.671  0.475  0.164]
-     [ 0.912  0.907  0.898  0.89   0.874  0.843  0.781  0.67   0.475  0.164]
-     [ 0.908  0.903  0.895  0.888  0.871  0.84   0.78   0.67   0.475  0.164]
-     [ 0.899  0.896  0.888  0.882  0.866  0.836  0.776  0.668  0.474  0.164]
-     [ 0.878  0.877  0.872  0.869  0.855  0.829  0.77   0.663  0.471  0.164]]
+     Total prediction: [ 1617.  1605.  1593.  1579.  1568.  1551.  1537.  1517.  1498.  1465.]
+    Precision: [ 0.821  0.819  0.818  0.818  0.816  0.811  0.809  0.804  0.8    0.792]
+    Recall: [ 0.927  0.925  0.923  0.923  0.92   0.915  0.913  0.907  0.902  0.894]
+    F score: [[ 0.871  0.868  0.859  0.852  0.836  0.81   0.742  0.636  0.48   0.161]
+     [ 0.869  0.866  0.857  0.85   0.834  0.808  0.741  0.635  0.48   0.161]
+     [ 0.867  0.864  0.857  0.849  0.834  0.808  0.741  0.635  0.48   0.161]
+     [ 0.867  0.864  0.857  0.849  0.834  0.808  0.741  0.635  0.48   0.161]
+     [ 0.865  0.862  0.855  0.848  0.832  0.807  0.741  0.635  0.48   0.161]
+     [ 0.86   0.857  0.851  0.844  0.828  0.804  0.739  0.633  0.479  0.161]
+     [ 0.858  0.855  0.849  0.843  0.827  0.802  0.738  0.633  0.478  0.161]
+     [ 0.852  0.85   0.844  0.839  0.823  0.8    0.736  0.631  0.477  0.16 ]
+     [ 0.848  0.846  0.841  0.836  0.82   0.797  0.734  0.631  0.477  0.16 ]
+     [ 0.84   0.838  0.834  0.829  0.814  0.792  0.729  0.629  0.476  0.16 ]]
+     
+     ############################# SSD512 NMS 0.45 ###########################
+     Total GT: 1433. 
+     Total prediction: [ 1438.  1428.  1421.  1413.  1403.  1398.  1384.  1374.  1348.  1305.]
+    Precision: [ 0.92   0.918  0.917  0.914  0.911  0.91   0.905  0.902  0.894  0.874]
+    Recall: [ 0.923  0.921  0.92   0.918  0.914  0.913  0.908  0.905  0.897  0.877]
+    F score: [[ 0.922  0.918  0.91   0.901  0.883  0.851  0.785  0.673  0.476  0.164]
+     [ 0.92   0.916  0.908  0.9    0.882  0.851  0.785  0.673  0.476  0.164]
+     [ 0.918  0.915  0.907  0.899  0.882  0.851  0.785  0.673  0.476  0.164]
+     [ 0.916  0.913  0.905  0.897  0.88   0.849  0.785  0.673  0.476  0.164]
+     [ 0.913  0.91   0.903  0.895  0.878  0.847  0.783  0.671  0.475  0.164]
+     [ 0.911  0.909  0.901  0.894  0.877  0.846  0.782  0.671  0.475  0.164]
+     [ 0.906  0.905  0.898  0.89   0.874  0.843  0.781  0.67   0.475  0.164]
+     [ 0.904  0.901  0.895  0.888  0.871  0.84   0.78   0.67   0.475  0.164]
+     [ 0.896  0.894  0.888  0.882  0.866  0.836  0.776  0.668  0.474  0.164]
+     [ 0.876  0.876  0.872  0.869  0.855  0.829  0.77   0.663  0.471  0.164]]
  
  
+<<<<<<< HEAD
 >>>>>>> bb5caf05d4bc41e182e41686b8b5e497053f9ca5
      ### POR = None (consider all testing examples)
     Total GT: 2696. 
@@ -509,6 +597,12 @@ def ssd_synthia_car_fine_tune():
      Conf: [ 0.5   0.55  0.6   0.65  0.7   0.75  0.8   0.85  0.9   0.95]
     Total GT: 1433.
     Total prediction: [ 1614.  1601.  1593.  1585.  1576.  1561.  1557.  1544.  1532.  1507.]
+=======
+    ############################# Faster-RCNN ###########################
+    Conf: [ 0.5   0.55  0.6   0.65  0.7   0.75  0.8   0.85  0.9   0.95]
+    Total GT: 1433. 
+     Total prediction: [ 1614.  1601.  1593.  1585.  1576.  1561.  1557.  1544.  1532.  1507.]
+>>>>>>> 419d28c4e27b82c4cfef6a3aa01425cf29929973
     Precision: [ 0.812  0.812  0.811  0.811  0.811  0.81   0.81   0.807  0.805  0.8  ]
     Recall: [ 0.914  0.914  0.913  0.913  0.913  0.913  0.913  0.909  0.907  0.902]
     F score: [[ 0.86   0.843  0.808  0.75   0.666  0.577  0.459  0.311  0.14   0.016]

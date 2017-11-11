@@ -83,15 +83,14 @@ class SegResNet(nn.Module):
 
 # Calculates class intersections over unions
 def iou(pred, target, num_classes):
-  ious = []
-  # Ignore IoU for background class
-  for cls in range(num_classes - 1):
-    pred_inds = pred == cls
-    target_inds = target == cls
-    intersection = (pred_inds[target_inds]).long().sum().data.cpu()[0]  # Cast to long to prevent overflows
-    union = pred_inds.long().sum().data.cpu()[0] + target_inds.long().sum().data.cpu()[0] - intersection
-    if union == 0:
-      ious.append(float('nan'))  # If there is no ground truth, do not include in evaluation
-    else:
-      ious.append(intersection / max(union, 1))
-  return ious
+    ious = []
+    for cls in range(num_classes):
+        pred_inds = pred == cls
+        target_inds = target == cls
+        intersection = (pred_inds[target_inds]).long().sum().data.cpu()[0]  # Cast to long to prevent overflows
+        union = pred_inds.long().sum().data.cpu()[0] + target_inds.long().sum().data.cpu()[0] - intersection
+        if union == 0:
+            ious.append(float('nan'))  # If there is no ground truth, do not include in evaluation
+        else:
+            ious.append(intersection / max(union, 1))
+    return ious

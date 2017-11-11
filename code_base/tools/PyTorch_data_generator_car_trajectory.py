@@ -134,23 +134,24 @@ class ImageDataGenerator_Synthia_Car_trajectory(Dataset):
         :param transform:  (callable, optional): Optional transform to be applied
         """
         self.image_dir = os.path.join(cf.dataset_path, cf.data_type, cf.data_stereo, cf.data_camera)
-        self.image_files = sorted(os.listdir(self.image_dir))
+        self.image_files = sorted(os.listdir(self.image_dir))[cf.start_tracking_idx:]
         self.label_dir = os.path.join(cf.dataset_path, 'GT', cf.data_label, cf.data_stereo, cf.data_camera)
-        self.label_files = sorted(os.listdir(self.label_dir))
+        self.label_files = sorted(os.listdir(self.label_dir))[cf.start_tracking_idx:]
         self.depth_dir = os.path.join(cf.dataset_path, 'Depth', cf.data_stereo, cf.data_camera)
-        self.depth_files = sorted(os.listdir(self.depth_dir))
+        self.depth_files = sorted(os.listdir(self.depth_dir))[cf.start_tracking_idx:]
+        self.len = len(os.listdir(self.image_dir)[cf.start_tracking_idx:])
         # we need to check all the image, label, depth have the same number of files
         assert len(self.image_files) == len(self.label_files) == len(self.depth_files), "number of files are not equal"
         self.transform = transform
 
     def __len__(self):
-        return len(os.listdir(self.image_dir))
+        return self.len
 
     def __getitem__(self, item):
         img_name = os.path.join(self.image_dir, self.image_files[item])
         image = io.imread(img_name)
         label_name = os.path.join(self.label_dir, self.image_files[item])
-        depth_name = os.path.join(self.depth_dir, self.depth_files[item])
+        depth_name = os.path.join(self.depth_dir, self.image_files[item])
         # folder containing png files (one per image). Annotations are given in two channels. The first
         # channel contains the class of that pixel (see the table below). The second channel contains
         # the unique ID of the instance for those objects that are dynamic (cars, pedestrians, etc.).

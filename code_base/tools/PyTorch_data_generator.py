@@ -15,7 +15,10 @@ from PIL import Image
 
 import torch
 from torch.utils.data import Dataset, DataLoader
-from torchvision import transforms as T
+import matplotlib
+# matplotlib.use('TkAgg')
+# from matplotlib import pyplot as plt
+# from torchvision import transforms as T
 # Ignore warnings
 import warnings
 
@@ -142,9 +145,8 @@ class Dataset_Generators_Synthia():
 
     def __init__(self, cf):
         self.cf = cf
-        self.dataloader = {}
-
         # Load training set
+<<<<<<< HEAD
         print('\n > Loading training, valid, test set, train_rand set')
         dataloaders_single = {x: ImageDataGenerator_Synthia(
             root_dir=os.path.join(cf.dataset_path, x),
@@ -179,13 +181,24 @@ class ImageDataGenerator_Synthia(Dataset):
     """ Image Data"""
 
     def __init__(self, root_dir, transform=None, error_images=None):
-        """
+=======
+        print('\n > Loading training, valid, test set')
+        train_dataset = ImageDataGenerator_Synthia(cf.dataset_path, 'train', cf=cf, crop=True, flip=True)
+        val_dataset = ImageDataGenerator_Synthia(cf.dataset_path, 'valid', cf=cf, crop=False, flip=False)
+        self.train_loader = DataLoader(train_dataset, batch_size=cf.batch_size, shuffle=True, num_workers=cf.workers, pin_memory=True)
+        self.val_loader = DataLoader(val_dataset, batch_size=1, num_workers=cf.workers, pin_memory=True)
 
+
+class ImageDataGenerator_Synthia(Dataset):
+    def __init__(self, root_dir, dataset_split, cf, crop=True, flip=True):
+>>>>>>> 419d28c4e27b82c4cfef6a3aa01425cf29929973
+        """
         :param root_dir: Directory will all the images
         :param label_dir: Directory will all the label images
         :param transform:  (callable, optional): Optional tra
         nsform to be applied
         """
+<<<<<<< HEAD
         if (root_dir[-10:] == 'train_rand'):
             self.root_dir = root_dir
             self.image_dir = os.path.join(root_dir[:-10], 'RGB')
@@ -208,29 +221,100 @@ class ImageDataGenerator_Synthia(Dataset):
 
     def __len__(self):
         return len(self.image_files)
+=======
+        self.root_dir = root_dir
+        # with open(os.path.join(root_dir, 'ALL.txt')) as text_file:  # can throw FileNotFoundError
+        #     lines = tuple(l.split() for l in text_file.readlines())
+        self.image_dir = os.path.join(root_dir, 'RGB')
+        self.label_dir = os.path.join(root_dir, 'GTTXT')
+        image_files = sorted(os.listdir(self.image_dir))
+        # if img_name not in ['ap_000_02-11-2015_18-02-19_000062_3_Rand_2.png',
+        #                     'ap_000_02-11-2015_18-02-19_000129_2_Rand_16.png',
+        #                     'ap_000_01-11-2015_19-20-57_000008_1_Rand_0.png']
+        train_num = int(len(image_files) * cf.train_ratio)
+        if dataset_split == 'train':
+            self.image_files = image_files[:train_num]
+            self.image_num = train_num
+            print('Total training number is: %d'%train_num)
+        elif dataset_split == 'valid':
+            self.image_files = image_files[train_num:]
+            self.image_num = len(image_files) - train_num
+            print('Total valid number is: %d' % self.image_num)
+        self.crop = crop
+        self.crop_size = cf.crop_size
+        self.flip = flip
+        self.mean = cf.rgb_mean
+        self.std = cf.rgb_std
+        self.ignore_index = cf.ignore_index
+
+    def __len__(self):
+        return self.image_num
+>>>>>>> 419d28c4e27b82c4cfef6a3aa01425cf29929973
 
     def __getitem__(self, item):
+        # Load images and perform augmentations with PIL
         img_name = os.path.join(self.image_dir, self.image_files[item])
+<<<<<<< HEAD
         # print ('-------')
         # print (img_name)
         image = io.imread(img_name)
         label_name = os.path.join(self.label_dir, self.image_files[item][:-4] + '.txt')
+=======
+>>>>>>> 419d28c4e27b82c4cfef6a3aa01425cf29929973
 
-        with open(label_name) as text_file:  # can throw FileNotFoundError
-            lines = tuple(l.split() for l in text_file.readlines())
+        try:
+            input = Image.open(img_name)
+        except IOError:
+            # unfortunately, some images are corrupted. Hence, we need to manually exclude them.
+            print("Image failed loading: ", img_name)
 
-        label = np.asarray(lines).astype('int32')
-        # y = imresize(y.astype('uint8'), size=x.shape[:2], interp='nearest')
+        label_name = os.path.join(self.label_dir, self.image_files[item][:-4] + '.txt')
+        try:
+            with open(label_name) as text_file:  # can throw FileNotFoundError
+                lines = tuple(l.split() for l in text_file.readlines())
+        except IOError:
+            # unfortunately, some images are corrupted. Hence, we need to manually exclude them.
+            print("Label failed loading: ", img_name)
 
-        sample = {'image': image, 'label': label}
+        target = np.asarray(lines).astype('int32')
+        target[target == -1] = 0
+        target[target == 0] = self.ignore_index
+        target = np.array(target).astype('uint8')
+        target = Image.fromarray(target)
 
-        if self.transform:
-            sample = self.transform(sample)
+        # Random uniform crop
+        if self.crop:
+            w, h = input.size
+            x1, y1 = random.randint(0, w - self.crop_size), random.randint(0, h - self.crop_size)
+            try:
+                input, target = input.crop((x1, y1, x1 + self.crop_size, y1 + self.crop_size)), \
+                                target.crop((x1, y1, x1 + self.crop_size, y1 + self.crop_size))
+            except IOError:
+                # unfortunately, some images are corrupted. Hence, we need to manually exclude them.
+                print("image failed loading: ", img_name)
+                # ap_000_01-11-2015_19-20-57_000008_1_Rand_0.png
+        # Random horizontal flip
+        if self.flip:
+            if random.random() < 0.5:
+                input, target = input.transpose(Image.FLIP_LEFT_RIGHT), target.transpose(Image.FLIP_LEFT_RIGHT)
 
+        # Convert to tensors
+        w, h = input.size
+        input_t = torch.ByteTensor(torch.ByteStorage.from_buffer(input.tobytes())).view(h, w, 3).permute(2, 0, 1).float().div(255)
+        target_t = torch.ByteTensor(torch.ByteStorage.from_buffer(target.tobytes())).view(h, w).long()
+        # Normalise input
+        input_t[0].sub_(self.mean[0]).div_(self.std[0])
+        input_t[1].sub_(self.mean[1]).div_(self.std[1])
+        input_t[2].sub_(self.mean[2]).div_(self.std[2])
+
+<<<<<<< HEAD
         label_tensor = sample['label']
         label_tensor_clone = label_tensor.clone()
         label_tensor_clone[label_tensor == -1] = 0
         return sample['image'], label_tensor_clone
+=======
+        return input_t, target_t
+>>>>>>> 419d28c4e27b82c4cfef6a3aa01425cf29929973
 
 
 class Dataset_Generators_Cityscape():
@@ -314,5 +398,5 @@ class CityscapesDataset(Dataset):
 
         # TOD): dangerous hack below
         #target_clone[target == self.num_classes] = 0
-        return input, target_one_hot, target_clone, self.inputs[i]  # Return x, y (one-hot), y (index)
+        return input, target
 

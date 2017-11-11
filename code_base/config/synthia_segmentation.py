@@ -1,21 +1,24 @@
 # Dataset
 problem_type                 = 'segmentation'  # ['classification' | 'detection' | 'segmentation']
-dataset_name                 = 'synthia_rand_cityscapes'        # Dataset
-sequence_name                 = 'SYNTHIA_RAND_CVPR16'
+
+
+dataset_name                 = 'SYNTHIA_RAND_CVPR16'
 dataset_name2                = None            # Second dataset name. None if not Domain Adaptation
 perc_mb2                     = None            # Percentage of data from the second dataset in each minibatch
 class_mode                   = problem_type
-local_path                   = '/home/ty/code/autonomous_driving'
-shared_path                  = '/home/public'
-data_path                    = '/home/stevenwudi/PycharmProjects/autonomous_driving/Datasets/segmentation'
-dataroot_dir                 = '/home/stevenwudi/PycharmProjects/autonomous_driving/Datasets/segmentation'
+local_path                   = '/home/stevenwudi/PycharmProjects/autonomous_driving'
+shared_path                  = '/home/public/synthia'
+sequence_name                = dataset_name
+dataroot_dir                 = '/home/stevenwudi/PycharmProjects/autonomous_driving/Datasets'
+
 # Model
-model_name                   = 'drn_d_38'          # Model to use ['fcn8' | 'lenet' | 'alexNet' | 'vgg16' |  'vgg19' | 'resnet50' | 'InceptionV3']
+model_name                   = 'drn_d_38'  # Model to use ['fcn8' | 'lenet' | 'alexNet' | 'vgg16' |  'vgg19' | 'resnet50' | 'InceptionV3']
+
 freeze_layers_from           = None            # Freeze layers from 0 to this layer during training (Useful for finetunning) [None | 'base_model' | Layer_id]
 show_model                   = False           # Show the architecture layers
 load_imageNet                = False           # Load Imagenet weights and normalize following imagenet procedure
-load_pretrained              = False           # Load a pretrained model for doing finetuning
-weights_file                 = 'weights.hdf5'  # Training weight file name
+load_trained_model           = True           # Load a pretrained model for doing finetuning
+train_model_path             = '/home/stevenwudi/PycharmProjects/autonomous_driving/Experiments/segmentation/SYNTHIA_RAND_CVPR16___Wed, 08 Nov 2017-11-08 11:21:17_drn_d_38/epoch_35_mIOU:.0.605787_net.pth'
 
 # Parameters
 train_model                  = True            # Train the model
@@ -30,7 +33,13 @@ debug_images_test            = 30              # N images for testing in debug m
 debug_n_epochs               = 3               # N of training epochs in debug mode
 
 # Batch sizes
+
 batch_size_train             = 20              # Batch size during training
+
+
+workers                      = 4
+
+
 batch_size_valid             = 10              # Batch size during validation
 batch_size_test              = 10              # Batch size during testing
 dataloader_num_workers_train = batch_size_train# Number of dataload works during training
@@ -57,6 +66,7 @@ seed_test                    = 1924            # Random seed for the testing shu
 
 # Training parameters
 optimizer                    = 'sgd'       # Optimizer
+
 learning_rate                = 0.0001          # Training learning rate
 weight_decay                 = 1e-4              # Weight decay or L2 parameter norm penalty   1e-4
 n_epochs                     = 10            # Number of epochs during training
@@ -108,6 +118,12 @@ TensorBoard_write_graph      = True             # Whether to visualize the graph
 TensorBoard_write_images     = False            # Whether to write model weights to visualize as image in Tensorboard.
 TensorBoard_logs_folder      = None             #
 
+learning_rate                = 0.001          # Training learning rate
+weight_decay                 = 0.              # Weight decay or L2 parameter norm penalty
+n_epochs                     = 100            # Number of epochs during training
+momentum                     = 0.9
+
+
 # Data augmentation for training and normalization
 norm_imageNet_preprocess           = False  # Normalize following imagenet procedure
 norm_rescale                       = 1/255. # Scalar to divide and set range 0-1
@@ -155,12 +171,16 @@ classes                             = {'void': 0, 'sky': 1, 'building': 2, 'road
                                        'sidewalk': 4, 'fence': 5, 'vegetation': 6,
                                        'pole': 7, 'car': 8, 'sign': 9, 'pedestrian': 10,
                                        'cyclist': 11}
-num_classes                         = len(classes)
+
+
+num_classes                           = len(classes)   # we don't want void class
+
 void_class                          = [len(classes) + 1]
 
 ignore_label                        = 0
 
 create_split                        = False
+
 cb_weights_method                   = 'rare_freq_cost'   # Label weight balance [None | 'median_freq_cost' | 'rare_freq_cost']
 cb_weights                          = [5.31950559,   1.65697855,   0.23748228,   0.29841721,
          0.63769955,   9.23991394,   1.66974087,   6.60188582,
@@ -178,3 +198,13 @@ full_to_colour = {0: (0, 0, 0), 1: (128, 128, 128), 2: (128, 0, 0), 3: (128, 64,
 #                   20: (220, 220, 0), 21: (107, 142, 35), 22: (152, 251, 152), 23: (70, 130, 180),
 #                   24: (220, 20, 60), 25: (255, 0, 0), 26: (0, 0, 142), 27: (0, 0, 70), 28: (0, 60, 100),
 #                   31: (0, 80, 100), 32: (0, 0, 230), 33: (119, 11, 32)}
+
+ignore_index                        = 0
+test_epoch                          = 1
+batch_size                          = 8
+crop_size                           = 720
+train_ratio                         = 0.9
+cb_weights_method                   = 'rare_freq_cost' #'rare_freq_cost'   # Label weight balance [None | 'median_freq_cost' | 'rare_freq_cost']
+cb_weights                          = [1.65697855,   0.23748228,   0.29841721, 0.63769955,   9.23991394,   1.66974087,
+                                       6.60188582, 0.92809024,  19.85701845,   2.60712632,  14.72396384]
+

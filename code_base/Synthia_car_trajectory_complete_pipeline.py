@@ -1,5 +1,6 @@
 import argparse
 import os
+os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 import sys
 # Di Wu add the following really ugly code so that python can find the path
 sys.path.append(os.getcwd())
@@ -10,32 +11,21 @@ matplotlib.use('TkAgg')
 
 from code_base.config.configuration import Configuration
 from code_base.tools.utils import HMS, configurationPATH
-from code_base.tools.gt_acquisition import gt_collection_examintion
-from code_base.models.PyTorch_model_factory import Model_Factory_LSTM
-from code_base.tools.PyTorch_model_training import prepare_data, prepare_data_image_list
+from code_base.tools.gt_acquisition import car_detection, car_tracking
 
 
 def process(cf):
 
-    # Create the data generators
-    if cf.collect_data:
-        print(' ---> Collecting data: ' + cf.sequence_name + ' <---')
-        gt_collection_examintion(cf)
+    if cf.car_detection:
+        print(' ---> Detecting cars : ' + cf.sequence_name + ' <---')
+        car_detection(cf)
 
-    # Build model
-    train_input, train_target, valid_input, valid_target, test_input, test_target, data_mean, data_std = prepare_data_image_list(cf)
+    if cf.car_tracking:
+        print(' ---> Tracking cars : ' + cf.sequence_name + ' <---')
+        print('Note that This part requires car detection to run first for very frame')
+        car_tracking(cf)
 
-    print('\n > Building model...')
-    model = Model_Factory_LSTM(cf)
-    if cf.train_model:
-        print(' ---> Training data: ' + cf.sequence_name + ' <---')
-        for epoch in range(1, cf.n_epochs + 1):
-            model.train(train_input, train_target, cf)
-            if cf.valid_model:
-                model.test(valid_input, valid_target, data_std, data_mean, cf, epoch)
-    if cf.test_model:
-        model.test(test_input, test_target, data_std, data_mean, cf)
-    print(' ---> Finish experiment: ' + cf.exp_name + ' <---')
+    print(' <--- Experiment finished! --->')
 
 
 def main():
