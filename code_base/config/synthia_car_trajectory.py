@@ -24,14 +24,9 @@ ssd_input_shape              = (512, 512, 3)
 ssd_conf                     = 0.5
 
 
-<<<<<<< HEAD
+
 local_path                   = '/home/wzn/PycharmProjects/autonomous_driving'
-||||||| merged common ancestors
-local_path                   = '/home/stevenwudi/PycharmProjects/autonomous_driving'
-=======
 # Dataset
-local_path                   = '/home/stevenwudi/PycharmProjects/autonomous_driving'
->>>>>>> pre-master
 shared_path                  = '/home/public/synthia'
 dataset_name2                = None            # Second dataset name. None if not Domain Adaptation
 perc_mb2                     = None            # Percentage of data from the second dataset in each minibatch
