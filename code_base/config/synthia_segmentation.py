@@ -1,13 +1,16 @@
 # Dataset
 problem_type                 = 'segmentation'  # ['classification' | 'detection' | 'segmentation']
 dataset_name                 = 'synthia_rand_cityscapes'        # Dataset
-dataset_name                 = 'SYNTHIA_RAND_CVPR16'
+sequence_name                 = 'SYNTHIA_RAND_CVPR16'
 dataset_name2                = None            # Second dataset name. None if not Domain Adaptation
 perc_mb2                     = None            # Percentage of data from the second dataset in each minibatch
 class_mode                   = problem_type
-
+local_path                   = '/home/ty/code/autonomous_driving'
+shared_path                  = '/home/public'
+data_path                    = '/home/stevenwudi/PycharmProjects/autonomous_driving/Datasets/segmentation'
+dataroot_dir                 = '/home/stevenwudi/PycharmProjects/autonomous_driving/Datasets/segmentation'
 # Model
-model_name                   = 'fcn8'          # Model to use ['fcn8' | 'lenet' | 'alexNet' | 'vgg16' |  'vgg19' | 'resnet50' | 'InceptionV3']
+model_name                   = 'drn_d_38'          # Model to use ['fcn8' | 'lenet' | 'alexNet' | 'vgg16' |  'vgg19' | 'resnet50' | 'InceptionV3']
 freeze_layers_from           = None            # Freeze layers from 0 to this layer during training (Useful for finetunning) [None | 'base_model' | Layer_id]
 show_model                   = False           # Show the architecture layers
 load_imageNet                = False           # Load Imagenet weights and normalize following imagenet procedure
@@ -27,7 +30,7 @@ debug_images_test            = 30              # N images for testing in debug m
 debug_n_epochs               = 3               # N of training epochs in debug mode
 
 # Batch sizes
-batch_size_train             = 10              # Batch size during training
+batch_size_train             = 20              # Batch size during training
 batch_size_valid             = 10              # Batch size during validation
 batch_size_test              = 10              # Batch size during testing
 dataloader_num_workers_train = batch_size_train# Number of dataload works during training
@@ -40,7 +43,7 @@ crop_size_test               = None            # Crop size during testing
 resize_train                 = (270, 480)      # Resize the image during training (Height, Width) or None
 resize_valid                 = (270, 480)      # Resize the image during validation
 resize_test                  = (270, 480)      # Resize the image during testing
-random_size_crop             = (250, 450)      # Random size crop of the image during training
+random_size_crop             = (512, 512)      # Random size crop of the image during training
 #random_size_crop             = None     # Random size crop of the image during training
 
 
@@ -53,10 +56,11 @@ seed_valid                   = 1924            # Random seed for the validation 
 seed_test                    = 1924            # Random seed for the testing shuffle
 
 # Training parameters
-optimizer                    = 'adam'       # Optimizer
+optimizer                    = 'sgd'       # Optimizer
 learning_rate                = 0.0001          # Training learning rate
-weight_decay                 = 0.              # Weight decay or L2 parameter norm penalty
-n_epochs                     = 25            # Number of epochs during training
+weight_decay                 = 1e-4              # Weight decay or L2 parameter norm penalty   1e-4
+n_epochs                     = 10            # Number of epochs during training
+momentum                     = 0.9  #0.9
 
 # Callback save results
 save_results_enabled         = False           # Enable the Callback
@@ -137,15 +141,40 @@ color_mode                          = 'rgb'
 n_channels                          = 3
 rgb_mean                            = [0.39450742,  0.37999875,  0.35578521] # Wudi pre-computed mean using first 1000 images
 rgb_std                             = [0.20455311,  0.20075491,  0.19981377] # Wudi pre-computed mean using first 1000 images
+
+# mean                                = [0.290101, 0.328081, 0.286964]
+# std                                 = [0.182954, 0.186566, 0.184475]
+
+
+load_trained_model                  = True
+# train_model_path                    = '/home/ty/code/autonomous_driving/Experiments/segmentation/synthia_rand_cityscapes___Mon, 06 Nov 2017-11-06 22:17:51/25_net.pth'
+# train_model_path                    = '/home/ty/code/autonomous_driving/Experiments/CityScape_semantic_segmentation/drn_d_38_cityscapes.pth'
+train_model_path                    = '/home/ty/code/autonomous_driving/Experiments/segmentation/synthia_rand_cityscapes___Tue, 07 Nov 2017-11-07 13:02:10/5_net.pth'
 #classes                             = ['void', 'sky', 'building', 'road', 'sidewalk', 'fence', 'vegetation', 'pole', 'car', 'sign', 'pedestrian', 'cyclist']
 classes                             = {'void': 0, 'sky': 1, 'building': 2, 'road': 3,
                                        'sidewalk': 4, 'fence': 5, 'vegetation': 6,
                                        'pole': 7, 'car': 8, 'sign': 9, 'pedestrian': 10,
                                        'cyclist': 11}
-n_classes                           = len(classes)
+num_classes                         = len(classes)
 void_class                          = [len(classes) + 1]
+
+ignore_label                        = 0
+
 create_split                        = False
 cb_weights_method                   = 'rare_freq_cost'   # Label weight balance [None | 'median_freq_cost' | 'rare_freq_cost']
 cb_weights                          = [5.31950559,   1.65697855,   0.23748228,   0.29841721,
          0.63769955,   9.23991394,   1.66974087,   6.60188582,
          0.92809024,  19.85701845,   2.60712632,  14.72396384]
+
+error_images                        = ['ap_000_02-11-2015_18-02-19_000062_3_Rand_2.png', 'ap_000_02-11-2015_18-02-19_000129_2_Rand_16.png',
+                                        'ap_000_01-11-2015_19-20-57_000008_1_Rand_0.png']
+test_epoch                          = 5
+
+full_to_colour = {0: (0, 0, 0), 1: (128, 128, 128), 2: (128, 0, 0), 3: (128, 64, 128),
+                  4: (0, 0, 192), 5: (64, 64, 128), 6: (128, 128, 0), 7: (192, 192, 128),
+                  8: (64, 0, 128), 9: (192, 192, 128), 10: (64, 64, 0), 11: (0, 128, 192)}
+# full_to_colour = {0: (0, 0, 0), 7: (128, 64, 128), 8: (244, 35, 232), 11: (70, 70, 70),
+#                   12: (102, 102, 156), 13: (190, 153, 153), 17: (153, 153, 153), 19: (250, 170, 30),
+#                   20: (220, 220, 0), 21: (107, 142, 35), 22: (152, 251, 152), 23: (70, 130, 180),
+#                   24: (220, 20, 60), 25: (255, 0, 0), 26: (0, 0, 142), 27: (0, 0, 70), 28: (0, 60, 100),
+#                   31: (0, 80, 100), 32: (0, 0, 230), 33: (119, 11, 32)}

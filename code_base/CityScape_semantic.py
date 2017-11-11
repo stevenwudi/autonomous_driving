@@ -7,7 +7,7 @@ sys.path.append(os.getcwd())
 import time
 from datetime import datetime
 
-from code_base.tools.PyTorch_data_generator import Dataset_Generators_Cityscape
+from code_base.tools.PyTorch_data_generator import Dataset_Generators_Cityscape, Dataset_Generators_Synthia
 from code_base.models.PyTorch_model_factory import Model_Factory
 from code_base.config.configuration import Configuration
 from code_base.tools.utils import HMS, configurationPATH
@@ -19,20 +19,21 @@ def process(cf):
     print(' ---> Init experiment: ' + cf.exp_name + ' <---')
     # Create the data generators
     DG = Dataset_Generators_Cityscape(cf)
+    # DG = Dataset_Generators_Synthia(cf)
     #show_DG(DG, 'train')  # this script will draw an image
 
     # Build model
     print('\n > Building model...')
     model = Model_Factory(cf)
-    model.test_and_save(DG.val_loader)
+    # model.test_and_save(DG.val_loader)
 
     # model.test(DG.val_loader, 0)
-    # if cf.train_model:
-    #     for epoch in range(1, cf.n_epochs + 1):
-    #         model.train(DG.train_loader, epoch)
-    #         if epoch % cf.test_epoch == 0:
-    #             if cf.test_model:
-    #                 model.test(DG.val_loader, epoch)
+    if cf.train_model:
+        for epoch in range(1, cf.n_epochs + 1):
+            model.train(DG.train_loader, epoch)
+            if epoch % cf.test_epoch == 0:
+                if cf.test_model:
+                    model.test(DG.val_loader, epoch)
 
     # Finish
     print(' ---> Finish experiment: ' + cf.exp_name + ' <---')
@@ -70,9 +71,7 @@ def main():
     shared_experiments_path = os.path.join(shared_path, 'Experiments')
 
     # Load configuration files
-    configuration = Configuration(arguments.config_path, arguments.exp_name,
-                                  dataset_path, shared_dataset_path,
-                                  experiments_path, shared_experiments_path)
+    configuration = Configuration(arguments.config_path)
     cf = configuration.load()
     configurationPATH(cf)
 

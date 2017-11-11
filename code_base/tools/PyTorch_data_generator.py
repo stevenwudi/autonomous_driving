@@ -99,7 +99,9 @@ class ToTensor(object):
         # numpy image: H x W x C
         # torch image: C X H X W
         image = image.transpose((2, 0, 1))
-        return {'image': torch.from_numpy(image),
+        image_tensor = torch.from_numpy(image)
+        image_tensor = image_tensor.float().div(255)
+        return {'image': image_tensor,
                 'label': torch.from_numpy(label)}
 
 
@@ -115,6 +117,25 @@ class RandomHorizontalFlip(object):
             results = [image, label]
         return results
 
+class Normalize(object):
+    """Given mean: (R, G, B) and std: (R, G, B),
+    will normalize each channel of the torch.*Tensor, i.e.
+    channel = (channel - mean) / std
+    """
+
+    def __init__(self, mean, std):
+        self.mean = torch.FloatTensor(mean)
+        self.std = torch.FloatTensor(std)
+
+    def __call__(self, image, label=None):
+        img = image['image']
+        label = image['label']
+        for t, m, s in zip(img, self.mean, self.std):
+            t.sub_(m).div_(s)
+        if label is None:
+            return image,
+        else:
+            return {'image': img, 'label': label.long()}
 
 class Dataset_Generators_Synthia():
     """ Initially we use synthia dataset"""
@@ -124,34 +145,40 @@ class Dataset_Generators_Synthia():
         self.dataloader = {}
 
         # Load training set
-        print('\n > Loading training, valid, test set')
+        print('\n > Loading training, valid, test set, train_rand set')
         dataloaders_single = {x: ImageDataGenerator_Synthia(
             root_dir=os.path.join(cf.dataset_path, x),
             transform=T.Compose([
-                Rescale(cf.resize_train),
                 RandomCrop(cf.random_size_crop),
                 ToTensor(),
-            ]))
-            for x in ['train', 'valid', 'test']}
+                Normalize(self.cf.rgb_mean, self.cf.rgb_std)
+            ]),
+            error_images=self.cf.error_images)
+            # for x in ['train', 'valid', 'test', 'train_rand']}
+            for x in ['train_rand']}
 
-        self.dataloader['train'] = DataLoader(dataset=dataloaders_single['train'],
-                                              batch_size=cf.batch_size_train,
-                                              shuffle=cf.shuffle_train,
-                                              num_workers=cf.dataloader_num_workers_train)
-        self.dataloader['valid'] = DataLoader(dataset=dataloaders_single['valid'],
-                                              batch_size=cf.batch_size_valid,
-                                              shuffle=cf.shuffle_valid,
-                                              num_workers=cf.dataloader_num_workers_valid)
-        self.dataloader['test'] = DataLoader(dataset=dataloaders_single['test'],
-                                             batch_size=cf.batch_size_test,
-                                             shuffle=cf.shuffle_test,
-                                             num_workers=cf.dataloader_num_workers_test)
+        # self.dataloader['train'] = DataLoader(dataset=dataloaders_single['train'],
+        #                                       batch_size=cf.batch_size_train,
+        #                                       shuffle=cf.shuffle_train,
+        #                                       num_workers=cf.dataloader_num_workers_train)
+        # self.dataloader['valid'] = DataLoader(dataset=dataloaders_single['valid'],
+        #                                       batch_size=cf.batch_size_valid,
+        #                                       shuffle=cf.shuffle_valid,
+        #                                       num_workers=cf.dataloader_num_workers_valid)
+        # self.dataloader['test'] = DataLoader(dataset=dataloaders_single['test'],
+        #                                      batch_size=cf.batch_size_test,
+        #                                      shuffle=cf.shuffle_test,
+        #                                      num_workers=cf.dataloader_num_workers_test)
+        self.dataloader['train_rand'] = DataLoader(dataset=dataloaders_single['train_rand'],
+                                             batch_size=cf.batch_size_train,
+                                             shuffle=cf.shuffle_train,
+                                             num_workers=cf.dataloader_num_workers_train)
 
 
 class ImageDataGenerator_Synthia(Dataset):
     """ Image Data"""
 
-    def __init__(self, root_dir, transform=None):
+    def __init__(self, root_dir, transform=None, error_images=None):
         """
 
         :param root_dir: Directory will all the images
@@ -159,18 +186,33 @@ class ImageDataGenerator_Synthia(Dataset):
         :param transform:  (callable, optional): Optional tra
         nsform to be applied
         """
-        self.root_dir = root_dir
-        self.image_dir = os.path.join(root_dir, 'images')
-        self.image_files = os.listdir(self.image_dir)
-        self.label_dir = os.path.join(root_dir, 'masks')
-        self.label_files = os.listdir(self.label_dir)
-        self.transform = transform
+        if (root_dir[-10:] == 'train_rand'):
+            self.root_dir = root_dir
+            self.image_dir = os.path.join(root_dir[:-10], 'RGB')
+            self.image_files = os.listdir(self.image_dir)
+            if error_images is not None:
+                for error in error_images:
+                    if os.path.exists(os.path.join(self.image_dir, error)):
+                        self.image_files.remove(error)
+
+            self.label_dir = os.path.join(root_dir[:-10], 'GTTXT')
+            self.label_files = os.listdir(self.label_dir)
+            self.transform = transform
+        else:
+            self.root_dir = root_dir
+            self.image_dir = os.path.join(root_dir, 'images')
+            self.image_files = os.listdir(self.image_dir)
+            self.label_dir = os.path.join(root_dir, 'masks')
+            self.label_files = os.listdir(self.label_dir)
+            self.transform = transform
 
     def __len__(self):
-        return len(os.listdir(self.image_dir))
+        return len(self.image_files)
 
     def __getitem__(self, item):
         img_name = os.path.join(self.image_dir, self.image_files[item])
+        # print ('-------')
+        # print (img_name)
         image = io.imread(img_name)
         label_name = os.path.join(self.label_dir, self.image_files[item][:-4] + '.txt')
 
@@ -185,7 +227,10 @@ class ImageDataGenerator_Synthia(Dataset):
         if self.transform:
             sample = self.transform(sample)
 
-        return sample
+        label_tensor = sample['label']
+        label_tensor_clone = label_tensor.clone()
+        label_tensor_clone[label_tensor == -1] = 0
+        return sample['image'], label_tensor_clone
 
 
 class Dataset_Generators_Cityscape():
