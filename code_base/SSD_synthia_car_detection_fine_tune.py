@@ -10,7 +10,7 @@ import numpy as np
 import pickle
 import random
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "3"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 import matplotlib.pyplot as plt
 
@@ -19,6 +19,7 @@ random.seed(1000)
 NUM_CLASSES = 1 + 1
 resize_train = (760, 1280)
 input_shape = (512, 512, 3)
+nms_thresh = 0.45
 
 # import keras
 # from keras.preprocessing import image
@@ -27,7 +28,7 @@ input_shape = (512, 512, 3)
 # priors = pickle.load(
 #     open('/home/stevenwudi/PycharmProjects/autonomous_driving/code_base/models/prior_boxes_ssd512.pkl', 'rb'),
 #     encoding='latin1')
-# bbox_util = BBoxUtility(NUM_CLASSES, priors)
+# bbox_util = BBoxUtility(NUM_CLASSES, priors, nms_thresh=nms_thresh)
 
 
 def combine_gt(annotation_1, annotation_2, merged_annotation):
@@ -283,10 +284,18 @@ def calculate_iou(test_gt_file, test_json_file, POR=None, draw=False):
     gt = pickle.load(open(test_gt_file, 'rb'))
     gt_dict = gt_classification_convert(gt)
 
+    ##################
     conf_threshold = np.linspace(0.5, 0.95, num=10)
     mAP_threshold = np.linspace(0.5, 0.95, num=10)
     tp = np.zeros(shape=(len(conf_threshold), len(mAP_threshold)))
     total_pred = np.zeros(len(conf_threshold))
+    ##################
+    # tp = 0
+    # total_pred = 0
+    # detection_threshold = 0.5
+    # iou_threshold = 0.5
+    ##################
+
     total_true = 0
     for i, k in enumerate(gt_dict.keys()):
         boxes_true = []
@@ -310,13 +319,13 @@ def calculate_iou(test_gt_file, test_json_file, POR=None, draw=False):
 
         for c, detection_threshold in enumerate(conf_threshold):
             true_matched_pred = np.zeros(shape=(len(boxes_pred), len(mAP_threshold)))
+            true_matched = np.zeros(shape=(len(boxes_true), len(mAP_threshold)))
             for ib, bx in enumerate(boxes_pred):
                 if POR and bx.w * bx.h < POR:
                     continue
                 if bx.c < detection_threshold:
                     continue
                 total_pred[c] += 1
-                true_matched = np.zeros(shape=(len(boxes_true), len(mAP_threshold)))
                 for u, iou_threshold in enumerate(mAP_threshold):
                     for t, gx in enumerate(boxes_true):
                         if true_matched[t, u]:
@@ -326,6 +335,24 @@ def calculate_iou(test_gt_file, test_json_file, POR=None, draw=False):
                             true_matched_pred[ib, u] = 1
                             tp[c, u] += 1.
                             break
+
+        # true_matched = np.zeros(shape=len(boxes_true))
+        # true_matched_pred = np.zeros(shape=len(boxes_pred))
+        # for ib, bx in enumerate(boxes_pred):
+        #     if POR and bx.w * bx.h < POR:
+        #         continue
+        #     if bx.c < detection_threshold:
+        #         continue
+        #     total_pred += 1
+        #
+        #     for t, gx in enumerate(boxes_true):
+        #         if true_matched[t]:
+        #             break
+        #         if box_iou(gx, bx) > iou_threshold:
+        #             true_matched[t] = 1
+        #             true_matched_pred[ib] = 1
+        #             tp += 1
+        #             break
 
         if draw:
             # we only draw conf=0.5, mAP(oou)=0.5) with false postive and false negative
@@ -416,7 +443,7 @@ def ssd_synthia_car_fine_tune():
         annotations_url_2 = '/home/public/synthia/SYNTHIA-SEQS-01-VALIDATE-shuffle.json'
         combine_gt(annotations_url_1, annotations_url_2, merged_annotation)
 
-    if True:
+    if False:
         print('collect front and rear cars')
         annotations_url_1 = '/home/public/synthia/SYNTHIA-SEQS-01-TRAIN-shuffle.json'
         annotations_url_2 = '/home/public/synthia/SYNTHIA-SEQS-01-VALIDATE-shuffle.json'
@@ -444,80 +471,68 @@ def ssd_synthia_car_fine_tune():
         # Examine test data
         examine_ssd512(test_gt_file, model_checkpoint)
 
-    test_json_file = '/home/public/synthia/ssd_car_fine_tune/ssd_car_test-shuffle.json'
+    test_json_file = '/home/public/synthia/ssd_car_fine_tune/ssd_car_test-shuffle_nms_'+str(nms_thresh)+'.json'
     if False:
         test_ssd512(test_gt_file, model_checkpoint, test_json_file)
     # A separate file for accepting gt file and predicted json fil
-    if False:
-        calculate_iou(test_gt_file, test_json_file, POR=2e-3, draw=True)
+    if True:
+        calculate_iou(test_gt_file, test_json_file, POR=2e-3, draw=False)
+
+        test_gt_file = '/home/public/synthia/ssd_car_fine_tune/ssd_car_test_gt-shuffle.pkl'
+        test_json_file = '/home/public/synthia/ssd_car_test_faster-shuffle.json'
+
+        calculate_iou(test_gt_file, test_json_file, POR=2e-3, draw=False)
     """
-    This is the network results train by SSD512 (with 0.05% POR trained)
-    Conf: [ 0.5   0.55  0.6   0.65  0.7   0.75  0.8   0.85  0.9   0.95]
-    
-    ### POR=1e-3
-    Total GT: 2327. 
-    Total prediction: [ 2016.  1986.  1951.  1918.  1888.  1852.  1815.  1774.  1711.  1641.]
-    Precision: [ 0.913  0.908  0.9    0.895  0.886  0.879  0.867  0.853  0.83   0.804]
-    Recall: [ 0.791  0.787  0.78   0.775  0.768  0.761  0.751  0.739  0.719  0.697]
-    F score: [[ 0.847  0.843  0.837  0.825  0.816  0.79   0.748  0.666  0.449  0.106]
-     [ 0.843  0.839  0.834  0.823  0.813  0.788  0.748  0.665  0.449  0.106]
-     [ 0.835  0.833  0.829  0.818  0.809  0.786  0.747  0.665  0.449  0.106]
-     [ 0.831  0.829  0.826  0.815  0.807  0.784  0.746  0.664  0.449  0.105]
-     [ 0.823  0.822  0.82   0.81   0.802  0.781  0.744  0.663  0.447  0.105]
-     [ 0.816  0.816  0.815  0.806  0.799  0.778  0.741  0.661  0.446  0.105]
-     [ 0.805  0.805  0.806  0.797  0.792  0.772  0.738  0.66   0.445  0.105]
-     [ 0.792  0.793  0.793  0.789  0.784  0.766  0.734  0.658  0.445  0.105]
-     [ 0.77   0.773  0.775  0.771  0.768  0.753  0.725  0.652  0.441  0.104]
-     [ 0.746  0.749  0.751  0.751  0.75   0.741  0.716  0.645  0.439  0.103]]
-         
-    ### POR shuffle
-    Total GT: 2563. 
-    Total prediction: [ 2185.  2137.  2081.  2047.  2010.  1976.  1937.  1893.  1831.  1713.]
-    Precision: [ 0.843  0.836  0.826  0.819  0.813  0.805  0.795  0.784  0.766  0.726]
-    Recall: [ 0.719  0.712  0.704  0.698  0.693  0.686  0.678  0.669  0.653  0.619]
-    F score: [[ 0.776  0.698  0.646  0.619  0.597  0.571  0.525  0.447  0.31   0.106]
-     [ 0.769  0.693  0.642  0.616  0.595  0.57   0.524  0.447  0.31   0.106]
-     [ 0.76   0.686  0.637  0.612  0.591  0.568  0.523  0.445  0.31   0.106]
-     [ 0.754  0.681  0.632  0.608  0.588  0.565  0.521  0.443  0.31   0.106]
-     [ 0.749  0.677  0.629  0.605  0.586  0.563  0.52   0.442  0.309  0.106]
-     [ 0.741  0.671  0.624  0.602  0.583  0.561  0.518  0.441  0.309  0.106]
-     [ 0.732  0.664  0.619  0.597  0.579  0.558  0.516  0.44   0.308  0.106]
-     [ 0.722  0.656  0.612  0.59   0.573  0.553  0.515  0.439  0.308  0.106]
-     [ 0.705  0.642  0.6    0.58   0.564  0.545  0.508  0.435  0.306  0.105]
-     [ 0.668  0.614  0.578  0.561  0.548  0.531  0.496  0.426  0.302  0.105]]
-    
-    POR = 2e-3
+    ############################# SSD512 NMS 0.6 ###########################
+     Conf: [ 0.5   0.55  0.6   0.65  0.7   0.75  0.8   0.85  0.9   0.95]
     Total GT: 1433. 
-    Total prediction: [ 1438.  1428.  1421.  1413.  1403.  1398.  1384.  1374.  1348.  1305.]
-    Precision: [ 0.928  0.926  0.924  0.922  0.919  0.917  0.91   0.906  0.898  0.876]
-    Recall: [ 0.931  0.929  0.927  0.925  0.922  0.92   0.913  0.909  0.901  0.879]
-    F score: [[ 0.929  0.921  0.91   0.901  0.883  0.851  0.785  0.673  0.476  0.164]
-     [ 0.927  0.92   0.908  0.9    0.882  0.851  0.785  0.673  0.476  0.164]
-     [ 0.926  0.919  0.907  0.899  0.882  0.851  0.785  0.673  0.476  0.164]
-     [ 0.924  0.916  0.905  0.897  0.88   0.849  0.785  0.673  0.476  0.164]
-     [ 0.92   0.914  0.903  0.895  0.878  0.847  0.783  0.671  0.475  0.164]
-     [ 0.918  0.912  0.901  0.894  0.877  0.846  0.782  0.671  0.475  0.164]
-     [ 0.912  0.907  0.898  0.89   0.874  0.843  0.781  0.67   0.475  0.164]
-     [ 0.908  0.903  0.895  0.888  0.871  0.84   0.78   0.67   0.475  0.164]
-     [ 0.899  0.896  0.888  0.882  0.866  0.836  0.776  0.668  0.474  0.164]
-     [ 0.878  0.877  0.872  0.869  0.855  0.829  0.77   0.663  0.471  0.164]]
+     Total prediction: [ 1617.  1605.  1593.  1579.  1568.  1551.  1537.  1517.  1498.  1465.]
+    Precision: [ 0.821  0.819  0.818  0.818  0.816  0.811  0.809  0.804  0.8    0.792]
+    Recall: [ 0.927  0.925  0.923  0.923  0.92   0.915  0.913  0.907  0.902  0.894]
+    F score: [[ 0.871  0.868  0.859  0.852  0.836  0.81   0.742  0.636  0.48   0.161]
+     [ 0.869  0.866  0.857  0.85   0.834  0.808  0.741  0.635  0.48   0.161]
+     [ 0.867  0.864  0.857  0.849  0.834  0.808  0.741  0.635  0.48   0.161]
+     [ 0.867  0.864  0.857  0.849  0.834  0.808  0.741  0.635  0.48   0.161]
+     [ 0.865  0.862  0.855  0.848  0.832  0.807  0.741  0.635  0.48   0.161]
+     [ 0.86   0.857  0.851  0.844  0.828  0.804  0.739  0.633  0.479  0.161]
+     [ 0.858  0.855  0.849  0.843  0.827  0.802  0.738  0.633  0.478  0.161]
+     [ 0.852  0.85   0.844  0.839  0.823  0.8    0.736  0.631  0.477  0.16 ]
+     [ 0.848  0.846  0.841  0.836  0.82   0.797  0.734  0.631  0.477  0.16 ]
+     [ 0.84   0.838  0.834  0.829  0.814  0.792  0.729  0.629  0.476  0.16 ]]
+     
+     ############################# SSD512 NMS 0.45 ###########################
+     Total GT: 1433. 
+     Total prediction: [ 1438.  1428.  1421.  1413.  1403.  1398.  1384.  1374.  1348.  1305.]
+    Precision: [ 0.92   0.918  0.917  0.914  0.911  0.91   0.905  0.902  0.894  0.874]
+    Recall: [ 0.923  0.921  0.92   0.918  0.914  0.913  0.908  0.905  0.897  0.877]
+    F score: [[ 0.922  0.918  0.91   0.901  0.883  0.851  0.785  0.673  0.476  0.164]
+     [ 0.92   0.916  0.908  0.9    0.882  0.851  0.785  0.673  0.476  0.164]
+     [ 0.918  0.915  0.907  0.899  0.882  0.851  0.785  0.673  0.476  0.164]
+     [ 0.916  0.913  0.905  0.897  0.88   0.849  0.785  0.673  0.476  0.164]
+     [ 0.913  0.91   0.903  0.895  0.878  0.847  0.783  0.671  0.475  0.164]
+     [ 0.911  0.909  0.901  0.894  0.877  0.846  0.782  0.671  0.475  0.164]
+     [ 0.906  0.905  0.898  0.89   0.874  0.843  0.781  0.67   0.475  0.164]
+     [ 0.904  0.901  0.895  0.888  0.871  0.84   0.78   0.67   0.475  0.164]
+     [ 0.896  0.894  0.888  0.882  0.866  0.836  0.776  0.668  0.474  0.164]
+     [ 0.876  0.876  0.872  0.869  0.855  0.829  0.77   0.663  0.471  0.164]]
  
  
-     ### POR = None (consider all testing examples)
-    Total GT: 2696. 
-    Total prediction: [ 2273.  2221.  2166.  2111.  2055.  2000.  1945.  1875.  1786.  1684.]
-    Precision: [ 0.822  0.818  0.81   0.805  0.796  0.789  0.777  0.763  0.741  0.716]
-    Recall: [ 0.693  0.69   0.683  0.678  0.671  0.665  0.655  0.643  0.625  0.604]
-    F score: [[ 0.752  0.746  0.74   0.729  0.724  0.703  0.668  0.597  0.405  0.096]
-     [ 0.748  0.744  0.737  0.727  0.722  0.702  0.668  0.597  0.405  0.096]
-     [ 0.741  0.737  0.733  0.723  0.718  0.699  0.667  0.596  0.405  0.096]
-     [ 0.736  0.733  0.729  0.72   0.716  0.698  0.666  0.596  0.404  0.095]
-     [ 0.728  0.726  0.724  0.716  0.712  0.695  0.664  0.595  0.403  0.095]
-     [ 0.722  0.721  0.72   0.712  0.708  0.692  0.661  0.593  0.402  0.095]
-     [ 0.711  0.711  0.711  0.704  0.703  0.687  0.659  0.592  0.401  0.095]
-     [ 0.698  0.7    0.7    0.696  0.696  0.682  0.655  0.59   0.401  0.095]
-     [ 0.678  0.682  0.684  0.681  0.681  0.67   0.647  0.585  0.398  0.095]
-     [ 0.655  0.659  0.662  0.663  0.665  0.659  0.639  0.578  0.395  0.094]]
+    ############################# Faster-RCNN ###########################
+    Conf: [ 0.5   0.55  0.6   0.65  0.7   0.75  0.8   0.85  0.9   0.95]
+    Total GT: 1433. 
+     Total prediction: [ 1614.  1601.  1593.  1585.  1576.  1561.  1557.  1544.  1532.  1507.]
+    Precision: [ 0.812  0.812  0.811  0.811  0.811  0.81   0.81   0.807  0.805  0.8  ]
+    Recall: [ 0.914  0.914  0.913  0.913  0.913  0.913  0.913  0.909  0.907  0.902]
+    F score: [[ 0.86   0.843  0.808  0.75   0.666  0.577  0.459  0.311  0.14   0.016]
+     [ 0.86   0.843  0.808  0.75   0.666  0.577  0.459  0.311  0.14   0.016]
+     [ 0.859  0.842  0.807  0.75   0.666  0.577  0.459  0.311  0.14   0.016]
+     [ 0.859  0.842  0.807  0.75   0.666  0.577  0.459  0.311  0.14   0.016]
+     [ 0.859  0.842  0.807  0.75   0.666  0.577  0.459  0.311  0.14   0.016]
+     [ 0.859  0.842  0.807  0.75   0.666  0.577  0.459  0.311  0.14   0.016]
+     [ 0.859  0.842  0.807  0.75   0.666  0.577  0.459  0.311  0.14   0.016]
+     [ 0.855  0.839  0.804  0.748  0.665  0.576  0.458  0.311  0.14   0.016]
+     [ 0.853  0.838  0.804  0.747  0.664  0.575  0.458  0.311  0.14   0.016]
+     [ 0.848  0.834  0.8    0.745  0.662  0.574  0.457  0.31   0.139  0.016]]
  """
 
 

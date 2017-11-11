@@ -30,6 +30,61 @@ def prepare_data(cf):
     train_data = f['train_data']
     valid_data = f['valid_data']
     test_data = f['test_data']
+
+    # --------> to test data shuffle
+    np.random.seed(10)
+    train_size = train_data.shape[0]
+    valid_size = valid_data.shape[0]
+
+    all_data = np.concatenate((train_data, valid_data, test_data), axis=0)
+    all_data = all_data.astype(float)
+    np.random.shuffle(all_data)
+    # train_data = all_data[:train_size, :, :]
+    train_data = all_data[:512, :, :]
+    valid_data = all_data[train_size:train_size + valid_size, :, :]
+    test_data = all_data[train_size + valid_size:, :, :]
+    # --------< to test data shuffle     
+
+    train_data, valid_data, test_data, data_mean, data_std = normalise_data(train_data, valid_data, test_data)
+
+    if cf.cuda:
+        print('Data using CUDA')
+        dtype = torch.cuda.FloatTensor  # Uncomment this to run on GPU
+    else:
+        dtype = torch.FloatTensor
+
+    valid_input = Variable(torch.from_numpy(valid_data[:, :cf.lstm_input_frame, :]).type(dtype), requires_grad=False)
+    valid_target = Variable(torch.from_numpy(valid_data[:, cf.lstm_input_frame:, :]).type(dtype), requires_grad=False)
+    test_input = Variable(torch.from_numpy(test_data[:, :cf.lstm_input_frame, :]).type(dtype), requires_grad=False)
+    test_target = Variable(torch.from_numpy(test_data[:, cf.lstm_input_frame:, :]).type(dtype), requires_grad=False)
+    # Many to many input
+    if cf.model_name == 'LSTM_ManyToMany':
+        train_input = Variable(torch.from_numpy(train_data[:, :-1, :]).type(dtype), requires_grad=False)
+        train_target = Variable(torch.from_numpy(train_data[:, 1:, :]).type(dtype), requires_grad=False)
+    else:
+        train_input = Variable(torch.from_numpy(train_data[:, :cf.lstm_input_frame, :]).type(dtype),
+                                requires_grad=False)
+        train_target = Variable(torch.from_numpy(train_data[:, cf.lstm_input_frame:, :]).type(dtype),
+                                requires_grad=False)
+
+
+    # images: the input images, may be semantic segmentation or RGB. size as (batchSize, sequenceSize, Cin, Hin, Win)
+    train_images = Variable(torch.zeros(train_input.size(0), train_input.size(1), 1, 100, 100).type(dtype), requires_grad=False)
+    valid_images = Variable(torch.zeros(valid_input.size(0), valid_input.size(1), 1, 100, 100).type(dtype), requires_grad=False)
+    test_images = Variable(torch.zeros(test_input.size(0), test_input.size(1), 1, 100, 100).type(dtype), requires_grad=False)
+
+    return train_images, valid_images, test_images, train_input, train_target, valid_input, valid_target, test_input, test_target, data_mean, data_std
+
+
+def prepare_data_image_list(cf):
+    import pickle
+    with open(os.path.join(cf.shared_path, cf.problem_type, cf.sequence_name + '_train.npy'), 'rb') as fp:
+        train_data = pickle.load(fp)
+    with open(os.path.join(cf.shared_path, cf.problem_type, cf.sequence_name + '_valid.npy'), 'rb') as fp:
+        valid_data = pickle.load(fp)
+    with open(os.path.join(cf.shared_path, cf.problem_type, cf.sequence_name + '_test.npy'), 'rb') as fp:
+        test_data = pickle.load(fp)
+
     train_data, valid_data, test_data, data_mean, data_std = normalise_data(train_data, valid_data, test_data)
     if cf.cuda:
         print('Data using CUDA')
@@ -61,6 +116,7 @@ def prepare_data(cf):
             train_target = Variable(torch.from_numpy(train_data[:, cf.lstm_input_frame:, :]), requires_grad=False)
 
     return train_input, train_target, valid_input, valid_target, test_input, test_target, data_mean, data_std
+
 
 
 def calc_seq_err_robust(results, rect_anno, focal_length):

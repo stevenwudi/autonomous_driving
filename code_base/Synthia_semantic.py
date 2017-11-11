@@ -1,6 +1,6 @@
 import argparse
 import os
-os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+os.environ['CUDA_VISIBLE_DEVICES'] = '3'
 import sys
 # Di Wu add the following really ugly code so that python can find the path
 sys.path.append(os.getcwd())
@@ -41,8 +41,7 @@ def process(cf):
 def main():
     # Get parameters from arguments
     parser = argparse.ArgumentParser(description='Semantic segmentation')
-    parser.add_argument('-c', '--config_path', type=str,
-                        default='/home/stevenwudi/PycharmProjects/autonomous_driving/code_base/config/synthia_segmentation.py')
+    parser.add_argument('-c', '--config_path', type=str, default='/home/stevenwudi/PycharmProjects/autonomous_driving/code_base/config/synthia_segmentation.py')
     arguments = parser.parse_args()
     assert arguments.config_path is not None, 'Please provide a configuration path using -c config/pathname'
 
