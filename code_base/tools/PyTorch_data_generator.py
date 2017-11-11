@@ -12,9 +12,12 @@ from scipy.misc import imresize
 import numpy as np
 
 from PIL import Image
+import cv2 as cv
 
 import torch
 from torch.utils.data import Dataset, DataLoader
+from code_base.tools.PyTorch_model_training import prepare_data_image_list
+
 import matplotlib
 # matplotlib.use('TkAgg')
 # from matplotlib import pyplot as plt
@@ -218,6 +221,89 @@ class ImageDataGenerator_Synthia(Dataset):
         input_t[2].sub_(self.mean[2]).div_(self.std[2])
 
         return input_t, target_t
+
+
+class DataGenerator_Synthia_car_trajectory():
+        """ Initially we use synthia dataset"""
+
+        def __init__(self, cf):
+            self.cf = cf
+            print('Loading data')
+            train_data, valid_data, test_data, data_mean, data_std, train_img_list, valid_img_list, test_img_list = prepare_data_image_list(cf)
+            # Load training set
+            print('\n > Loading training, valid, test set')
+            train_dataset = BB_ImageDataGenerator_Synthia(cf, train_data, train_img_list, crop=True, flip=True)
+            val_dataset = BB_ImageDataGenerator_Synthia(cf.dataset_path, 'valid', cf=cf, crop=False, flip=False)
+            test_dataset = BB_ImageDataGenerator_Synthia(cf.dataset_path, 'valid', cf=cf, crop=False, flip=False)
+
+            self.train_loader = DataLoader(train_dataset, batch_size=cf.batch_size, shuffle=True,
+                                           num_workers=cf.workers, pin_memory=True)
+            self.val_loader = DataLoader(val_dataset, batch_size=1, num_workers=cf.workers, pin_memory=True)
+
+
+class BB_ImageDataGenerator_Synthia(Dataset):
+    def __init__(self, cf, trajectory_data, img_list, crop=True, flip=True):
+        """
+        :param root_dir: Directory will all the images
+        :param label_dir: Directory will all the label images
+        :param transform:  (callable, optional): Optional tra
+        nsform to be applied
+        """
+        self.trajectory_data = trajectory_data
+        self.cf = cf
+        self.img_list = img_list
+        self.root_dir = '/'.join(cf.dataset_path[0].split('/')[:-1])
+
+        # with open(os.path.join(root_dir, 'ALL.txt')) as text_file:  # can throw FileNotFoundError
+        #     lines = tuple(l.split() for l in text_file.readlines())
+        self.image_dir = os.path.join(root_dir, 'RGB')
+        self.label_dir = os.path.join(root_dir, 'GTTXT')
+        image_files = sorted(os.listdir(self.image_dir))
+        train_num = int(len(image_files) * cf.train_ratio)
+        if dataset_split == 'train':
+            self.image_files = image_files[:train_num]
+            self.image_num = train_num
+            print('Total training number is: %d'%train_num)
+        elif dataset_split == 'valid':
+            self.image_files = image_files[train_num:]
+            self.image_num = len(image_files) - train_num
+            print('Total valid number is: %d' % self.image_num)
+        self.crop = crop
+        self.crop_size = cf.crop_size
+        self.flip = flip
+        self.mean = cf.rgb_mean
+        self.std = cf.rgb_std
+        self.ignore_index = cf.ignore_index
+
+    def __len__(self):
+        return self.image_num
+
+    def __getitem__(self, item):
+        trajectory = self.trajectory_data[item]
+
+        img_dir = self.root_dir + '/' + self.img_list[item][0].split('/')[0] + '/' + 'GT/LABELS' + '/' + self.cf.data_stereo + '/' + self.cf.data_camera
+        img_name = os.path.join(img_dir, self.img_list[item][0].split('/')[1])
+
+        try:
+            input = cv.imread(img_name, -1)
+            semantic_image = np.int8(input[:, :, 2])
+        except IOError:
+            # unfortunately, some images are corrupted. Hence, we need to manually exclude them.
+            print("Image failed loading: ", img_name)
+
+        # Convert to training labels
+        w, h = semantic_image.shape
+        # Create one-hot encoding
+        semantic_image_one_hot = np.zeros(shape=(self.cf.cnn_class_num, w, h))
+        for c in range(self.cf.cnn_class_num):
+            semantic_image_one_hot[c][semantic_image == c] = 1
+
+        # Convert to tensors
+        trajectory_t = torch.FloatTensor(trajectory)
+        semantic_image_t = torch.Tensor(semantic_image_one_hot)
+
+        return semantic_image_t, trajectory_t
+
 
 
 class Dataset_Generators_Cityscape():
