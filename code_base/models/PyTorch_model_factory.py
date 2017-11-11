@@ -248,17 +248,19 @@ class Model_Factory_LSTM():
         else:
             input = tuple([train_input])
 
-        def closure():
-            self.optimiser.zero_grad()
-            out = self.net(*input)[0]
-            loss = self.crit(out, train_target)
-            if cf.cuda:
-                print('loss: ', loss.data.cpu().numpy()[0])
-            else:
-                print('loss: ', loss.data.numpy()[0])
-            loss.backward()
-            return loss
-        self.optimiser.step(closure)
+        if cf.optimizer == 'LBFGS':
+            def closure():
+                self.optimiser.zero_grad()
+                out = self.net(*input)[0]
+                loss = self.crit(out, train_target)
+                if cf.cuda:
+                    print('loss: ', loss.data.cpu().numpy()[0])
+                else:
+                    print('loss: ', loss.data.numpy()[0])
+                loss.backward()
+                return loss
+            self.optimiser.step(closure)
+
         # output loss
         out = self.net(*input)[0]
         loss = self.crit(out, train_target)
