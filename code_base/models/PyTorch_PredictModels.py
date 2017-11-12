@@ -196,6 +196,9 @@ class CNN_LSTM_To_FC(nn.Module):
                                   nn.MaxPool2d(2),
                                   nn.Conv2d(**self.convparas[2]),
                                   nn.ReLU(),
+                                  nn.MaxPool2d(2),
+                                  nn.Conv2d(**self.convparas[3]),
+                                  nn.ReLU(),
                                   nn.MaxPool2d(2)
                                   )
 
