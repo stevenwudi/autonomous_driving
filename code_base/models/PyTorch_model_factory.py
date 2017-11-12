@@ -263,7 +263,7 @@ class Model_Factory_LSTM():
             self.optimiser.step()
 
         train_loss = np.array(train_losses).mean()
-        print('Train Loss', epoch, train_loss )
+        print('Train Loss', epoch, train_loss)
 
 
         # # output loss
