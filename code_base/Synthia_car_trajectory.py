@@ -35,9 +35,9 @@ def process(cf):
         valid_losses = []
         print(' ---> Training data: ' + cf.sequence_name + ' <---')
         for epoch in range(1, cf.n_epochs + 1):
-            train_losses += [model.train(train_images, train_input, train_target, cf)]
+            train_losses += [model.train(cf, DG.train_loader, epoch)]
             if cf.valid_model:
-                valid_losses += [model.test(valid_images, valid_input, valid_target, data_std, data_mean, cf, epoch)]
+                valid_losses += [model.test(cf, DG.valid_loader, DG.data_mean, DG.data_std, epoch)]
         print('---> Train losses:')
         print(train_losses)
         print('---> Valid losses:')
@@ -54,7 +54,7 @@ def process(cf):
         plt.savefig(figure_path)
 
     if cf.test_model:
-        test_loss = model.test(test_images, test_input, test_target, data_std, data_mean, cf)
+        test_loss = model.test(cf, DG.test_loader, DG.data_mean, DG.data_std, epoch=None)
         print('---> Test losses:')
         print(test_loss)
     print(' ---> Finish experiment: ' + cf.exp_name + ' <---')
