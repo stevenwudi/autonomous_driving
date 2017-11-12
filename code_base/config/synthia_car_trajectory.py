@@ -42,6 +42,7 @@ debug                        = False
 im_size                      = (760, 1280)
 resize_train                 = (760, 1280)      # Resize the image during training (Height, Width) or None
 #random_size_crop             = (350*2, 460*2)      # Random size crop of the image during training
+workers                      = 4              #  how many subprocesses to use for data loading. 0 means that the data will be loaded in the main process
 batch_size_train             = 4              # Batch size during training
 batch_size_valid             = 1              # Batch size during validation
 batch_size_test              = 1              # Batch size during testing

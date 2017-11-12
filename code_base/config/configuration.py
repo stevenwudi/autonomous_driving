@@ -14,7 +14,7 @@ class Configuration():
         # Load configuration file...
         print(self.config_path)
         cf = imp.load_source('config', self.config_path)
-        dataset_path = os.path.join(cf.local_path, 'Datasets')
+        dataset_path = os.path.join('/home/stevenwudi/PycharmProjects/autonomous_driving', 'Datasets')
         experiments_path = os.path.join(cf.local_path, 'Experiments')
         shared_experiments_path = os.path.join(cf.shared_path, 'Experiments')
 

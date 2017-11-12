@@ -232,9 +232,9 @@ class DataGenerator_Synthia_car_trajectory():
             train_data, valid_data, test_data, self.data_mean, self.data_std, train_img_list, valid_img_list, test_img_list = prepare_data_image_list(cf)
             # Load training set
             print('\n > Loading training, valid, test set')
-            train_dataset = BB_ImageDataGenerator_Synthia(cf, train_data, train_img_list, crop=True, flip=True)
-            valid_dataset = BB_ImageDataGenerator_Synthia(cf, valid_data, valid_img_list,  crop=True, flip=True)
-            test_dataset = BB_ImageDataGenerator_Synthia(cf, test_data, test_img_list, crop=True, flip=True)
+            train_dataset = BB_ImageDataGenerator_Synthia(cf, train_data, train_img_list, crop=False, flip=False)
+            valid_dataset = BB_ImageDataGenerator_Synthia(cf, valid_data, valid_img_list,  crop=False, flip=False)
+            test_dataset = BB_ImageDataGenerator_Synthia(cf, test_data, test_img_list, crop=False, flip=False)
 
             self.train_loader = DataLoader(train_dataset, batch_size=cf.batch_size_train, shuffle=True,
                                            num_workers=cf.workers, pin_memory=True)
@@ -258,10 +258,10 @@ class BB_ImageDataGenerator_Synthia(Dataset):
 
         # with open(os.path.join(root_dir, 'ALL.txt')) as text_file:  # can throw FileNotFoundError
         #     lines = tuple(l.split() for l in text_file.readlines())
-        self.image_dir = os.path.join(self.root_dir, 'RGB')
-        self.label_dir = os.path.join(self.root_dir, 'GTTXT')
-        image_files = sorted(os.listdir(self.image_dir))
-        train_num = int(len(image_files) * cf.train_ratio)
+        # self.image_dir = os.path.join(self.root_dir, 'RGB')
+        # self.label_dir = os.path.join(self.root_dir, 'GTTXT')
+        # image_files = sorted(os.listdir(self.image_dir))
+        # train_num = int(len(image_files) * cf.train_ratio)
         # if dataset_split == 'train':
         #     self.image_files = image_files[:train_num]
         #     self.image_num = train_num
@@ -271,11 +271,11 @@ class BB_ImageDataGenerator_Synthia(Dataset):
         #     self.image_num = len(image_files) - train_num
         #     print('Total valid number is: %d' % self.image_num)
         self.crop = crop
-        self.crop_size = cf.crop_size
+        # self.crop_size = cf.crop_size
         self.flip = flip
         self.mean = cf.rgb_mean
         self.std = cf.rgb_std
-        self.ignore_index = cf.ignore_index
+        # self.ignore_index = cf.ignore_index
 
     def __len__(self):
         return self.image_num
