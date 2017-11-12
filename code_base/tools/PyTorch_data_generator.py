@@ -296,6 +296,8 @@ class BB_ImageDataGenerator_Synthia(Dataset):
                 # unfortunately, some images are corrupted. Hence, we need to manually exclude them.
                 print("Image failed loading: ", img_name)
 
+            # resize
+            semantic_image = imresize(semantic_image, size=0.125, interp='nearest', mode='F')
             # Convert to training labels
             w, h = semantic_image.shape
             # Create one-hot encoding

@@ -124,7 +124,7 @@ lstmToFc_output_dim           = 6               # outlayer output: [x,y,w,h, d_m
 cnn_class_num                 = 15
 def cnnDict(in_channels, out_channels, kernel_size, stride, padding):
     return {'in_channels': in_channels, 'out_channels': out_channels, 'kernel_size': kernel_size, 'stride': stride, 'padding': padding}
-cnnLstmToFc_conv_paras        = [cnnDict(cnn_class_num,2,3,1,1), cnnDict(2,4,3,1,1),cnnDict(4,4,2,2,0)]              # a list composed of dicts representing parameters of each conv, {'in_channels': ,
+cnnLstmToFc_conv_paras        = [cnnDict(cnn_class_num,15,3,1,1), cnnDict(15,15,3,2,1),cnnDict(15,15,5,2,1)]              # a list composed of dicts representing parameters of each conv, {'in_channels': ,
                                                                                       # 'out_channels': ,
                                                                                       # 'kernel_size': ,
                                                                                       # 'stride': ,

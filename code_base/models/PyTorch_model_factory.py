@@ -295,7 +295,6 @@ class Model_Factory_LSTM():
 
         self.loss = self.crit(output_trajectories, target_trajectories)
 
-
         # evaluations
         if cf.cuda:
             results = output_trajectories.data.cpu().numpy() * data_std + data_mean
