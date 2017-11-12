@@ -278,7 +278,7 @@ class BB_ImageDataGenerator_Synthia(Dataset):
         # self.ignore_index = cf.ignore_index
 
     def __len__(self):
-        return self.image_num
+        return len(self.trajectory_data)
 
     def __getitem__(self, item):
 
