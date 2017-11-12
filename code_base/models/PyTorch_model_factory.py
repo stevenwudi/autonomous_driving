@@ -225,7 +225,7 @@ class Model_Factory_LSTM():
 
     def train(self, cf, train_loader, epoch):
         # begin to train
-        lr = adjust_learning_rate(self.cf.learning_rate, self.optimiser, epoch)
+        lr = adjust_learning_rate(self.cf.learning_rate, self.optimiser, epoch, decrease_epoch=cf.lr_decay_epoch)
         print('learning rate:', lr)
 
         # if cf.model_name == 'CNN_LSTM_To_FC':
