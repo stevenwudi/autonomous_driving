@@ -12,13 +12,14 @@ from torchvision.utils import save_image
 from code_base.tools.logger import Logger
 from datetime import datetime
 
+import numpy as np
 from matplotlib import pyplot as plt
 import os
 import sys
 
 
 
-def adjust_learning_rate(lr, optimizer, epoch, decrease_epoch=50):
+def adjust_learning_rate(lr, optimizer, epoch, decrease_epoch=10):
     """Sets the learning rate to the initial LR decayed by 10 every 30 epochs"""
     lr = lr * (0.1 ** (epoch // decrease_epoch))
     for param_group in optimizer.param_groups:
@@ -245,6 +246,7 @@ class Model_Factory_LSTM():
         #         return loss
         #     self.optimiser.step(closure)
         # else:
+        train_losses=[]
         for i, (sementic, input_trajectory, target_trajectory) in enumerate(train_loader):
             self.optimiser.zero_grad()
             sementic, input_trajectory, target_trajectory = Variable(sementic.cuda(async=True), requires_grad=False), \
@@ -256,11 +258,13 @@ class Model_Factory_LSTM():
                 input = tuple([input_trajectory])
             output = self.net(*input)[0]
             self.loss = self.crit(output, target_trajectory)
+            train_losses.append(self.loss.data[0])
             # print(epoch, i, self.loss.data[0])
             self.loss.backward()
             self.optimiser.step()
 
-        print('Train Loss', epoch, self.loss.data[0])
+        train_loss = np.array(train_losses).mean()
+        print('Train Loss', epoch, train_loss )
 
         # # output loss
         # out = self.net(*input)[0]
@@ -268,7 +272,7 @@ class Model_Factory_LSTM():
         # if cf.cuda:
         #     return loss.data.cpu().numpy()[0]
         # else:
-        return self.loss.data[0]
+        return train_loss
 
     def test(self, cf, valid_loader, data_mean, data_std, epoch=None):
         # if cf.model_name == 'CNN_LSTM_To_FC':
