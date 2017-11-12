@@ -306,13 +306,16 @@ class BB_ImageDataGenerator_Synthia(Dataset):
             semantic_image_t = torch.Tensor(semantic_image_one_hot)
             return semantic_image_t
 
-        semantic_images = torch.stack([semantic_image(img_name(i)) for i in range(self.cf.lstm_input_frame)], dim=0)
-
         # trajectory
         trajectory = self.trajectory_data[item]
         trajectory_t = torch.FloatTensor(trajectory)
         input_trajectorys = trajectory_t[:self.cf.lstm_input_frame, :]
         target_trajectorys = trajectory_t[self.cf.lstm_input_frame:, :]
+        # semantics
+        if self.cf.model_name == 'CNN_LSTM_To_FC':
+            semantic_images = torch.stack([semantic_image(img_name(i)) for i in range(self.cf.lstm_input_frame)], dim=0)
+        else:
+            semantic_images = torch.FloatTensor(torch.zeros(input_trajectorys.size()))
 
         return semantic_images, input_trajectorys, target_trajectorys
 
