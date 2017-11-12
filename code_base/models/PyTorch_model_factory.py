@@ -22,8 +22,9 @@ import sys
 def adjust_learning_rate(lr, optimizer, epoch, decrease_epoch=10):
     """Sets the learning rate to the initial LR decayed by 10 every 30 epochs"""
     lr = lr * (0.1 ** (epoch // decrease_epoch))
-    for param_group in optimizer.param_groups:
-        param_group['lr'] = lr
+    if lr >= 1.0e-6:
+        for param_group in optimizer.param_groups:
+            param_group['lr'] = lr
     return lr
 
 
