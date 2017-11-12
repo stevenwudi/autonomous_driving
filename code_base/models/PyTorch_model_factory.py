@@ -226,6 +226,7 @@ class Model_Factory_LSTM():
 
     def train(self, cf, train_loader, epoch):
         # begin to train
+        self.net.train()
         lr = adjust_learning_rate(self.cf.learning_rate, self.optimiser, epoch, decrease_epoch=cf.lr_decay_epoch)
         print('learning rate:', lr)
 
@@ -266,8 +267,6 @@ class Model_Factory_LSTM():
         train_loss = np.array(train_losses).mean()
         print('Train Loss', epoch, train_loss)
 
-
-
         return train_loss
 
     def test(self, cf, valid_loader, data_mean, data_std, epoch=None):
@@ -276,9 +275,29 @@ class Model_Factory_LSTM():
         # else:
         #     input = tuple([valid_input])
 
-        output_trajectories = []
-        target_trajectories = []
+        def evaluation(output_trajectories, target_trajectories):
+            # evaluations
+            if cf.cuda:
+                results = output_trajectories.data.cpu().numpy() * data_std + data_mean
+                rect_anno = target_trajectories.data.cpu().numpy() * data_std + data_mean
+            else:
+                results = output_trajectories.data.numpy() * data_std + data_mean
+                rect_anno = target_trajectories.data.numpy() * data_std + data_mean
+
+            aveErrCoverage, aveErrCenter, errCoverage, iou_2d, aveErrCoverage_realworld, aveErrCenter_realworld, errCenter_realworld, iou_3d = calc_seq_err_robust(
+                results, rect_anno, cf.focal_length)
+
+            return aveErrCoverage, aveErrCenter, errCoverage, iou_2d, aveErrCoverage_realworld, aveErrCenter_realworld, errCenter_realworld, iou_3d
+
+        # output_trajectories = []
+        # target_trajectories = []
+        aveErrCoverage = []
+        aveErrCenter = []
+        aveErrCoverage_realworld = []
+        aveErrCenter_realworld = []
+        valid_losses = []
         for i, (sementic, input_trajectory, target_trajectory) in enumerate(valid_loader):
+            print(i)
             sementic, input_trajectory, target_trajectory = Variable(sementic.cuda(async=True)), \
                                                             Variable(input_trajectory.cuda(async=True)), \
                                                             Variable(target_trajectory.cuda(async=True))
@@ -286,31 +305,39 @@ class Model_Factory_LSTM():
                 input = tuple([sementic, input_trajectory])
             else:
                 input = tuple([input_trajectory])
-            output = self.net(*input, future=cf.lstm_predict_frame)[-1]
-            output_trajectories.append(output)
-            target_trajectories.append(target_trajectory)
 
-        # concatenate
-        output_trajectories = torch.cat(output_trajectories, 0)
-        target_trajectories = torch.cat(target_trajectories, 0)
+            output_trajectory = self.net(*input, future=cf.lstm_predict_frame)[-1]
+            # cal loss
+            loss = self.crit(output_trajectory, target_trajectory)
+            valid_losses.append(loss.data[0])
+            # evaluation
+            evalua_values = evaluation(output_trajectory, target_trajectory)
+            aveErrCoverage.append(evalua_values[0])
+            aveErrCenter.append(evalua_values[1])
+            aveErrCoverage_realworld.append(evalua_values[4])
+            aveErrCenter_realworld.append(evalua_values[5])
+            # output_trajectories.append(output)
+            # target_trajectories.append(target_trajectory)
 
-        self.loss = self.crit(output_trajectories, target_trajectories)
+        # loss mean
+        self.loss = np.array(valid_losses).mean()
+        # print('Valid Loss', epoch, self.loss)
 
-        # evaluations
-        if cf.cuda:
-            results = output_trajectories.data.cpu().numpy() * data_std + data_mean
-            rect_anno = target_trajectories.data.cpu().numpy() * data_std + data_mean
-        else:
-            results = output_trajectories.data.numpy() * data_std + data_mean
-            rect_anno = target_trajectories.data.numpy() * data_std + data_mean
+        # evaluation mean
+        aveErrCoverage = np.array(aveErrCoverage).mean()
+        aveErrCenter = np.array(aveErrCenter).mean()
+        aveErrCoverage_realworld = np.array(aveErrCoverage_realworld).mean()
+        aveErrCenter_realworld = np.array(aveErrCenter_realworld).mean()
 
-        aveErrCoverage, aveErrCenter, errCoverage, iou_2d, \
-        aveErrCoverage_realworld, aveErrCenter_realworld, errCenter_realworld, iou_3d = calc_seq_err_robust(results, rect_anno, cf.focal_length)
+        ## concatenate
+        # output_trajectories = torch.cat(output_trajectories, 0)
+        # target_trajectories = torch.cat(target_trajectories, 0)
+
 
         # Save weights and scores
         if epoch:
             print('############### VALID #############################################')
-            print('Valid Loss', epoch, self.loss.data[0])
+            print('Valid Loss', epoch, self.loss)
             print('2D aveErrCoverage: %.4f, aveErrCenter: %.2f' % (aveErrCoverage, aveErrCenter))
             print('3D aveErrCoverage_realworld: %.4f, aveErrCenter_realworld: %.4f' % (
             aveErrCoverage_realworld, aveErrCenter_realworld))
@@ -319,7 +346,7 @@ class Model_Factory_LSTM():
                                (epoch, aveErrCoverage, aveErrCenter, aveErrCoverage_realworld, aveErrCenter_realworld)
         else:
             print('############### TEST #############################################')
-            print('Test Loss', epoch, self.loss.data[0])
+            print('Test Loss', epoch, self.loss)
             print('2D aveErrCoverage: %.4f, aveErrCenter: %.2f' % (aveErrCoverage, aveErrCenter))
             print('3D aveErrCoverage_realworld: %.4f, aveErrCenter_realworld: %.4f' % (
             aveErrCoverage_realworld, aveErrCenter_realworld))
@@ -334,9 +361,9 @@ class Model_Factory_LSTM():
             # plt.savefig(os.path.join(self.exp_dir, 'ious.png'))
             # plt.close()
         torch.save(self.net.state_dict(), os.path.join(self.exp_dir, model_checkpoint))
-        if cf.cuda:
-            return self.loss.data.cpu().numpy()[0]
-        else:
-            return self.loss.data.numpy()[0]
+        # if cf.cuda:
+        #     return self.loss.data.cpu().numpy()[0]
+        # else:
+        return self.loss
 
 

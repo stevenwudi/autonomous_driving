@@ -127,7 +127,7 @@ def prepare_data_image_list(cf):
 
     train_img_list, valid_img_list, test_img_list = get_img_list(train_data, valid_data, test_data)
 
-    return train_data_array[:100, :, :], valid_data_array[:5, :, :], test_data_array[:5, :, :], data_mean, data_std, train_img_list, valid_img_list, test_img_list
+    return train_data_array[:20,:,:], valid_data_array, test_data_array, data_mean, data_std, train_img_list[:20], valid_img_list, test_img_list
 
 
 def calc_seq_err_robust(results, rect_anno, focal_length):

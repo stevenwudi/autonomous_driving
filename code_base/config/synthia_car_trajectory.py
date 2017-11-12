@@ -42,10 +42,10 @@ debug                        = False
 im_size                      = (760, 1280)
 resize_train                 = (760, 1280)      # Resize the image during training (Height, Width) or None
 #random_size_crop             = (350*2, 460*2)      # Random size crop of the image during training
-workers                      = 6              #  how many subprocesses to use for data loading. 0 means that the data will be loaded in the main process
-batch_size_train             = 20              # Batch size during training
-batch_size_valid             = 20              # Batch size during validation
-batch_size_test              = 20              # Batch size during testing
+workers                      = 4              #  how many subprocesses to use for data loading. 0 means that the data will be loaded in the main process
+batch_size_train             = 20             # Batch size during training
+batch_size_valid             = 1              # Batch size during validation
+batch_size_test              = 1              # Batch size during testing
 dataloader_num_workers_train = 1        # Number of dataload works during training
 dataloader_num_workers_valid = 1        # Number of dataload works during valid
 dataloader_num_workers_test  = 1        # Number of dataload works during test
@@ -102,7 +102,7 @@ lr_decay_epoch               = 10          # every lr_decay_epoch, decay learnin
 figure_epoch                 = 5           # every fugure_epoch, figure out the losses
 test_epoch                   = 1
 weight_decay                 = 0.              # Weight decay or L2 parameter norm penalty
-n_epochs                     = 50            # Number of epochs during training
+n_epochs                     = 100            # Number of epochs during training
 cuda                         = True
 loss                         = 'SmoothL1Loss'       # 'MSE', 'SmoothL1Loss'
 optimizer                    = 'sgd'      # LBFGS','adam','rmsprop','sgd'
@@ -126,12 +126,12 @@ lstmToFc_output_dim           = 6               # outlayer output: [x,y,w,h, d_m
 cnn_class_num                 = 15
 def cnnDict(in_channels, out_channels, kernel_size, stride, padding):
     return {'in_channels': in_channels, 'out_channels': out_channels, 'kernel_size': kernel_size, 'stride': stride, 'padding': padding}
-cnnLstmToFc_conv_paras        = [cnnDict(cnn_class_num,15,3,1,1), cnnDict(15,15,3,2,1),cnnDict(15,15,5,2,2)]              # a list composed of dicts representing parameters of each conv, {'in_channels': ,
+cnnLstmToFc_conv_paras        = [cnnDict(cnn_class_num,15,3,1,1), cnnDict(15,10,3,1,1),cnnDict(10,5,3,1,1),cnnDict(5,5,3,1,1)]              # a list composed of dicts representing parameters of each conv, {'in_channels': ,
                                                                                       # 'out_channels': ,
                                                                                       # 'kernel_size': ,
                                                                                       # 'stride': ,
                                                                                       # 'padding': }
-cnnLstmToFc_input_dims        = [6, 325, 350]              # a list involving each lstm_layer's input_dim
+cnnLstmToFc_input_dims        = [6, 350, 350]              # a list involving each lstm_layer's input_dim
 cnnLstmToFc_hidden_sizes      = [100, 350, 350]              # a list involving each lstm_layer's hidden_size
 cnnLstmToFc_future            = lstm_predict_frame # the number of predicting frames
 cnnLstmToFc_output_dim        = 6               # outlayer output: [x,y,w,h, d_min, d_max]
