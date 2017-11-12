@@ -247,18 +247,20 @@ class Model_Factory_LSTM():
         # else:
         for i, (sementic, input_trajectory, target_trajectory) in enumerate(train_loader):
             self.optimiser.zero_grad()
-            sementic, input_trajectory, target_trajectory = Variable(sementic.cuda(async=True)), \
-                                                            Variable(input_trajectory.cuda(async=True)), \
-                                                            Variable(target_trajectory.cuda(async=True))
+            sementic, input_trajectory, target_trajectory = Variable(sementic.cuda(async=True), requires_grad=False), \
+                                                            Variable(input_trajectory.cuda(async=True), requires_grad=False), \
+                                                            Variable(target_trajectory.cuda(async=True), requires_grad=False)
             if cf.model_name == 'CNN_LSTM_To_FC':
                 input = tuple([sementic, input_trajectory])
             else:
                 input = tuple([input_trajectory])
             output = self.net(*input)[0]
             self.loss = self.crit(output, target_trajectory)
-            print(epoch, i, self.loss.data[0])
+            # print(epoch, i, self.loss.data[0])
             self.loss.backward()
             self.optimiser.step()
+
+        print('Train Loss', epoch, self.loss.data[0])
 
         # # output loss
         # out = self.net(*input)[0]
