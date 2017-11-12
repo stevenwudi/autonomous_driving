@@ -266,12 +266,7 @@ class Model_Factory_LSTM():
         print('Train Loss', epoch, train_loss)
 
 
-        # # output loss
-        # out = self.net(*input)[0]
-        # loss = self.crit(out, train_target)
-        # if cf.cuda:
-        #     return loss.data.cpu().numpy()[0]
-        # else:
+
         return train_loss
 
     def test(self, cf, valid_loader, data_mean, data_std, epoch=None):
