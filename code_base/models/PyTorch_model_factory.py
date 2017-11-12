@@ -133,25 +133,7 @@ class Model_Factory_semantic_seg():
             pred = output.permute(0, 2, 3, 1).contiguous().view(-1, self.num_classes).max(1)[1].view(b, h, w)
             total_ious.append(iou(pred, target, self.num_classes))
 
-            # Save images
-            # if i % 100 == 0:
-            #     pred = pred.data.cpu()
-            #     pred_remapped = pred.clone()
-            #     # Convert to full labels
-            #     for k, v in self.cf.train_to_full.items():
-            #         pred_remapped[pred == k] = v
-            #     # Convert to colour image
-            #     pred = pred_remapped
-            #     pred_colour = torch.zeros(b, 3, h, w)
-            #     for k, v in self.cf.full_to_colour.items():
-            #         pred_r = torch.zeros(b, 1, h, w)
-            #         pred_r[(pred == k)] = v[0]
-            #         pred_g = torch.zeros(b, 1, h, w)
-            #         pred_g[(pred == k)] = v[1]
-            #         pred_b = torch.zeros(b, 1, h, w)
-            #         pred_b[(pred == k)] = v[2]
-            #         pred_colour.add_(torch.cat((pred_r, pred_g, pred_b), 1))
-            #     save_image(pred_colour[0].float().div(255), os.path.join(self.exp_dir, str(epoch) + '_' + str(i) + '.png'))
+
 
         # Calculate average IoU
         total_ious_t = torch.Tensor(total_ious).transpose(0, 1)
@@ -234,60 +216,92 @@ class Model_Factory_LSTM():
         if cf.optimizer == 'LBFGS':
             self.optimiser = optim.LBFGS(self.net.parameters(), lr=cf.learning_rate)
         elif cf.optimizer == 'adam':
-            self.optimiser = optim.Adam(self.net.parameters(), lr=cf.learning_rate)
+            self.optimiser = optim.Adam(self.net.parameters(), lr=cf.learning_rate, weight_decay=cf.weight_decay)
         elif cf.optimizer == 'rmsprop':
             self.optimiser = optim.RMSprop(self.net.parameters(), lr=cf.learning_rate, momentum=cf.momentum, weight_decay=cf.weight_decay)
         elif cf.optimizer == 'sgd':
-            self.optimiser = optim.SGD(self.net.parameters(), lr=cf.learning_rate, momentum=cf.momentum, weight_decay=cf.weight_decay)
+            self.optimiser = optim.SGD(self.net.parameters(), lr=cf.learning_rate, momentum=cf.momentum, weight_decay=cf.weight_decay, nesterov=True)
 
-    def train(self, train_images, train_input, train_target, cf):
-        #print('learning rate:', lr)
+    def train(self, cf, train_loader, epoch):
         # begin to train
-        if cf.model_name == 'CNN_LSTM_To_FC':
-            input = tuple([train_images, train_input])
-        else:
-            input = tuple([train_input])
+        lr = adjust_learning_rate(self.cf.learning_rate, self.optimiser, epoch)
+        print('learning rate:', lr)
 
-        if cf.optimizer == 'LBFGS':
-            def closure():
-                self.optimiser.zero_grad()
-                out = self.net(*input)[0]
-                loss = self.crit(out, train_target)
-                if cf.cuda:
-                    print('loss: ', loss.data.cpu().numpy()[0])
-                else:
-                    print('loss: ', loss.data.numpy()[0])
-                loss.backward()
-                return loss
-            self.optimiser.step(closure)
+        # if cf.model_name == 'CNN_LSTM_To_FC':
+        #     input = tuple([train_images, train_input])
+        # else:
+        #     input = tuple([train_input])
 
-        # output loss
-        out = self.net(*input)[0]
-        loss = self.crit(out, train_target)
+        # if cf.optimizer == 'LBFGS':
+        #     def closure():
+        #         self.optimiser.zero_grad()
+        #         out = self.net(*input)[0]
+        #         loss = self.crit(out, train_target)
+        #         if cf.cuda:
+        #             print('loss: ', loss.data.cpu().numpy()[0])
+        #         else:
+        #             print('loss: ', loss.data.numpy()[0])
+        #         loss.backward()
+        #         return loss
+        #     self.optimiser.step(closure)
+        # else:
+        for i, (sementic, input_trajectory, target_trajectory) in enumerate(train_loader):
+            self.optimiser.zero_grad()
+            sementic, input_trajectory, target_trajectory = Variable(sementic.cuda(async=True)), \
+                                                            Variable(input_trajectory.cuda(async=True)), \
+                                                            Variable(target_trajectory.cuda(async=True))
+            if cf.model_name == 'CNN_LSTM_To_FC':
+                input = tuple([sementic, input_trajectory])
+            else:
+                input = tuple([input_trajectory])
+            output = self.net(*input)[0]
+            self.loss = self.crit(output, target_trajectory)
+            print(epoch, i, self.loss.data[0])
+            self.loss.backward()
+            self.optimiser.step()
+
+        # # output loss
+        # out = self.net(*input)[0]
+        # loss = self.crit(out, train_target)
+        # if cf.cuda:
+        #     return loss.data.cpu().numpy()[0]
+        # else:
+        return self.loss.data[0]
+
+    def test(self, cf, valid_loader, data_mean, data_std, epoch=None):
+        # if cf.model_name == 'CNN_LSTM_To_FC':
+        #     input = tuple([valid_images, valid_input])
+        # else:
+        #     input = tuple([valid_input])
+
+        output_trajectories = []
+        target_trajectories = []
+        for i, (sementic, input_trajectory, target_trajectory) in enumerate(valid_loader):
+            sementic, input_trajectory, target_trajectory = Variable(sementic.cuda(async=True)), \
+                                                            Variable(input_trajectory.cuda(async=True)), \
+                                                            Variable(target_trajectory.cuda(async=True))
+            if cf.model_name == 'CNN_LSTM_To_FC':
+                input = tuple([sementic, input_trajectory])
+            else:
+                input = tuple([input_trajectory])
+            output = self.net(*input, future=cf.lstm_predict_frame)[-1]
+            output_trajectories.append(output)
+            target_trajectories.append(target_trajectory)
+
+        # concatenate
+        output_trajectories = torch.cat(output_trajectories, 0)
+        target_trajectories = torch.cat(target_trajectories, 0)
+
+        self.loss = self.crit(output_trajectories, target_trajectories)
+
+
+        # evaluations
         if cf.cuda:
-            return loss.data.cpu().numpy()[0]
+            results = output_trajectories.data.cpu().numpy() * data_std + data_mean
+            rect_anno = target_trajectories.data.cpu().numpy() * data_std + data_mean
         else:
-            return loss.data.numpy()[0]
-
-    def test(self,valid_images ,valid_input, valid_target, data_std, data_mean, cf, epoch=None):
-        if cf.model_name == 'CNN_LSTM_To_FC':
-            input = tuple([valid_images, valid_input])
-        else:
-            input = tuple([valid_input])
-
-        pred = self.net(*input, future=cf.lstm_predict_frame)
-        loss = self.crit(pred[-1], valid_target)
-        if cf.cuda:
-            results = pred[-1].data.cpu().numpy() * data_std + data_mean
-            rect_anno = valid_target.data.cpu().numpy() * data_std + data_mean
-        else:
-            results = pred[-1].data.numpy() * data_std + data_mean
-            rect_anno = valid_target.data.numpy() * data_std + data_mean
-
-        if cf.cuda:
-            print('Loss:', loss.data.cpu().numpy()[0])
-        else:
-            print('Loss:', loss.data.numpy()[0])
+            results = output_trajectories.data.numpy() * data_std + data_mean
+            rect_anno = target_trajectories.data.numpy() * data_std + data_mean
 
         aveErrCoverage, aveErrCenter, errCoverage, iou_2d, \
         aveErrCoverage_realworld, aveErrCenter_realworld, errCenter_realworld, iou_3d = calc_seq_err_robust(results, rect_anno, cf.focal_length)
@@ -295,6 +309,7 @@ class Model_Factory_LSTM():
         # Save weights and scores
         if epoch:
             print('############### VALID #############################################')
+            print('Valid Loss', epoch, self.loss.data[0])
             print('2D aveErrCoverage: %.4f, aveErrCenter: %.2f' % (aveErrCoverage, aveErrCenter))
             print('3D aveErrCoverage_realworld: %.4f, aveErrCenter_realworld: %.4f' % (
             aveErrCoverage_realworld, aveErrCenter_realworld))
@@ -303,6 +318,7 @@ class Model_Factory_LSTM():
                                (epoch, aveErrCoverage, aveErrCenter, aveErrCoverage_realworld, aveErrCenter_realworld)
         else:
             print('############### TEST #############################################')
+            print('Test Loss', epoch, self.loss.data[0])
             print('2D aveErrCoverage: %.4f, aveErrCenter: %.2f' % (aveErrCoverage, aveErrCenter))
             print('3D aveErrCoverage_realworld: %.4f, aveErrCenter_realworld: %.4f' % (
             aveErrCoverage_realworld, aveErrCenter_realworld))
@@ -318,8 +334,8 @@ class Model_Factory_LSTM():
             # plt.close()
         torch.save(self.net.state_dict(), os.path.join(self.exp_dir, model_checkpoint))
         if cf.cuda:
-            return loss.data.cpu().numpy()[0]
+            return self.loss.data.cpu().numpy()[0]
         else:
-            return loss.data.numpy()[0]
+            return self.loss.data.numpy()[0]
 
 
