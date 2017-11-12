@@ -19,10 +19,10 @@ from torch.utils.data import Dataset, DataLoader
 from code_base.tools.PyTorch_model_training import prepare_data_image_list
 
 import matplotlib
-# matplotlib.use('TkAgg')
-# from matplotlib import pyplot as plt
-# from torchvision import transforms as T
-# Ignore warnings
+matplotlib.use('TkAgg')
+from matplotlib import pyplot as plt
+from torchvision import transforms as T
+#Ignore warnings
 import warnings
 
 warnings.filterwarnings("ignore")
@@ -234,11 +234,12 @@ class DataGenerator_Synthia_car_trajectory():
             print('\n > Loading training, valid, test set')
             train_dataset = BB_ImageDataGenerator_Synthia(cf, train_data, train_img_list, crop=True, flip=True)
             val_dataset = BB_ImageDataGenerator_Synthia(cf.dataset_path, 'valid', cf=cf, crop=False, flip=False)
-            test_dataset = BB_ImageDataGenerator_Synthia(cf.dataset_path, 'valid', cf=cf, crop=False, flip=False)
+            test_dataset = BB_ImageDataGenerator_Synthia(cf.dataset_path, 'test', cf=cf, crop=False, flip=False)
 
             self.train_loader = DataLoader(train_dataset, batch_size=cf.batch_size, shuffle=True,
                                            num_workers=cf.workers, pin_memory=True)
             self.val_loader = DataLoader(val_dataset, batch_size=1, num_workers=cf.workers, pin_memory=True)
+            self.test_loader = DataLoader(test_dataset, batch_size=1, num_workers=cf.workers, pin_memory=True)
 
 
 class BB_ImageDataGenerator_Synthia(Dataset):

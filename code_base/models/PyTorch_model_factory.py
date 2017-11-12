@@ -15,7 +15,7 @@ from datetime import datetime
 from matplotlib import pyplot as plt
 import os
 import sys
-
+import numpy as np
 
 
 def adjust_learning_rate(lr, optimizer, epoch, decrease_epoch=50):
@@ -75,8 +75,6 @@ class Model_Factory_semantic_seg():
         else:
             self.crit = nn.NLLLoss2d(ignore_index=cf.ignore_index).cuda()
 
-
-
         # we print the configuration file here so that the configuration is traceable
         self.cf = cf
         print(help(cf))
@@ -116,7 +114,7 @@ class Model_Factory_semantic_seg():
         self.net.train()
         for i, (input, target) in enumerate(train_loader):
             self.optimiser.zero_grad()
-            input, target = Variable(input.cuda(async=True)), Variable(target.cuda(async=True))
+            input, target = Variable(input.cuda(async=True), requires_grad=False), Variable(target.cuda(async=True), requires_grad=False)
             output = F.log_softmax(self.net(input))
             self.loss = self.crit(output, target)
             print(epoch, i, self.loss.data[0])
@@ -132,6 +130,19 @@ class Model_Factory_semantic_seg():
             b, _, h, w = output.size()
             pred = output.permute(0, 2, 3, 1).contiguous().view(-1, self.num_classes).max(1)[1].view(b, h, w)
             total_ious.append(iou(pred, target, self.num_classes))
+
+            image = np.squeeze(input.data.cpu().numpy())
+            image[0, :, :] = image[0, :, :] * cf.rgb_std[0] + cf.rgb_mean[0]
+            image[1, :, :] = image[1, :, :] * cf.rgb_std[1] + cf.rgb_mean[1]
+            image[2, :, :] = image[2, :, :] * cf.rgb_std[2] + cf.rgb_mean[2]
+            pred_image = np.squeeze(pred.data.cpu().numpy())
+            class_image = np.squeeze(target.data.cpu().numpy())
+            plt.figure()
+            plt.subplot(1,3,1);plt.imshow(image.transpose(1, 2, 0));plt.title('RGB')
+            plt.subplot(1,3,2);plt.imshow(pred_image);plt.title('Prediction')
+            plt.subplot(1,3,3);plt.imshow(class_image);plt.title('GT')
+            plt.waitforbuttonpress(1)
+            print('Training testing')
 
             # Save images
             # if i % 100 == 0:
@@ -178,6 +189,33 @@ class Model_Factory_semantic_seg():
         plt.ylabel('Mean IoU')
         plt.savefig(os.path.join(self.exp_dir, 'ious.png'))
         plt.close()
+
+    def test_frame(self, val_loader, cf, sequence_name):
+        self.net.eval()
+        total_ious = []
+        for i_batch, sample_batched in enumerate(val_loader):
+            if i_batch % 100 == 0:
+                print("Processing batch: %d" % i_batch)
+
+            #input = sample_batched['image']
+            input = sample_batched['input_t']
+            image = np.squeeze(input.numpy())
+            image[0, :, :] = image[0, :, :] * cf.rgb_std[0] + cf.rgb_mean[0]
+            image[1, :, :] = image[1, :, :] * cf.rgb_std[1] + cf.rgb_mean[1]
+            image[2, :, :] = image[2, :, :] * cf.rgb_std[2] + cf.rgb_mean[2]
+
+            input_cuda = Variable(input.cuda(async=True), volatile=True)
+            output = F.log_softmax(self.net(input_cuda))
+            b, _, h, w = output.size()
+            pred = output.permute(0, 2, 3, 1).contiguous().view(-1, self.num_classes).max(1)[1].view(b, h, w)
+
+            pred_image = np.squeeze(pred.data.cpu().numpy())
+            class_image = np.squeeze(sample_batched['classes'].numpy())
+            plt.figure()
+            plt.subplot(1,3,1);plt.imshow(image.transpose(1, 2, 0))
+            plt.subplot(1,3,2);plt.imshow(pred_image)
+            plt.subplot(1,3,3);plt.imshow(class_image)
+            plt.waitforbuttonpress(1)
 
 
 class Model_Factory_LSTM():
