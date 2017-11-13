@@ -141,9 +141,11 @@ def get_img_resized_list(cf, train_data, valid_data, test_data):
         # Convert to training labels
         w, h = semantic_image.shape
         # Create one-hot encoding
-        semantic_image_one_hot = np.zeros(shape=(cf.cnn_class_num, w, h))
-        for c in range(cf.cnn_class_num):
-            semantic_image_one_hot[c][semantic_image == c] = 1
+        semantic_image_one_hot = np.zeros(shape=(2, w, h))
+        car_chanel = 8
+        road_chanel = 3
+        for c, chanel in enumerate([car_chanel, road_chanel]):
+            semantic_image_one_hot[c][semantic_image == chanel] = 1
         # Convert to tensors
         semantic_image_t = torch.Tensor(semantic_image_one_hot)
         return semantic_image_t

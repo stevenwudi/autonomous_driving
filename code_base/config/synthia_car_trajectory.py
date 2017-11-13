@@ -113,7 +113,7 @@ loss                         = 'SmoothL1Loss'       # 'MSE', 'SmoothL1Loss'
 optimizer                    = 'sgd'      # LBFGS','adam','rmsprop','sgd'
 learning_rate                = 0.001          # Training learning rate
 momentum                     = 0.9
-load_trained_model           = True
+load_trained_model           = False
 train_model_path             = '/home/wzn/PycharmProjects/autonomous_driving/Experiments/car_trajectory_prediction/SYNTHIA-SEQS-01_Mon, 13 Nov 2017-11-13 11:27:35_CNN_LSTM_To_FC/Epoch: 5_net_Coverage:0.0859_Center:231.26_CoverageR:0.0423_CenterR:1.22.PTH'
 #### LSTM training variables #################
 # LSTM_ManyToMany
