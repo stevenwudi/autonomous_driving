@@ -230,6 +230,51 @@ class DataGenerator_Synthia_car_trajectory():
             self.cf = cf
             print('Loading data')
             train_data, valid_data, test_data, self.data_mean, self.data_std, train_img_list, valid_img_list, test_img_list = prepare_data_image_list(cf)
+
+            # deal images and relocate train_img_list & valid_img_list & test_img_list
+            self.root_dir = '/'.join(cf.dataset_path[0].split('/')[:-1])
+
+
+            # def deal_img_list(img_list, item):
+            #
+            #     # parent dir
+            #     img_dir = self.root_dir + '/' + img_list[item][0].split('/')[
+            #         0] + '/' + 'GT/LABELS' + '/' + self.cf.data_stereo + '/' + self.cf.data_camera
+            #
+            #     def img_name(i):
+            #         return os.path.join(img_dir, img_list[item][i].split('/')[1])
+            #
+            #     def semantic_image(img_name):
+            #         try:
+            #             input = cv.imread(img_name, -1)
+            #             semantic_image = np.int8(input[:, :, 2])
+            #         except IOError:
+            #             # unfortunately, some images are corrupted. Hence, we need to manually exclude them.
+            #             print("Image failed loading: ", img_name)
+            #
+            #         # resize
+            #         semantic_image = imresize(semantic_image, size=0.125, interp='nearest', mode='F')
+            #         # Convert to training labels
+            #         w, h = semantic_image.shape
+            #         # Create one-hot encoding
+            #         semantic_image_one_hot = np.zeros(shape=(self.cf.cnn_class_num, w, h))
+            #         for c in range(self.cf.cnn_class_num):
+            #             semantic_image_one_hot[c][semantic_image == c] = 1
+            #
+            #         # Convert to tensors
+            #         semantic_image_t = torch.Tensor(semantic_image_one_hot)
+            #         return semantic_image_t
+            #
+            #     if self.cf.model_name == 'CNN_LSTM_To_FC':
+            #         semantic_images = torch.stack(
+            #             [semantic_image(img_name(i)) for i in range(self.cf.lstm_input_frame)], dim=0)
+            #
+            #
+            #     return semantic_images
+
+
+
+
             # Load training set
             print('\n > Loading training, valid, test set')
             train_dataset = BB_ImageDataGenerator_Synthia(cf, train_data, train_img_list, crop=False, flip=False)

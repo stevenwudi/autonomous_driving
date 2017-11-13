@@ -16,7 +16,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 import os
 import sys
-
+import json
 
 
 def adjust_learning_rate(lr, optimizer, epoch,train_losses, decrease_epoch=10):
@@ -315,6 +315,11 @@ class Model_Factory_LSTM():
         aveErrCoverage_realworld = []
         aveErrCenter_realworld = []
         valid_losses = []
+        errCoverage = []
+        iou_2d = []
+        errCenter_realworld =[]
+        iou_3d = []
+
         for i, (sementic, input_trajectory, target_trajectory) in enumerate(valid_loader):
             print(i)
             sementic, input_trajectory, target_trajectory = Variable(sementic.cuda(async=True)), \
@@ -335,10 +340,20 @@ class Model_Factory_LSTM():
             aveErrCenter.append(evalua_values[1])
             aveErrCoverage_realworld.append(evalua_values[4])
             aveErrCenter_realworld.append(evalua_values[5])
+            errCoverage.append(evalua_values[2])
+            iou_2d.append(evalua_values[3])
+            errCenter_realworld.append(evalua_values[6])
+            iou_3d.append(evalua_values[7])
             # output_trajectories.append(output)
             # target_trajectories.append(target_trajectory)
 
         # loss mean
+        track_plot = {}
+        track_plot['errCoverage'] = errCoverage
+        track_plot['iou_2d'] = iou_2d
+        track_plot['errCenter_realworld'] = errCenter_realworld
+        track_plot['iou_3d'] = iou_3d
+
         self.loss = np.array(valid_losses).mean()
         # print('Valid Loss', epoch, self.loss)
 
@@ -363,6 +378,9 @@ class Model_Factory_LSTM():
 
             model_checkpoint = 'Epoch:%2d_net_Coverage:%.4f_Center:%.2f_CoverageR:%.4f_CenterR:%.2f.PTH' % \
                                (epoch, aveErrCoverage, aveErrCenter, aveErrCoverage_realworld, aveErrCenter_realworld)
+            np.save('/media/samsumg_1tb/synthia/SYNTHIA-SEQS-01/tracking_plot/' + 'valid', track_plot)
+
+
         else:
             print('############### TEST #############################################')
             print('Test Loss', epoch, self.loss)
@@ -371,6 +389,8 @@ class Model_Factory_LSTM():
             aveErrCoverage_realworld, aveErrCenter_realworld))
             model_checkpoint = 'Final_test:Coverage:%.4f_Center:%.2f_CoverageR:%.4f_CenterR:%.2f.PTH' % \
                                (aveErrCoverage, aveErrCenter, aveErrCoverage_realworld, aveErrCenter_realworld)
+            np.save('/media/samsumg_1tb/synthia/SYNTHIA-SEQS-01/tracking_plot/' + 'test', track_plot)
+
             # Plot scores
             # self.aveErrCoverage.append(aveErrCoverage.mean())
             # es = list(range(len(self.aveErrCoverage)))

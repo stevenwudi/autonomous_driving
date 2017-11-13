@@ -171,7 +171,7 @@ def calc_seq_err_robust(results, rect_anno, focal_length):
         aveErrCoverage_realworld = totalerrCoverage_realworld / float(seq_length)
         aveErrCenter_realworld = totalerrCenter_realworld / float(seq_length)
 
-    return aveErrCoverage, aveErrCenter, errCoverage, iou_2d, \
+    return aveErrCoverage, aveErrCenter, errCenter, iou_2d, \
            aveErrCoverage_realworld, aveErrCenter_realworld, errCenter_realworld, iou_3d
 
 
