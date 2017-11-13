@@ -53,7 +53,7 @@ dataloader_num_workers_test  = 1        # Number of dataload works during test
 dataloader_load_prepare_data = True     # whether or not load prepare_data for DataLoader
 dataloader_load_prepare_data_path = ''
 dataloader_save_prepare_data = True     # whether or not save generated prepare_data for DataLoader
-dataloader_save_prepare_data_path = ''  
+dataloader_save_prepare_data_path = ''
 # Data shuffle
 shuffle_train                = False            # No shuffling because the time sequence matters
 shuffle_valid                = False           # Whether to shuffle the validation data
