@@ -125,6 +125,8 @@ def get_img_resized_list(cf, train_data, valid_data, test_data):
     train_img_dir = data_img_dir(train_data)
     valid_img_dir = data_img_dir(valid_data)
     test_img_dir = data_img_dir(test_data)
+    save_semantics_dir = ''
+
 
     def img_name(img_dir, item):
         return os.path.join(img_dir, item.split('/')[1])
@@ -150,11 +152,16 @@ def get_img_resized_list(cf, train_data, valid_data, test_data):
         semantic_image_t = torch.Tensor(semantic_image_one_hot)
         return semantic_image_t
 
+    def save_semantics_itemlist(itemlist):
+        np.save('', tuple(itemlist))
+
+
     valid_img_list = []
     for d in valid_data:
         item_list = [x[6] for x in d[:cf.lstm_input_frame]]
         item_list = [semantic_image(img_name(valid_img_dir, item)) for item in item_list]
         item_list = torch.stack(item_list, dim=0)
+
         valid_img_list.append(item_list)
 
     test_img_list = []
