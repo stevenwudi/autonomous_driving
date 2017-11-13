@@ -2,14 +2,17 @@
 problem_type                 = 'segmentation'  # ['classification' | 'detection' | 'segmentation']
 
 
+
 dataset_name                 = 'SYNTHIA_RAND_CVPR16'
+
 dataset_name2                = None            # Second dataset name. None if not Domain Adaptation
 perc_mb2                     = None            # Percentage of data from the second dataset in each minibatch
 class_mode                   = problem_type
 local_path                   = '/home/stevenwudi/PycharmProjects/autonomous_driving'
-shared_path                  = '/home/public/synthia'
-sequence_name                = dataset_name
+shared_path                  = '/media/samsumg_1tb/synthia'
+
 dataroot_dir                 = '/home/stevenwudi/PycharmProjects/autonomous_driving/Datasets'
+
 
 # Model
 model_name                   = 'drn_d_38'  # Model to use ['fcn8' | 'lenet' | 'alexNet' | 'vgg16' |  'vgg19' | 'resnet50' | 'InceptionV3']
@@ -17,8 +20,6 @@ model_name                   = 'drn_d_38'  # Model to use ['fcn8' | 'lenet' | 'a
 freeze_layers_from           = None            # Freeze layers from 0 to this layer during training (Useful for finetunning) [None | 'base_model' | Layer_id]
 show_model                   = False           # Show the architecture layers
 load_imageNet                = False           # Load Imagenet weights and normalize following imagenet procedure
-load_trained_model           = True           # Load a pretrained model for doing finetuning
-train_model_path             = '/home/stevenwudi/PycharmProjects/autonomous_driving/Experiments/segmentation/SYNTHIA_RAND_CVPR16___Wed, 08 Nov 2017-11-08 11:21:17_drn_d_38/epoch_35_mIOU:.0.605787_net.pth'
 
 # Parameters
 train_model                  = True            # Train the model
@@ -33,15 +34,11 @@ debug_images_test            = 30              # N images for testing in debug m
 debug_n_epochs               = 3               # N of training epochs in debug mode
 
 # Batch sizes
-
-batch_size_train             = 20              # Batch size during training
-
-
 workers                      = 4
+batch_size_train             = 8              # Batch size during training
+batch_size_valid             = 8              # Batch size during validation
+batch_size_test              = 8              # Batch size during testing
 
-
-batch_size_valid             = 10              # Batch size during validation
-batch_size_test              = 10              # Batch size during testing
 dataloader_num_workers_train = batch_size_train# Number of dataload works during training
 dataloader_num_workers_valid = batch_size_valid# Number of dataload works during valid
 dataloader_num_workers_test  = batch_size_test # Number of dataload works during test
@@ -173,8 +170,12 @@ classes                             = {'void': 0, 'sky': 1, 'building': 2, 'road
                                        'cyclist': 11}
 
 
-num_classes                           = len(classes)   # we don't want void class
 
+classes = {'Void': 0, 'Sky': 1, 'Building': 2, 'Road': 3, 'Sidewalk': 4, 'Fence': 5, 'Vegetation': 6, 'Pole': 7,
+           'Car': 8, 'Traffic_Sign': 9, 'Pedestrian': 10, 'Bicycle': 11, 'Lanemarking': 12,
+           'Reserved': 13, 'Reserved': 14, 'Traffic Light': 15}
+num_classes                           = len(classes) +1   # we don't want void class
+#num_classes                           = len(classes)   # we don't want void class
 void_class                          = [len(classes) + 1]
 
 ignore_label                        = 0
@@ -204,7 +205,25 @@ test_epoch                          = 1
 batch_size                          = 8
 crop_size                           = 720
 train_ratio                         = 0.9
-cb_weights_method                   = 'rare_freq_cost' #'rare_freq_cost'   # Label weight balance [None | 'median_freq_cost' | 'rare_freq_cost']
+cb_weights_method                   = None  #'rare_freq_cost'# Label weight balance [None | 'median_freq_cost' | 'rare_freq_cost']
 cb_weights                          = [1.65697855,   0.23748228,   0.29841721, 0.63769955,   9.23991394,   1.66974087,
                                        6.60188582, 0.92809024,  19.85701845,   2.60712632,  14.72396384]
 
+
+video_sequence_train         = True
+train_ratio                  = 0.8
+valid_ratio                  = 0.1
+video_sequence_prediction    = False
+
+load_trained_model           = False           # Load a pretrained model for doing finetuning
+train_model_path             = '/home/stevenwudi/PycharmProjects/autonomous_driving/Experiments/segmentation/SYNTHIA_RAND_CVPR16___Wed, 08 Nov 2017-11-08 11:21:17_drn_d_38/epoch_44_mIOU:.0.603778_net.pth'
+data_type                           = 'RGB'
+data_stereo                         = 'Stereo_Left'
+data_camera                         = 'Omni_F'
+data_label                          = 'LABELS'  # we have 'COLORS' and 'LABELS'
+start_tracking_idx           = 1
+resize_train                 = (720, 960)    # Resize the image during training (Height, Width) or None
+
+dataset_name                 = 'SYNTHIA_RAND_CVPR16'
+sequence_name                = 'SYNTHIA-SEQS-01'
+#sequence_name = dataset_name

@@ -11,7 +11,7 @@ get_sequence_car_detection   = True
 get_sequence_car_tracking    = True
 depth_threshold_method       = 'yen'   #['yen', 'ostu', 'li'
 iou_threshold                = 0.3
-start_tracking_idx           = 850
+start_tracking_idx           = 1
 threshold_car_POR_start      = 2e-3  # threshold for car start tracking using pixel occupant rate
 threshold_car_POR_end        = 1e-3  # threshold for car start tracking using pixel occupant rate
 minimum_detection_length     = 3
@@ -41,7 +41,7 @@ formatting_ground_truth_sequence_car_trajectory = True
 draw_seq                                = 'SYNTHIA-SEQS-06-NIGHT'   # which sequence to draw, need to set the above two flags to False
 
 # Model
-model_name                   = 'LSTM_ManyToMany'       # Model to use ['LSTM_ManyToMany', 'LSTM_To_FC']
+model_name                   = 'LSTM_ManyToMany'       # Model to use ['LSTM_ManyToMany', 'LSTM_To_FC', 'CNN_LSTM_To_FC']
 debug                        = False
 im_size                      = (760, 1280)
 resize_train                 = (760, 1280)      # Resize the image during training (Height, Width) or None
@@ -113,9 +113,26 @@ load_trained_model           = False
 train_model_path             = '/home/stevenwudi/PycharmProjects/autonomous_driving/Experiments/car_trajectory_prediction/SYNTHIA-SEQS-01___Mon, 06 Nov 2017-11-06 16:08:14/Epoch:100_net_aveErrCoverage:0.8343_aveErrCenter:17.47___.pth'
 #### LSTM training variables #################
 # LSTM_ManyToMany
-lstm_inputsize               = 6   # LSTM input: [x,y,w,h, d_min, d_max]
-lstm_hiddensize              = 50
-lstm_numlayers               = 2
-lstm_outputsize              = 6
+lstm_input_dims               = [6, 150, 150]    # [layer1_input_dim, layer2_input_dim,...]  layer1_input_dim:[x,y,w,h, d_min, d_max]
+lstm_hidden_sizes             = [150, 150, 150]    # [layer1_hidden_size, layer2_hidden_size,...]
+outlayer_input_dim            = 150          # outlayer's input dim.Generally, identify to hidden_sizes[-1]
+outlayer_output_dim           = 6            # outlayer output: [x,y,w,h, d_min, d_max]
 # LSTM_To_FC
-lstm_output_dim              = 6   # currently is [x,y,w,h,d_min, d_max] as lstm_inputsize
+lstmToFc_input_dims           = [6, 100, 300]              # [layer1_input_dim, layer2_input_dim,...]  layer1_input_dim:[x,y,w,h, d_min, d_max]
+lstmToFc_hidden_sizes         = [100, 300, 300]            # [layer1_hidden_size, layer2_hidden_size,...]
+lstmToFc_future               = lstm_predict_frame        # the number of predicting frames
+lstmToFc_output_dim           = 6               # outlayer output: [x,y,w,h, d_min, d_max]
+
+# CNN_LSTM_To_FC
+cnn_class_num                 = 15
+def cnnDict(in_channels, out_channels, kernel_size, stride, padding):
+    return {'in_channels': in_channels, 'out_channels': out_channels, 'kernel_size': kernel_size, 'stride': stride, 'padding': padding}
+cnnLstmToFc_conv_paras        = [cnnDict(cnn_class_num,2,3,1,1), cnnDict(2,4,3,1,1),cnnDict(4,4,2,2,0)]              # a list composed of dicts representing parameters of each conv, {'in_channels': ,
+                                                                                      # 'out_channels': ,
+                                                                                      # 'kernel_size': ,
+                                                                                      # 'stride': ,
+                                                                                      # 'padding': }
+cnnLstmToFc_input_dims        = [6, 200, 300]              # a list involving each lstm_layer's input_dim
+cnnLstmToFc_hidden_sizes      = [100, 300, 300]              # a list involving each lstm_layer's hidden_size
+cnnLstmToFc_future            = lstm_predict_frame # the number of predicting frames
+cnnLstmToFc_output_dim        = 6               # outlayer output: [x,y,w,h, d_min, d_max]
