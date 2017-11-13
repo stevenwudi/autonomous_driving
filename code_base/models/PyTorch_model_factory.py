@@ -19,13 +19,13 @@ import sys
 import json
 
 
-def adjust_learning_rate(lr, optimizer, epoch,train_losses, decrease_epoch=10):
+def adjust_learning_rate(lr, optimizer, epoch, train_losses, decrease_epoch=10):
     """Sets the learning rate to the initial LR decayed by 10 every 30 epochs"""
 
     if len(train_losses) < 5:
         return lr
 
-    eva_losses = train_losses[-5:]
+    eva_losses = np.array(train_losses[-5:])
 
     max_value = eva_losses.max()
     min_value = eva_losses.min()
