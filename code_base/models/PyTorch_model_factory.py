@@ -19,12 +19,31 @@ import sys
 
 
 
-def adjust_learning_rate(lr, optimizer, epoch, decrease_epoch=10):
+def adjust_learning_rate(lr, optimizer, epoch,train_losses, decrease_epoch=10):
     """Sets the learning rate to the initial LR decayed by 10 every 30 epochs"""
-    lr = lr * (0.1 ** (epoch // decrease_epoch))
-    if lr >= 1.0e-6:
-        for param_group in optimizer.param_groups:
-            param_group['lr'] = lr
+
+    if len(train_losses) < 5:
+        return lr
+
+    eva_losses = train_losses[-5:]
+
+    max_value = eva_losses.max()
+    min_value = eva_losses.min()
+    max_loction = eva_losses.argmax()
+    min_location = eva_losses.argmin()
+
+    if np.abs(max_value-min_value)/max_value < 1e-3 or max_loction>min_location:
+        lr = optimizer.param_groups[-1]['lr']
+        lr =lr * 0.1
+        if lr >= 1.0e-6:
+            for param_group in optimizer.param_groups:
+                param_group['lr'] = lr
+    #
+    # lr = lr * (0.1 ** (epoch // decrease_epoch))
+    # if lr >= 1.0e-6:
+    #     for param_group in optimizer.param_groups:
+    #         param_group['lr'] = lr
+
     return lr
 
 
@@ -224,10 +243,10 @@ class Model_Factory_LSTM():
         elif cf.optimizer == 'sgd':
             self.optimiser = optim.SGD(self.net.parameters(), lr=cf.learning_rate, momentum=cf.momentum, weight_decay=cf.weight_decay, nesterov=True)
 
-    def train(self, cf, train_loader, epoch):
+    def train(self, cf, train_loader, epoch, train_losses):
         # begin to train
         self.net.train()
-        lr = adjust_learning_rate(self.cf.learning_rate, self.optimiser, epoch, decrease_epoch=cf.lr_decay_epoch)
+        lr = adjust_learning_rate(self.cf.learning_rate, self.optimiser, epoch,train_losses , decrease_epoch=cf.lr_decay_epoch)
         print('learning rate:', lr)
 
         # if cf.model_name == 'CNN_LSTM_To_FC':

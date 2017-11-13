@@ -109,7 +109,7 @@ optimizer                    = 'sgd'      # LBFGS','adam','rmsprop','sgd'
 learning_rate                = 0.01          # Training learning rate
 momentum                     = 0.9
 load_trained_model           = True
-train_model_path             = '/home/wzn/PycharmProjects/autonomous_driving/Experiments/car_trajectory_prediction/SYNTHIA-SEQS-01___Mon, 06 Nov 2017-11-06 16:08:14/Epoch:100_net_aveErrCoverage:0.8343_aveErrCenter:17.47___.pth'
+train_model_path             = '/home/wzn/PycharmProjects/autonomous_driving/Experiments/car_trajectory_prediction/SYNTHIA-SEQS-01_Mon, 13 Nov 2017-11-13 00:27:55_CNN_LSTM_To_FC/Epoch:13_net_Coverage:0.0883_Center:231.14_CoverageR:0.0300_CenterR:1.82.PTH'
 #### LSTM training variables #################
 # LSTM_ManyToMany
 lstm_input_dims               = [6, 150, 150]    # [layer1_input_dim, layer2_input_dim,...]  layer1_input_dim:[x,y,w,h, d_min, d_max]

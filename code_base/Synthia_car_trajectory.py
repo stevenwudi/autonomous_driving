@@ -37,7 +37,7 @@ def process(cf):
         valid_losses = []
         print(' ---> Training data: ' + cf.sequence_name + ' <---')
         for epoch in range(1, cf.n_epochs + 1):
-            train_losses += [model.train(cf, DG.train_loader, epoch)]
+            train_losses += [model.train(cf, DG.train_loader, epoch, train_losses)]
             if cf.valid_model:
                 valid_losses += [model.test(cf, DG.valid_loader, DG.data_mean, DG.data_std, epoch)]
                 if epoch > 0 and epoch%cf.figure_epoch == 0:
