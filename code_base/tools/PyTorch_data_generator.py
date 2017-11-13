@@ -338,7 +338,6 @@ class Resized_BB_ImageDataGenerator_Synthia(Dataset):
         self.cf = cf
         self.img_list = img_list
         self.root_dir = '/'.join(cf.dataset_path[0].split('/')[:-1])
-
         self.crop = crop
         # self.crop_size = cf.crop_size
         self.flip = flip
