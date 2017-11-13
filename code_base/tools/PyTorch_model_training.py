@@ -125,8 +125,6 @@ def get_img_resized_list(cf, train_data, valid_data, test_data):
     train_img_dir = data_img_dir(train_data)
     valid_img_dir = data_img_dir(valid_data)
     test_img_dir = data_img_dir(test_data)
-    save_semantics_dir = ''
-
 
     def img_name(img_dir, item):
         return os.path.join(img_dir, item.split('/')[1])
@@ -152,31 +150,38 @@ def get_img_resized_list(cf, train_data, valid_data, test_data):
         semantic_image_t = torch.Tensor(semantic_image_one_hot)
         return semantic_image_t
 
-    def save_semantics_itemlist(itemlist):
-        np.save('', tuple(itemlist))
-
+    save_root_dir = '/media/samsumg_1tb/synthia/SYNTHIA-SEQS-01/resized_semantic_images/'
+    def save_semantics_itemlist(name, itemlist):
+        path = save_root_dir + name + '.npy'
+        np.save(path, [itemlist])
+        return path
 
     valid_img_list = []
+    i = 0
     for d in valid_data:
+        i += 1
         item_list = [x[6] for x in d[:cf.lstm_input_frame]]
         item_list = [semantic_image(img_name(valid_img_dir, item)) for item in item_list]
         item_list = torch.stack(item_list, dim=0)
-
-        valid_img_list.append(item_list)
+        valid_img_list.append(save_semantics_itemlist('valid_'+str(i), item_list))
 
     test_img_list = []
+    i = 0
     for d in test_data:
+        i += 1
         item_list = [x[6] for x in d[:cf.lstm_input_frame]]
         item_list = [semantic_image(img_name(test_img_dir, item)) for item in item_list]
         item_list = torch.stack(item_list, dim=0)
-        test_img_list.append(item_list)
+        test_img_list.append(save_semantics_itemlist('test_' + str(i), item_list))
 
     train_img_list = []
+    i = 0
     for d in train_data:
+        i += 1
         item_list = [x[6] for x in d[:cf.lstm_input_frame]]
         item_list = [semantic_image(img_name(train_img_dir, item)) for item in item_list]
         item_list = torch.stack(item_list, dim=0)
-        train_img_list.append(item_list)
+        train_img_list.append(save_semantics_itemlist('train_' + str(i), item_list))
 
     return train_img_list, valid_img_list, test_img_list
 
@@ -184,7 +189,7 @@ def get_img_resized_list(cf, train_data, valid_data, test_data):
 def prepare_data_image_list(cf):
     if cf.dataloader_load_prepare_data:
         # load data
-        prepared_data = np.load(cf.dataloader_load_prepare_data_path)
+        prepared_data = tuple(np.load(cf.dataloader_load_prepare_data_path))
     else:
         import pickle
         with open(os.path.join(cf.shared_path, cf.problem_type, cf.sequence_name + '_train.npy'), 'rb') as fp:
@@ -194,10 +199,13 @@ def prepare_data_image_list(cf):
         with open(os.path.join(cf.shared_path, cf.problem_type, cf.sequence_name + '_test.npy'), 'rb') as fp:
             test_data = pickle.load(fp)
 
-        train_data_array, valid_data_array, test_data_array, data_mean, data_std = normalise_data_with_img_list(train_data, valid_data, test_data)
+        train_data_array, valid_data_array, test_data_array, data_mean, data_std = normalise_data_with_img_list(train_data,
+                                                                                                                valid_data,
+                                                                                                                test_data)
         train_img_list, valid_img_list, test_img_list = get_img_resized_list(cf, train_data, valid_data, test_data)
 
         prepared_data = (train_data_array, valid_data_array, test_data_array, data_mean, data_std, train_img_list, valid_img_list, test_img_list)
+
         if cf.dataloader_save_prepare_data:
             # save data
             np.save(cf.dataloader_save_prepare_data_path, prepared_data)

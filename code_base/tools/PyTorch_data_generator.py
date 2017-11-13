@@ -358,7 +358,7 @@ class Resized_BB_ImageDataGenerator_Synthia(Dataset):
 
         # semantics
         if self.cf.model_name == 'CNN_LSTM_To_FC':
-            semantic_images = self.img_list[item]
+            semantic_images = np.load(self.img_list[item])[0]
         else:
             semantic_images = torch.FloatTensor(torch.zeros(input_trajectorys.size()))
 
