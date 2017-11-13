@@ -42,7 +42,7 @@ debug                        = False
 im_size                      = (760, 1280)
 resize_train                 = (760, 1280)      # Resize the image during training (Height, Width) or None
 #random_size_crop             = (350*2, 460*2)      # Random size crop of the image during training
-workers                      = 6              #  how many subprocesses to use for data loading. 0 means that the data will be loaded in the main process
+workers                      = 32              #  how many subprocesses to use for data loading. 0 means that the data will be loaded in the main process
 batch_size_train             = 64            # Batch size during training
 batch_size_valid             = 20              # Batch size during validation
 batch_size_test              = 20              # Batch size during testing
@@ -108,7 +108,7 @@ loss                         = 'SmoothL1Loss'       # 'MSE', 'SmoothL1Loss'
 optimizer                    = 'sgd'      # LBFGS','adam','rmsprop','sgd'
 learning_rate                = 0.01          # Training learning rate
 momentum                     = 0.9
-load_trained_model           = False
+load_trained_model           = True
 train_model_path             = '/home/wzn/PycharmProjects/autonomous_driving/Experiments/car_trajectory_prediction/SYNTHIA-SEQS-01___Mon, 06 Nov 2017-11-06 16:08:14/Epoch:100_net_aveErrCoverage:0.8343_aveErrCenter:17.47___.pth'
 #### LSTM training variables #################
 # LSTM_ManyToMany
