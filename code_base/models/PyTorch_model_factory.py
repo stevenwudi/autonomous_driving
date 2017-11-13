@@ -321,7 +321,7 @@ class Model_Factory_LSTM():
         iou_3d = []
 
         for i, (sementic, input_trajectory, target_trajectory) in enumerate(valid_loader):
-            print(i)
+            # print(i)
             sementic, input_trajectory, target_trajectory = Variable(sementic.cuda(async=True)), \
                                                             Variable(input_trajectory.cuda(async=True)), \
                                                             Variable(target_trajectory.cuda(async=True))
@@ -378,7 +378,7 @@ class Model_Factory_LSTM():
 
             model_checkpoint = 'Epoch:%2d_net_Coverage:%.4f_Center:%.2f_CoverageR:%.4f_CenterR:%.2f.PTH' % \
                                (epoch, aveErrCoverage, aveErrCenter, aveErrCoverage_realworld, aveErrCenter_realworld)
-            np.save('/media/samsumg_1tb/synthia/SYNTHIA-SEQS-01/tracking_plot/' + 'valid', track_plot)
+            np.save('/media/samsumg_1tb/synthia/SYNTHIA-SEQS-01/tracking_plot/' + 'valid'+str(epoch), track_plot)
 
 
         else:
