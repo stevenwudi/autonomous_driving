@@ -107,7 +107,7 @@ lr_decay_epoch               = 10          # every lr_decay_epoch, decay learnin
 figure_epoch                 = 5           # every fugure_epoch, figure out the losses
 test_epoch                   = 1
 weight_decay                 = 0.              # Weight decay or L2 parameter norm penalty
-n_epochs                     = 200            # Number of epochs during training
+n_epochs                     = 500            # Number of epochs during training
 cuda                         = True
 loss                         = 'SmoothL1Loss'       # 'MSE', 'SmoothL1Loss'
 optimizer                    = 'sgd'      # LBFGS','adam','rmsprop','sgd'
@@ -131,7 +131,7 @@ lstmToFc_output_dim           = 6               # outlayer output: [x,y,w,h, d_m
 cnn_class_num                 = 15
 def cnnDict(in_channels, out_channels, kernel_size, stride, padding):
     return {'in_channels': in_channels, 'out_channels': out_channels, 'kernel_size': kernel_size, 'stride': stride, 'padding': padding}
-cnnLstmToFc_conv_paras        = [cnnDict(cnn_class_num,15,3,1,1), cnnDict(15,10,3,1,1),cnnDict(10,5,3,1,1),cnnDict(5,5,3,1,1)]              # a list composed of dicts representing parameters of each conv, {'in_channels': ,
+cnnLstmToFc_conv_paras        = [cnnDict(2,4,3,1,1), cnnDict(4,4,3,1,1),cnnDict(4,4,3,1,1),cnnDict(4,4,3,1,1)]              # a list composed of dicts representing parameters of each conv, {'in_channels': ,
                                                                                       # 'out_channels': ,
                                                                                       # 'kernel_size': ,
                                                                                       # 'stride': ,
