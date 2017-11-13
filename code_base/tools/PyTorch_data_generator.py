@@ -105,7 +105,9 @@ class ToTensor(object):
         # numpy image: H x W x C
         # torch image: C X H X W
         image = image.transpose((2, 0, 1))
-        return {'image': torch.from_numpy(image),
+        image_tensor = torch.from_numpy(image)
+        image_tensor = image_tensor.float().div(255)
+        return {'image': image_tensor,
                 'label': torch.from_numpy(label)}
 
 
@@ -121,6 +123,25 @@ class RandomHorizontalFlip(object):
             results = [image, label]
         return results
 
+class Normalize(object):
+    """Given mean: (R, G, B) and std: (R, G, B),
+    will normalize each channel of the torch.*Tensor, i.e.
+    channel = (channel - mean) / std
+    """
+
+    def __init__(self, mean, std):
+        self.mean = torch.FloatTensor(mean)
+        self.std = torch.FloatTensor(std)
+
+    def __call__(self, image, label=None):
+        img = image['image']
+        label = image['label']
+        for t, m, s in zip(img, self.mean, self.std):
+            t.sub_(m).div_(s)
+        if label is None:
+            return image,
+        else:
+            return {'image': img, 'label': label.long()}
 
 class Dataset_Generators_Synthia():
     """ Initially we use synthia dataset"""
@@ -128,6 +149,42 @@ class Dataset_Generators_Synthia():
     def __init__(self, cf):
         self.cf = cf
         # Load training set
+<<<<<<< HEAD
+        print('\n > Loading training, valid, test set, train_rand set')
+        dataloaders_single = {x: ImageDataGenerator_Synthia(
+            root_dir=os.path.join(cf.dataset_path, x),
+            transform=T.Compose([
+                RandomCrop(cf.random_size_crop),
+                ToTensor(),
+                Normalize(self.cf.rgb_mean, self.cf.rgb_std)
+            ]),
+            error_images=self.cf.error_images)
+            # for x in ['train', 'valid', 'test', 'train_rand']}
+            for x in ['train_rand']}
+
+        # self.dataloader['train'] = DataLoader(dataset=dataloaders_single['train'],
+        #                                       batch_size=cf.batch_size_train,
+        #                                       shuffle=cf.shuffle_train,
+        #                                       num_workers=cf.dataloader_num_workers_train)
+        # self.dataloader['valid'] = DataLoader(dataset=dataloaders_single['valid'],
+        #                                       batch_size=cf.batch_size_valid,
+        #                                       shuffle=cf.shuffle_valid,
+        #                                       num_workers=cf.dataloader_num_workers_valid)
+        # self.dataloader['test'] = DataLoader(dataset=dataloaders_single['test'],
+        #                                      batch_size=cf.batch_size_test,
+        #                                      shuffle=cf.shuffle_test,
+        #                                      num_workers=cf.dataloader_num_workers_test)
+        self.dataloader['train_rand'] = DataLoader(dataset=dataloaders_single['train_rand'],
+                                             batch_size=cf.batch_size_train,
+                                             shuffle=cf.shuffle_train,
+                                             num_workers=cf.dataloader_num_workers_train)
+
+
+class ImageDataGenerator_Synthia(Dataset):
+    """ Image Data"""
+
+    def __init__(self, root_dir, transform=None, error_images=None):
+=======
         print('\n > Loading training, valid, test set')
         train_dataset = ImageDataGenerator_Synthia(cf.dataset_path, 'train', cf=cf, crop=True, flip=True)
         val_dataset = ImageDataGenerator_Synthia(cf.dataset_path, 'valid', cf=cf, crop=False, flip=False)
@@ -137,12 +194,37 @@ class Dataset_Generators_Synthia():
 
 class ImageDataGenerator_Synthia(Dataset):
     def __init__(self, root_dir, dataset_split, cf, crop=True, flip=True):
+>>>>>>> 419d28c4e27b82c4cfef6a3aa01425cf29929973
         """
         :param root_dir: Directory will all the images
         :param label_dir: Directory will all the label images
         :param transform:  (callable, optional): Optional tra
         nsform to be applied
         """
+<<<<<<< HEAD
+        if (root_dir[-10:] == 'train_rand'):
+            self.root_dir = root_dir
+            self.image_dir = os.path.join(root_dir[:-10], 'RGB')
+            self.image_files = os.listdir(self.image_dir)
+            if error_images is not None:
+                for error in error_images:
+                    if os.path.exists(os.path.join(self.image_dir, error)):
+                        self.image_files.remove(error)
+
+            self.label_dir = os.path.join(root_dir[:-10], 'GTTXT')
+            self.label_files = os.listdir(self.label_dir)
+            self.transform = transform
+        else:
+            self.root_dir = root_dir
+            self.image_dir = os.path.join(root_dir, 'images')
+            self.image_files = os.listdir(self.image_dir)
+            self.label_dir = os.path.join(root_dir, 'masks')
+            self.label_files = os.listdir(self.label_dir)
+            self.transform = transform
+
+    def __len__(self):
+        return len(self.image_files)
+=======
         self.root_dir = root_dir
         # with open(os.path.join(root_dir, 'ALL.txt')) as text_file:  # can throw FileNotFoundError
         #     lines = tuple(l.split() for l in text_file.readlines())
@@ -170,10 +252,18 @@ class ImageDataGenerator_Synthia(Dataset):
 
     def __len__(self):
         return self.image_num
+>>>>>>> 419d28c4e27b82c4cfef6a3aa01425cf29929973
 
     def __getitem__(self, item):
         # Load images and perform augmentations with PIL
         img_name = os.path.join(self.image_dir, self.image_files[item])
+<<<<<<< HEAD
+        # print ('-------')
+        # print (img_name)
+        image = io.imread(img_name)
+        label_name = os.path.join(self.label_dir, self.image_files[item][:-4] + '.txt')
+=======
+>>>>>>> 419d28c4e27b82c4cfef6a3aa01425cf29929973
 
         try:
             input = Image.open(img_name)
@@ -220,7 +310,14 @@ class ImageDataGenerator_Synthia(Dataset):
         input_t[1].sub_(self.mean[1]).div_(self.std[1])
         input_t[2].sub_(self.mean[2]).div_(self.std[2])
 
+<<<<<<< HEAD
+        label_tensor = sample['label']
+        label_tensor_clone = label_tensor.clone()
+        label_tensor_clone[label_tensor == -1] = 0
+        return sample['image'], label_tensor_clone
+=======
         return input_t, target_t
+>>>>>>> 419d28c4e27b82c4cfef6a3aa01425cf29929973
 
 
 class DataGenerator_Synthia_car_trajectory():
