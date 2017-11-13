@@ -190,10 +190,16 @@ class CNN_LSTM_To_FC(nn.Module):
         self.convparas = conv_paras
         self.conv = nn.Sequential(nn.Conv2d(**self.convparas[0]),
                                   nn.ReLU(),
+                                  nn.MaxPool2d(2),
                                   nn.Conv2d(**self.convparas[1]),
                                   nn.ReLU(),
+                                  nn.MaxPool2d(2),
                                   nn.Conv2d(**self.convparas[2]),
-                                  nn.ReLU()
+                                  nn.ReLU(),
+                                  nn.MaxPool2d(2),
+                                  nn.Conv2d(**self.convparas[3]),
+                                  nn.ReLU(),
+                                  nn.MaxPool2d(2)
                                   )
 
         # lstm part; build lstm layer, parameters are (input_dim,hidden_size,num_layers)

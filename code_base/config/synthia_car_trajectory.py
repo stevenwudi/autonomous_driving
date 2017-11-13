@@ -46,9 +46,12 @@ debug                        = False
 im_size                      = (760, 1280)
 resize_train                 = (760, 1280)      # Resize the image during training (Height, Width) or None
 #random_size_crop             = (350*2, 460*2)      # Random size crop of the image during training
-batch_size_train             = 1              # Batch size during training
-batch_size_valid             = 8              # Batch size during validation
-batch_size_test              = 8              # Batch size during testing
+
+workers                      = 4              #  how many subprocesses to use for data loading. 0 means that the data will be loaded in the main process
+batch_size_train             = 20             # Batch size during training
+batch_size_valid             = 1              # Batch size during validation
+batch_size_test              = 1              # Batch size during testing
+
 dataloader_num_workers_train = 1        # Number of dataload works during training
 dataloader_num_workers_valid = 1        # Number of dataload works during valid
 dataloader_num_workers_test  = 1        # Number of dataload works during test
@@ -101,13 +104,15 @@ test_model                   = True           # Predict using the model
 focal_length                 = 532.740352  # camera focal lense
 
 # Training parameters
+lr_decay_epoch               = 10          # every lr_decay_epoch, decay learning_rate by 10
+figure_epoch                 = 5           # every fugure_epoch, figure out the losses
 test_epoch                   = 1
 weight_decay                 = 0.              # Weight decay or L2 parameter norm penalty
-n_epochs                     = 3            # Number of epochs during training
+n_epochs                     = 100            # Number of epochs during training
 cuda                         = True
 loss                         = 'SmoothL1Loss'       # 'MSE', 'SmoothL1Loss'
-optimizer                    = 'LBFGS'      # LBFGS','adam'
-learning_rate                = 0.1          # Training learning rate
+optimizer                    = 'adam'      # LBFGS','adam','rmsprop','sgd'
+learning_rate                = 0.001          # Training learning rate
 momentum                     = 0.9
 load_trained_model           = False
 train_model_path             = '/home/stevenwudi/PycharmProjects/autonomous_driving/Experiments/car_trajectory_prediction/SYNTHIA-SEQS-01___Mon, 06 Nov 2017-11-06 16:08:14/Epoch:100_net_aveErrCoverage:0.8343_aveErrCenter:17.47___.pth'
@@ -117,6 +122,7 @@ lstm_input_dims               = [6, 150, 150]    # [layer1_input_dim, layer2_inp
 lstm_hidden_sizes             = [150, 150, 150]    # [layer1_hidden_size, layer2_hidden_size,...]
 outlayer_input_dim            = 150          # outlayer's input dim.Generally, identify to hidden_sizes[-1]
 outlayer_output_dim           = 6            # outlayer output: [x,y,w,h, d_min, d_max]
+
 # LSTM_To_FC
 lstmToFc_input_dims           = [6, 100, 300]              # [layer1_input_dim, layer2_input_dim,...]  layer1_input_dim:[x,y,w,h, d_min, d_max]
 lstmToFc_hidden_sizes         = [100, 300, 300]            # [layer1_hidden_size, layer2_hidden_size,...]
@@ -127,12 +133,14 @@ lstmToFc_output_dim           = 6               # outlayer output: [x,y,w,h, d_m
 cnn_class_num                 = 15
 def cnnDict(in_channels, out_channels, kernel_size, stride, padding):
     return {'in_channels': in_channels, 'out_channels': out_channels, 'kernel_size': kernel_size, 'stride': stride, 'padding': padding}
-cnnLstmToFc_conv_paras        = [cnnDict(cnn_class_num,2,3,1,1), cnnDict(2,4,3,1,1),cnnDict(4,4,2,2,0)]              # a list composed of dicts representing parameters of each conv, {'in_channels': ,
+
+cnnLstmToFc_conv_paras        = [cnnDict(cnn_class_num,15,3,1,1), cnnDict(15,10,3,1,1),cnnDict(10,5,3,1,1),cnnDict(5,5,3,1,1)]              # a list composed of dicts representing parameters of each conv, {'in_channels': ,
                                                                                       # 'out_channels': ,
                                                                                       # 'kernel_size': ,
                                                                                       # 'stride': ,
                                                                                       # 'padding': }
-cnnLstmToFc_input_dims        = [6, 200, 300]              # a list involving each lstm_layer's input_dim
-cnnLstmToFc_hidden_sizes      = [100, 300, 300]              # a list involving each lstm_layer's hidden_size
+
+cnnLstmToFc_input_dims        = [6, 350, 350]              # a list involving each lstm_layer's input_dim
+cnnLstmToFc_hidden_sizes      = [100, 350, 350]              # a list involving each lstm_layer's hidden_size
 cnnLstmToFc_future            = lstm_predict_frame # the number of predicting frames
 cnnLstmToFc_output_dim        = 6               # outlayer output: [x,y,w,h, d_min, d_max]
