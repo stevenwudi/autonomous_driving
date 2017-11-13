@@ -42,6 +42,7 @@ debug                        = False
 im_size                      = (760, 1280)
 resize_train                 = (760, 1280)      # Resize the image during training (Height, Width) or None
 #random_size_crop             = (350*2, 460*2)      # Random size crop of the image during training
+#------ DataLoader ------#
 workers                      = 32              #  how many subprocesses to use for data loading. 0 means that the data will be loaded in the main process
 batch_size_train             = 64            # Batch size during training
 batch_size_valid             = 20              # Batch size during validation
@@ -49,6 +50,10 @@ batch_size_test              = 20              # Batch size during testing
 dataloader_num_workers_train = 1        # Number of dataload works during training
 dataloader_num_workers_valid = 1        # Number of dataload works during valid
 dataloader_num_workers_test  = 1        # Number of dataload works during test
+dataloader_load_prepare_data = True     # whether or not load prepare_data for DataLoader
+dataloader_load_prepare_data_path = ''
+dataloader_save_prepare_data = True     # whether or not save generated prepare_data for DataLoader
+dataloader_save_prepare_data_path = ''  
 # Data shuffle
 shuffle_train                = False            # No shuffling because the time sequence matters
 shuffle_valid                = False           # Whether to shuffle the validation data
