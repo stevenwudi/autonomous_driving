@@ -140,6 +140,14 @@ def calc_seq_err_robust(results, rect_anno, focal_length):
 
     seq_length = results.shape[1]
 
+    aveErrCoverages = []
+    aveErrCenters = []
+    errCenters = []
+    iou_2ds = []
+    aveErrCoverage_realworlds = []
+    aveErrCenter_realworlds = []
+    errCenter_realworlds = []
+    iou_3ds = []
     for batch_num in range(len(results)):
         res = results[batch_num]
         anno = rect_anno[batch_num]
@@ -171,9 +179,23 @@ def calc_seq_err_robust(results, rect_anno, focal_length):
         aveErrCoverage_realworld = totalerrCoverage_realworld / float(seq_length)
         aveErrCenter_realworld = totalerrCenter_realworld / float(seq_length)
 
-    return aveErrCoverage, aveErrCenter, errCenter, iou_2d, \
-           aveErrCoverage_realworld, aveErrCenter_realworld, errCenter_realworld, iou_3d
 
+        aveErrCoverages.append(aveErrCoverage)
+        aveErrCenters.append(aveErrCenter)
+        errCenters.append(errCenter)
+        iou_2ds.append(iou_2d)
+        aveErrCoverage_realworlds.append(aveErrCoverage_realworld)
+        aveErrCenter_realworlds.append(aveErrCenter_realworld)
+        errCenter_realworlds.append(errCenter_realworld)
+        iou_3ds.append(iou_3d)
+
+    aveErrCoverage = np.array(aveErrCoverages).mean()
+    aveErrCenter = np.array(aveErrCenters).mean()
+    aveErrCoverage_realworld = np.array(aveErrCoverage_realworlds).mean()
+    aveErrCenter_realworld = np.array(aveErrCenter_realworlds).mean()
+
+    return aveErrCoverage, aveErrCenter, errCenters, iou_2ds, \
+           aveErrCoverage_realworld, aveErrCenter_realworld, errCenter_realworlds, iou_3ds
 
 def ssd_2d(x, y):
     s = 0

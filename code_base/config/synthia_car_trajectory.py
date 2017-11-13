@@ -116,6 +116,7 @@ lstm_input_dims               = [6, 150, 150]    # [layer1_input_dim, layer2_inp
 lstm_hidden_sizes             = [150, 150, 150]    # [layer1_hidden_size, layer2_hidden_size,...]
 outlayer_input_dim            = 150          # outlayer's input dim.Generally, identify to hidden_sizes[-1]
 outlayer_output_dim           = 6            # outlayer output: [x,y,w,h, d_min, d_max]
+
 # LSTM_To_FC
 lstmToFc_input_dims           = [6, 100, 300]              # [layer1_input_dim, layer2_input_dim,...]  layer1_input_dim:[x,y,w,h, d_min, d_max]
 lstmToFc_hidden_sizes         = [100, 300, 300]            # [layer1_hidden_size, layer2_hidden_size,...]
@@ -126,12 +127,12 @@ lstmToFc_output_dim           = 6               # outlayer output: [x,y,w,h, d_m
 cnn_class_num                 = 15
 def cnnDict(in_channels, out_channels, kernel_size, stride, padding):
     return {'in_channels': in_channels, 'out_channels': out_channels, 'kernel_size': kernel_size, 'stride': stride, 'padding': padding}
-cnnLstmToFc_conv_paras        = [cnnDict(cnn_class_num,15,3,1,1), cnnDict(15,10,3,1,1),cnnDict(10,5,3,1,1),cnnDict(5,5,3,1,1)]              # a list composed of dicts representing parameters of each conv, {'in_channels': ,
-                                                                                      # 'out_channels': ,
-                                                                                      # 'kernel_size': ,
-                                                                                      # 'stride': ,
-                                                                                      # 'padding': }
+cnnLstmToFc_conv_paras        = [cnnDict(cnn_class_num,15,3,1,1), cnnDict(15,10,3,1,1),cnnDict(10,5,3,1,1),cnnDict(5,5,3,1,1)]      # a list composed of dicts representing parameters of each conv, {'in_channels': ,
+                                                                                                                                    # 'out_channels': ,
+                                                                                                                                    # 'kernel_size': ,
+                                                                                                                                    # 'stride': ,
+                                                                                                                                    # 'padding': }
 cnnLstmToFc_input_dims        = [6, 350, 350]              # a list involving each lstm_layer's input_dim
 cnnLstmToFc_hidden_sizes      = [100, 350, 350]              # a list involving each lstm_layer's hidden_size
-cnnLstmToFc_future            = lstm_predict_frame # the number of predicting frames
-cnnLstmToFc_output_dim        = 6               # outlayer output: [x,y,w,h, d_min, d_max]
+cnnLstmToFc_future            = lstm_predict_frame  # the number of predicting frames
+cnnLstmToFc_output_dim        = 6                   # outlayer output: [x,y,w,h, d_min, d_max]
