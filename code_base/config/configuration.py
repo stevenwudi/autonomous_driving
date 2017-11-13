@@ -15,11 +15,14 @@ class Configuration():
         print(self.config_path)
         cf = imp.load_source('config', self.config_path)
 
+        dataset_path = os.path.join('/home/stevenwudi/PycharmProjects/autonomous_driving', 'Datasets')
+
         if cf.data_path:
             dataset_path = os.path.join(cf.data_path)
         else:
             dataset_path = os.path.join(cf.local_path, 'Datasets')
         # shared_dataset_path = os.path.join(cf.shared_path)
+
 
         experiments_path = os.path.join(cf.local_path, 'Experiments')
         shared_experiments_path = os.path.join(cf.shared_path, 'Experiments')
