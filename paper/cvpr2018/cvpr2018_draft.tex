@@ -48,24 +48,23 @@ Shenzhen University\thanks{Shenzhen Key Lab of Advanced Telecommunication and In
 \maketitle
 %%%%%%%%% ABSTRACT
 \begin{abstract}
-TODO: abstract
-This guide is patterned after my “Doing well in your courses”, a post I wrote a long time ago on some of the tips/tricks I’ve developed during my undergrad. I’ve received nice comments about that guide, so in the same spirit, now that my PhD has come to an end I wanted to compile a similar retrospective document in hopes that it might be helpful to some. Unlike the undergraduate guide, this one was much more difficult to write because there is significantly more variation in how one can traverse the PhD experience. Therefore, many things are likely contentious and a good fraction will be specific to what I’m familiar with (Computer Science / Machine Learning / Computer Vision research). But disclaimers are boring, lets get to it!
+% State the problem, your approach and solution, and the main contributions of the paper. Include little if any background and motivation. Be factual but comprehensive. The material in the abstract should not be repeated later word for word in the paper.
+
+Vision-based deep neural networks are crucial components for autonomous driving in terms of visual understanding and decision making.
+These models need to be temporally consistent and visually interpretable.
+Most recent works focus on using static images for understanding visual semantics, ignoring the temporal consistency of driving conditions; or adopt end-to-end architectures for learning the pilot networks, providing limited interpretability.
+In this paper, we raise the question of ``can we predict car's future odometry given previous egomotion visual input?".
+The proposed system stems from the issue of human driver reaction time in the autonomous driving context.
+Our dual-staged model firstly applies modern convolutional object detectors for spotting traffic participants (i.e., cars in this paper) and robustly tracks the targets of interest.
+Then, a novel DRN-LSTM network is incorporated to fuse the multiple-streams from past frames to predict targets' future trajectories.
+We demonstrate the feasibility of predicting future trajectories of cars for assisting mediated perception.
+ We also show the effectiveness of using privileged information (e.g., scene semantics and car pose information) further boost the prediction accuracy across diverse traffic conditions.
 \end{abstract}
 %%%%%%%%% BODY TEXT
 %%% Andrje Karpathy's blog: http://karpathy.github.io/2016/09/07/phd/
 %%% Another great resource on this topic is Tips for Writing Technical Papers from Jennifer Widom.
 %%% https://cs.stanford.edu/people/widom/paper-writing.html
 \section{Introduction}
-
-
-\begin{figure}
-
-\includegraphics[width=8.8cm]{pool_figure}
-\caption{pool figure}
-\label{figure10}
-\end{figure}
-
-
 
 \textbf{\emph{1. What is the problem?}}
 
@@ -144,10 +143,16 @@ At the field of semantic segmentation, many methods with CNN also bring a dramat
 
 TODO: DW
 
-
 %% DW: (1)traditional segmentic segmentation dataset
 %% DW: (2) synthetic dataset
 %% DW: (3) temporal consistent dataset
+
+\begin{figure*}[t]
+        \centering
+        \includegraphics[width=0.75\textwidth]{figures/framework.pdf}
+        \caption{ {\small TODO: framework caption goes here.}}
+        \label{fig:framework}
+\end{figure*}
 
 \textbf{\emph{3. Dataset for autonoumous driving}}
 
@@ -168,15 +173,9 @@ A fine annotated images in Cityscape dataset requires on average 1.5 hours which
 This dataset is a large collection of images with high variability due to changes in illumination, textures, pose of dynamic objects and camera view-points.
 
 %%% ZN: write related works for Recurrent Networks (used in the context of autonomous driving)
-\begin{figure*}[t]
-        \centering
-        \includegraphics[width=0.75\textwidth]{figures/framework.pdf}
-        \caption{ {\small TODO: framework caption goes here.}}
-        \label{fig:framework}
-\end{figure*}
+
 
 \textbf{\emph{4. Recurrent Networks (used in the context of autonomous driving)}}
-
 
 
 Recently, RNN(recurrent network) and its variant LSTM(long short-term memory) have been successfully used in autonomous driving, due to its advantages for modeling sequential data in vision problems. Most of these works exploit LSTM as component of an end-to-end driving model. ~\cite{xu2017end} used the combination of a fully-convolutional network and an LSTM to learn from large-scale vehicle action data, to predict future egomotion including multi-modal discrete and continuous driving behaviors. ~\cite{kim2017interpretable} used a LSTM network to predict the inverse turning radius and generate a heat map of attention at each timestep conditioned on the previous hidden states and a current convolutional feature cube. ~\cite{duself} used 3D convolutional layers to extract visual features, then fed them into LSTM layers to capture the sequential relation. In addition to using deep features, ~\cite{koutnik2013evolving} trained a large recurrent neural network using a reinforcement learning approach to map images directly to steering angles, with the purpose to keep the car on track.
@@ -203,12 +202,6 @@ Our goal is via collecting the visual information from the past to predict the t
 \subsection{Instance tracking}
 
 We compare two state-of-the-art trackers (given the time vs. accuracy) of the trackers.
-\begin{figure}[t]
-        \centering
-        \includegraphics[width=0.4\textwidth]{figures/double_detection.png}
-        \caption{ {\small TODO: Instance association caption goes here.}}
-        \label{fig:Instance_associationn}
-\end{figure}
 
 \subsection{Semantic segmentation}
 We use the state-of-the-art semantic segmentation networks: Dilated Residual Networks (DRN)~\cite{yu2017dilated}.
@@ -217,6 +210,8 @@ We use the state-of-the-art semantic segmentation networks: Dilated Residual Net
 
 
 We compare two temporal models based on LSTM cells for predicting the car trajectory.
+
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Experiments}
@@ -265,6 +260,17 @@ TODO: generate a table for total number of frames and sequence tracklets!
 
 \subsection{Implementations}\label{sec:Implementations}
 
+
+\subsubsection{Traffic participants detection}
+
+We compared two state-of-the-art approaches: SSD~\cite{liu2016ssd} and Faster-RCNN~\cite{ren2015faster} for detecting the traffic participants.
+We use the pretrained network on the PASCAL VOC detection dataset~\cite{everingham2015pascal} which has 20 classes and fine-tune the network on the SYNTHIA with two classes: cars \emph{v.s.} background.
+A comprehensive survey of trade-offs for modern convolutional object detectors is presented in~\cite{huang2017speed} and we refer keen readers to the aforementioned paper for a more complete comparison to achieve the right speed/memeory/accuracy balance for a given application and platform.
+
+As it is also pointed out in the paper~\cite{huang2017speed} that SSD, albeit is less advantageous in detecting small object, it's very competitive for detecting larger objects. In this paper, we concerns mostly about cars that are closer to the driver. Hence, we chose the POR as 0.2\% which favors detectors that are robust in larger object detection.
+Tab.~\ref{tab:ssd_fasterrcnn} also verifies that SSD is indeed more competitive when the objects of interest are large.
+
+
 \begin{table*}\centering
 \ra{1.}
 \begin{tabular}{@{}llllllllllll@{}}\toprule
@@ -294,6 +300,12 @@ Tab.~\ref{tab:ssd_fasterrcnn} also verifies that SSD is indeed more competitive 
 \subsubsection{Instance tracking}
 
 We compare two state-of-the-art trackers (given the time vs. accuracy) of the trackers.
+\begin{figure}[t]
+        \centering
+        \includegraphics[width=0.4\textwidth]{figures/double_detection.png}
+        \caption{ {\small TODO: Instance association caption goes here.}}
+        \label{fig:Instance_associationn}
+\end{figure}
 
 \subsubsection{Trajectory prediction}
 
