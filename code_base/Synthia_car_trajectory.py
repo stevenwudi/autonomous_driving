@@ -11,7 +11,6 @@ import matplotlib
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 
-
 from code_base.config.configuration import Configuration
 from code_base.tools.utils import HMS, configurationPATH
 from code_base.tools.gt_acquisition import gt_collection_examintion

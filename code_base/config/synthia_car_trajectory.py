@@ -136,7 +136,7 @@ cnnLstmToFc_conv_paras        = [cnnDict(2,4,3,1,1), cnnDict(4,4,3,1,1),cnnDict(
                                                                                       # 'kernel_size': ,
                                                                                       # 'stride': ,
                                                                                       # 'padding': }
-cnnLstmToFc_input_dims        = [6, 350, 350]              # a list involving each lstm_layer's input_dim
-cnnLstmToFc_hidden_sizes      = [100, 350, 350]              # a list involving each lstm_layer's hidden_size
+cnnLstmToFc_input_dims        = [6, 300, 300]              # a list involving each lstm_layer's input_dim
+cnnLstmToFc_hidden_sizes      = [100, 300, 300]              # a list involving each lstm_layer's hidden_size
 cnnLstmToFc_future            = lstm_predict_frame # the number of predicting frames
 cnnLstmToFc_output_dim        = 6               # outlayer output: [x,y,w,h, d_min, d_max]
