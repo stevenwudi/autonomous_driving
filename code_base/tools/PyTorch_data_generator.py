@@ -235,15 +235,16 @@ class DataGenerator_Synthia_car_trajectory():
             self.root_dir = '/'.join(cf.dataset_path[0].split('/')[:-1])
 
             print('\n > Loading training, valid, test set')
-            train_dataset = BB_ImageDataGenerator_Synthia(cf, train_data, train_img_list, crop=False, flip=False)
-            valid_dataset = BB_ImageDataGenerator_Synthia(cf, valid_data, valid_img_list,  crop=False, flip=False)
-            test_dataset = BB_ImageDataGenerator_Synthia(cf, test_data, test_img_list, crop=False, flip=False)
+            train_dataset = Resized_BB_ImageDataGenerator_Synthia(cf, train_data, train_img_list, crop=False, flip=False)
+            valid_dataset = Resized_BB_ImageDataGenerator_Synthia(cf, valid_data, valid_img_list,  crop=False, flip=False)
+            test_dataset = Resized_BB_ImageDataGenerator_Synthia(cf, test_data, test_img_list, crop=False, flip=False)
 
             self.train_loader = DataLoader(train_dataset, batch_size=cf.batch_size_train, shuffle=True,
                                            num_workers=cf.workers, pin_memory=True)
-            self.valid_loader = DataLoader(valid_dataset, batch_size=cf.batch_size_valid, num_workers=cf.workers, pin_memory=True)
-            self.test_loader = DataLoader(test_dataset, batch_size=cf.batch_size_test, num_workers=cf.workers, pin_memory=True)
-
+            self.valid_loader = DataLoader(valid_dataset, batch_size=cf.batch_size_valid, num_workers=cf.workers,
+                                           pin_memory=True)
+            self.test_loader = DataLoader(test_dataset, batch_size=cf.batch_size_test, num_workers=cf.workers,
+                                          pin_memory=True)
 
 
 class BB_ImageDataGenerator_Synthia(Dataset):
@@ -324,6 +325,45 @@ class BB_ImageDataGenerator_Synthia(Dataset):
 
         return semantic_images, input_trajectorys, target_trajectorys
 
+# resized semantic image
+class Resized_BB_ImageDataGenerator_Synthia(Dataset):
+    def __init__(self, cf, trajectory_data, img_list, crop=True, flip=True):
+        """
+        :param root_dir: Directory will all the images
+        :param label_dir: Directory will all the label images
+        :param transform:  (callable, optional): Optional tra
+        nsform to be applied
+        """
+        self.trajectory_data = trajectory_data
+        self.cf = cf
+        self.img_list = img_list
+        self.root_dir = '/'.join(cf.dataset_path[0].split('/')[:-1])
+
+        self.crop = crop
+        # self.crop_size = cf.crop_size
+        self.flip = flip
+        self.mean = cf.rgb_mean
+        self.std = cf.rgb_std
+        # self.ignore_index = cf.ignore_index
+
+    def __len__(self):
+        return len(self.trajectory_data)
+
+    def __getitem__(self, item):
+
+        # trajectory
+        trajectory = self.trajectory_data[item]
+        trajectory_t = torch.FloatTensor(trajectory)
+        input_trajectorys = trajectory_t[:self.cf.lstm_input_frame, :]
+        target_trajectorys = trajectory_t[self.cf.lstm_input_frame:, :]
+
+        # semantics
+        if self.cf.model_name == 'CNN_LSTM_To_FC':
+            semantic_images = self.img_list[item]
+        else:
+            semantic_images = torch.FloatTensor(torch.zeros(input_trajectorys.size()))
+
+        return semantic_images, input_trajectorys, target_trajectorys
 
 
 class Dataset_Generators_Cityscape():
