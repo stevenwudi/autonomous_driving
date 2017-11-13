@@ -11,12 +11,15 @@ from torch.nn import functional as F
 from torchvision.utils import save_image
 from code_base.tools.logger import Logger
 from datetime import datetime
+import numpy as np
 
 import numpy as np
 from matplotlib import pyplot as plt
 import os
 import sys
+
 import json
+import numpy as np
 
 
 def adjust_learning_rate(lr, optimizer, epoch,train_losses, decrease_epoch=10):
@@ -55,7 +58,6 @@ def save_output_images(predictions, filenames, output_dir):
     # pdb.set_trace()
     root = '/home/public/CITYSCAPE'
     from PIL import Image
-    import numpy as np
     for ind in range(len(filenames)):
         im = Image.fromarray(predictions[ind].astype(np.uint8))
         name = filenames[ind].replace(root, output_dir)
@@ -64,6 +66,17 @@ def save_output_images(predictions, filenames, output_dir):
         if not os.path.exists(out_dir):
             os.makedirs(out_dir)
         im.save(name)
+
+
+def load_net_synthia(state_dict, net):
+    for k, v in net.state_dict().items():
+        pre_param = state_dict[k]
+        if pre_param.size() == v.size():
+            # param = torch.from_numpy(pre_param)
+            v.copy_(pre_param)
+
+        else:
+            print (k)
 
 
 # Build the model
@@ -96,8 +109,6 @@ class Model_Factory_semantic_seg():
         else:
             self.crit = nn.NLLLoss2d(ignore_index=cf.ignore_index).cuda()
 
-
-
         # we print the configuration file here so that the configuration is traceable
         self.cf = cf
         print(help(cf))
@@ -105,7 +116,8 @@ class Model_Factory_semantic_seg():
         # Construct optimiser
         if cf.load_trained_model:
             print("Load from pretrained_model weight: "+cf.train_model_path)
-            self.net.load_state_dict(torch.load(cf.train_model_path))
+            load_net_synthia(torch.load(cf.train_model_path), self.net)
+            # self.net.load_state_dict(torch.load(cf.train_model_path))
 
         # self.net = DRNSegF(self.net, 20)
         params_dict = dict(self.net.named_parameters())
@@ -137,12 +149,27 @@ class Model_Factory_semantic_seg():
         self.net.train()
         for i, (input, target) in enumerate(train_loader):
             self.optimiser.zero_grad()
+            input, target = Variable(input.cuda(async=True), requires_grad=False), Variable(target.cuda(async=True), requires_grad=False)
+            output = F.log_softmax(self.net(input))
+            self.loss = self.crit(output, target)
+            print(epoch, i, self.loss.data[0])
+            self.loss.backward()
+            self.optimiser.step()
+
+
+    def train_synthia(self, train_loader, epoch):
+        lr = adjust_learning_rate(self.cf.learning_rate, self.optimiser, epoch)
+        print('learning rate:', lr)
+        self.net.train()
+        for i, (input, target) in enumerate(train_loader):
+            self.optimiser.zero_grad()
             input, target = Variable(input.cuda(async=True)), Variable(target.cuda(async=True))
             output = F.log_softmax(self.net(input))
             self.loss = self.crit(output, target)
             print(epoch, i, self.loss.data[0])
             self.loss.backward()
             self.optimiser.step()
+
 
     def test(self, val_loader, epoch, cf):
         self.net.eval()
@@ -155,6 +182,18 @@ class Model_Factory_semantic_seg():
             total_ious.append(iou(pred, target, self.num_classes))
 
 
+            image = np.squeeze(input.data.cpu().numpy())
+            image[0, :, :] = image[0, :, :] * cf.rgb_std[0] + cf.rgb_mean[0]
+            image[1, :, :] = image[1, :, :] * cf.rgb_std[1] + cf.rgb_mean[1]
+            image[2, :, :] = image[2, :, :] * cf.rgb_std[2] + cf.rgb_mean[2]
+            pred_image = np.squeeze(pred.data.cpu().numpy())
+            class_image = np.squeeze(target.data.cpu().numpy())
+            plt.figure()
+            plt.subplot(1,3,1);plt.imshow(image.transpose(1, 2, 0));plt.title('RGB')
+            plt.subplot(1,3,2);plt.imshow(pred_image);plt.title('Prediction')
+            plt.subplot(1,3,3);plt.imshow(class_image);plt.title('GT')
+            plt.waitforbuttonpress(1)
+            print('Training testing')
 
         # Calculate average IoU
         total_ious_t = torch.Tensor(total_ious).transpose(0, 1)
@@ -181,6 +220,138 @@ class Model_Factory_semantic_seg():
         plt.ylabel('Mean IoU')
         plt.savefig(os.path.join(self.exp_dir, 'ious.png'))
         plt.close()
+
+    def test_frame(self, val_loader, cf, sequence_name):
+        self.net.eval()
+        total_ious = []
+        for i_batch, sample_batched in enumerate(val_loader):
+            if i_batch % 100 == 0:
+                print("Processing batch: %d" % i_batch)
+
+            #input = sample_batched['image']
+            input = sample_batched['input_t']
+            image = np.squeeze(input.numpy())
+            image[0, :, :] = image[0, :, :] * cf.rgb_std[0] + cf.rgb_mean[0]
+            image[1, :, :] = image[1, :, :] * cf.rgb_std[1] + cf.rgb_mean[1]
+            image[2, :, :] = image[2, :, :] * cf.rgb_std[2] + cf.rgb_mean[2]
+
+            input_cuda = Variable(input.cuda(async=True), volatile=True)
+            output = F.log_softmax(self.net(input_cuda))
+            b, _, h, w = output.size()
+            pred = output.permute(0, 2, 3, 1).contiguous().view(-1, self.num_classes).max(1)[1].view(b, h, w)
+
+            pred_image = np.squeeze(pred.data.cpu().numpy())
+            class_image = np.squeeze(sample_batched['classes'].numpy())
+            plt.figure()
+            plt.subplot(1,3,1);plt.imshow(image.transpose(1, 2, 0))
+            plt.subplot(1,3,2);plt.imshow(pred_image)
+            plt.subplot(1,3,3);plt.imshow(class_image)
+            plt.waitforbuttonpress(1)
+
+
+    def test_and_save(self, val_loader):
+        self.net.eval()
+        for i, (input, _, target, filename) in enumerate(val_loader):
+            input, target = Variable(input.cuda(async=True), volatile=True), Variable(target.cuda(async=True), volatile=True)
+            output = F.log_softmax(self.net(input))
+            b, _, h, w = output.size()
+            pred = output.permute(0, 2, 3, 1).contiguous().view(-1, self.num_classes).max(1)[1].view(b, h, w)
+            pred = pred.cpu().data.numpy()
+            save_output_images(pred, filename, '/home/ty/code/autonomous_driving/Experiments/CityScape_semantic_segmentation')
+
+    def test_synthia(self, epoch):
+        torch.save(self.net.state_dict(), os.path.join(self.exp_dir, str(epoch) + '_net.pth'))
+
+    def test_synthia_json(self, json_path):
+        # torch.save(self.net.state_dict(), os.path.join(self.exp_dir, str(epoch) + '_net.pth'))
+        self.net.eval()
+        from skimage import io
+        import json
+        # img_name = os.path.join('/home/stevenwudi/PycharmProjects/autonomous_driving/Datasets/SYNTHIA-SEQS-01-DAWN/RGB/Stereo_Left/Omni_F/000001.png')
+        # print ('-------')
+        # print (img_name)
+        save_root = '/home/public/synthia/synthia_segmentation'
+        with open(json_path, 'r') as fp:
+            predict_dict = json.load(fp)
+
+        keys = predict_dict.keys()
+        keys = sorted(keys)
+        predict_list = []
+        for i, key in enumerate(keys):
+            image = io.imread(key)
+            print (i, '----', key)
+            folder = key.split('/')[-5]
+            image_name = os.path.basename(key)
+            image = image.transpose((2, 0, 1))
+            image = image[np.newaxis, ...]
+            image_tensor = torch.from_numpy(image)
+            image_tensor = image_tensor.float().div(255)
+            for t, m, s in zip(image_tensor, self.cf.rbg_mean, self.cf.rbg_std):
+                t.sub_(m).div_(s)
+
+            input = Variable(image_tensor.cuda(async=True))
+            output = F.log_softmax(self.net(input))
+            b, _, h, w = output.size()
+            pred = output.permute(0, 2, 3, 1).contiguous().view(-1, self.num_classes).max(1)[1].view(b, h, w)
+            pred = pred.data.cpu()
+
+            pred_colour = torch.zeros(b, 3, h, w)
+            for k, v in self.cf.full_to_colour.items():
+                pred_r = torch.zeros(b, 1, h, w)
+                pred_r[(pred == k)] = v[0]
+                pred_g = torch.zeros(b, 1, h, w)
+                pred_g[(pred == k)] = v[1]
+                pred_b = torch.zeros(b, 1, h, w)
+                pred_b[(pred == k)] = v[2]
+                pred_colour.add_(torch.cat((pred_r, pred_g, pred_b), 1))
+
+            save_path = os.path.join(save_root, folder)
+            if not os.path.exists(save_path):
+                os.makedirs(os.path.join(save_root, folder))
+            save_image(pred_colour[0].float().div(255), os.path.join(save_path, image_name))
+            car_dict = {'image_path': key, 'boundingbox': predict_dict[key], 'segment_path': os.path.join(save_path, image_name), }
+            predict_list.append(car_dict)
+
+        json_bbox_seg_path = os.path.join('/home/public/synthia', 'car_test_bbox_seg-shuffle.json')
+        with open(json_bbox_seg_path, 'w') as fp:
+            json.dump(predict_list, fp, indent=4)
+
+    def test_synthia_json2(self, json_path):
+        # torch.save(self.net.state_dict(), os.path.join(self.exp_dir, str(epoch) + '_net.pth'))
+        self.net.eval()
+        from skimage import io
+
+        img_name = os.path.join('/home/stevenwudi/PycharmProjects/autonomous_driving/Datasets/segmentation/SYNTHIA_RAND_CVPR16/RGB/ap_000_02-11-2015_18-02-19_000157_0_Rand_10.png')
+        image = io.imread(img_name)
+
+        image = image.transpose((2, 0, 1))
+        # image = image[np.newaxis, ...]
+        image_tensor = torch.from_numpy(image)
+        image_tensor = image_tensor.float().div(255)
+        # for t, m, s in zip(image_tensor, self.cf.mean, self.cf.std):
+        #     t.sub_(m).div_(s)
+        image_tensor[0].sub_(self.cf.rgb_mean[0]).div_(self.cf.rgb_std[0])
+        image_tensor[1].sub_(self.cf.rgb_mean[1]).div_(self.cf.rgb_std[1])
+        image_tensor[2].sub_(self.cf.rgb_mean[2]).div_(self.cf.rgb_std[2])
+        image_tensor.unsqueeze_(0)
+        input = Variable(image_tensor.cuda(async=True))
+        output = F.log_softmax(self.net(input))
+        b, _, h, w = output.size()
+        pred = output.permute(0, 2, 3, 1).contiguous().view(-1, self.num_classes).max(1)[1].view(b, h, w)
+        pred = pred.data.cpu()
+
+        pred_colour = torch.zeros(b, 3, h, w)
+        for k, v in self.cf.full_to_colour.items():
+            pred_r = torch.zeros(b, 1, h, w)
+            pred_r[(pred == k)] = v[0]
+            pred_g = torch.zeros(b, 1, h, w)
+            pred_g[(pred == k)] = v[1]
+            pred_b = torch.zeros(b, 1, h, w)
+            pred_b[(pred == k)] = v[2]
+            pred_colour.add_(torch.cat((pred_r, pred_g, pred_b), 1))
+
+
+        save_image(pred_colour[0].float().div(255), os.path.join(self.exp_dir, 'a.png'))
 
 
 class Model_Factory_LSTM():

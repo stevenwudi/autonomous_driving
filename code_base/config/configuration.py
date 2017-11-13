@@ -14,7 +14,16 @@ class Configuration():
         # Load configuration file...
         print(self.config_path)
         cf = imp.load_source('config', self.config_path)
+
         dataset_path = os.path.join('/home/stevenwudi/PycharmProjects/autonomous_driving', 'Datasets')
+
+        if cf.data_path:
+            dataset_path = os.path.join(cf.data_path)
+        else:
+            dataset_path = os.path.join(cf.local_path, 'Datasets')
+        # shared_dataset_path = os.path.join(cf.shared_path)
+
+
         experiments_path = os.path.join(cf.local_path, 'Experiments')
         shared_experiments_path = os.path.join(cf.shared_path, 'Experiments')
 
@@ -67,14 +76,21 @@ class Configuration():
                     os.mkdir(os.path.join(experiments_path, cf.exp_name))
                 if not os.path.exists(cf.savepath):
                     os.mkdir(cf.savepath)
+                if cf.video_sequence_prediction:
+                    if not os.path.exists(cf.shared_path):
+                        os.mkdir(cf.shared_path)
+                    cf.seg_img_path = os.path.join(cf.shared_path, cf.sequence_name)
+                    if not os.path.exists(cf.seg_img_path):
+                        os.mkdir(cf.seg_img_path)
 
             else:
+
                 cf.dataset_path = os.path.join(dataset_path, cf.problem_type, cf.sequence_name)
+
                 # Create output folders
                 cf.savepath = os.path.join(experiments_path, cf.exp_name, cf.dataset_name)
 
-                cf.final_savepath = os.path.join(shared_experiments_path, cf.dataset_name,
-                                                 cf.exp_name)
+                cf.final_savepath = os.path.join(shared_experiments_path, cf.dataset_name, cf.exp_name)
                 # cf.log_file = os.path.join(cf.savepath, "logfile.log")
                 if not os.path.exists(experiments_path):
                     os.mkdir(experiments_path)
