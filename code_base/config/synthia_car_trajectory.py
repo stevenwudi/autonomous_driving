@@ -50,10 +50,10 @@ batch_size_test              = 20              # Batch size during testing
 dataloader_num_workers_train = 1        # Number of dataload works during training
 dataloader_num_workers_valid = 1        # Number of dataload works during valid
 dataloader_num_workers_test  = 1        # Number of dataload works during test
-dataloader_load_prepare_data = True     # whether or not load prepare_data for DataLoader
-dataloader_load_prepare_data_path = ''
+dataloader_load_prepare_data = False     # whether or not load prepare_data for DataLoader
+dataloader_load_prepare_data_path = '/media/samsumg_1tb/synthia/SYNTHIA-SEQS-01/prepared_data.npy'
 dataloader_save_prepare_data = True     # whether or not save generated prepare_data for DataLoader
-dataloader_save_prepare_data_path = ''
+dataloader_save_prepare_data_path = '/media/samsumg_1tb/synthia/SYNTHIA-SEQS-01/prepared_data.npy'
 # Data shuffle
 shuffle_train                = False            # No shuffling because the time sequence matters
 shuffle_valid                = False           # Whether to shuffle the validation data

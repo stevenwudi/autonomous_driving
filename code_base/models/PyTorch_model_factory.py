@@ -321,7 +321,7 @@ class Model_Factory_LSTM():
         iou_3d = []
 
         for i, (sementic, input_trajectory, target_trajectory) in enumerate(valid_loader):
-            print(i)
+            # print(i)
             sementic, input_trajectory, target_trajectory = Variable(sementic.cuda(async=True)), \
                                                             Variable(input_trajectory.cuda(async=True)), \
                                                             Variable(target_trajectory.cuda(async=True))
