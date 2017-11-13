@@ -16,6 +16,10 @@ threshold_car_POR_start      = 2e-3  # threshold for car start tracking using pi
 threshold_car_POR_end        = 1e-3  # threshold for car start tracking using pixel occupant rate
 minimum_detection_length     = 3
 
+
+sequence_name                = 'G'
+
+
 ####  SSD parameters (currently, we only suppose keras with Tensorflow backend, TODO: use Pytorch!
 ssd_prior_boxes              = '/home/stevenwudi/PycharmProjects/autonomous_driving/code_base/models/prior_boxes_ssd512.pkl'
 ssd_number_classes           = 2
@@ -25,6 +29,7 @@ ssd_conf                     = 0.5
 
 
 # Dataset
+
 local_path                   = '/home/stevenwudi/PycharmProjects/autonomous_driving'
 shared_path                  = '/home/public/synthia'
 dataset_name2                = None            # Second dataset name. None if not Domain Adaptation
