@@ -37,7 +37,7 @@ formatting_ground_truth_sequence_car_trajectory = True
 draw_seq                                = 'SYNTHIA-SEQS-06-NIGHT'   # which sequence to draw, need to set the above two flags to False
 
 # Model
-model_name                   = 'CNN_LSTM_To_FC'       # Model to use ['LSTM_ManyToMany', 'LSTM_To_FC', 'CNN_LSTM_To_FC']
+model_name                   = 'LSTM_To_FC'       # Model to use ['LSTM_ManyToMany', 'LSTM_To_FC', 'CNN_LSTM_To_FC']
 debug                        = False
 im_size                      = (760, 1280)
 resize_train                 = (760, 1280)      # Resize the image during training (Height, Width) or None
@@ -109,7 +109,7 @@ optimizer                    = 'sgd'      # LBFGS','adam','rmsprop','sgd'
 learning_rate                = 0.01          # Training learning rate
 momentum                     = 0.9
 load_trained_model           = True
-train_model_path             = '/home/wzn/PycharmProjects/autonomous_driving/Experiments/car_trajectory_prediction/SYNTHIA-SEQS-01_Mon, 13 Nov 2017-11-13 00:27:55_CNN_LSTM_To_FC/Epoch:13_net_Coverage:0.0883_Center:231.14_CoverageR:0.0300_CenterR:1.82.PTH'
+train_model_path             = '/home/wzn/PycharmProjects/autonomous_driving/Experiments/car_trajectory_prediction/SYNTHIA-SEQS-01_Sun, 12 Nov 2017-11-12 15:34:35_LSTM_To_FC_Noshuffle_Sixpoint_Nosemantics/Epoch:30_net_Coverage:0.6430_Center:55.87_CoverageR:0.2335_CenterR:0.41.PTH'
 #### LSTM training variables #################
 # LSTM_ManyToMany
 lstm_input_dims               = [6, 150, 150]    # [layer1_input_dim, layer2_input_dim,...]  layer1_input_dim:[x,y,w,h, d_min, d_max]

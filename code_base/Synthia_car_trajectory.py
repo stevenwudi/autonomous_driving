@@ -31,7 +31,8 @@ def process(cf):
 
     print('\n > Building model...')
     model = Model_Factory_LSTM(cf)
-
+    #model.test(cf, DG.valid_loader, DG.data_mean, DG.data_std, 0)
+    model.test(cf, DG.test_loader, DG.data_mean, DG.data_std, epoch=None)
     if cf.train_model:
         train_losses = []
         valid_losses = []
