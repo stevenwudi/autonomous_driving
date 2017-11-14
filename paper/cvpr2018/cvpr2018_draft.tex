@@ -40,7 +40,7 @@
 \def\cvprPaperID{16} % *** Enter the CVPR Paper ID here
 \def\httilde{\mbox{\tt\raisebox{-.5ex}{\symbol{126}}}}
 \begin{document}
-\title{DeepAutoTrack (DAC): Car Trajectory Prediction for Autonomous Driving}
+\title{DeepAutoTrack (DAT): Vehicle Trajectory Prediction for Autonomous Driving}
 
 \author{Di Wu, Zhennan Wang, Yi Tang,  Wenbin Zou, Xia Li\\
 Shenzhen University\thanks{Shenzhen Key Lab of Advanced Telecommunication and Information Processing, College of Information Engineering, Shenzhen University.}\\
@@ -56,9 +56,9 @@ Most recent works focus on using static images for understanding visual semantic
 In this paper, we raise the question of ``can we predict car's future odometry given previous egomotion visual input?".
 The proposed system stems from the issue of human driver reaction time in the autonomous driving context.
 Our dual-staged model firstly applies modern convolutional object detectors for spotting traffic participants (i.e., cars in this paper) and robustly tracks the targets of interest.
-Then, a novel DRN-LSTM network is incorporated to fuse the multiple-streams from past frames to predict targets' future trajectories.
-We demonstrate the feasibility of predicting future trajectories of cars for assisting mediated perception.
- We also show the effectiveness of using privileged information (e.g., scene semantics and car pose information) further boost the prediction accuracy across diverse traffic conditions.
+Then, a novel SEG-LSTM network is incorporated to fuse the multiple-streams from past frames and then predict targets' future trajectories.
+We demonstrate the feasibility of predicting future trajectories of vehicles for assisting mediated perception.
+ We also show the effectiveness of using privileged information (e.g., scene semantics) further boost the prediction accuracy across diverse traffic conditions.
 \end{abstract}
 %%%%%%%%% BODY TEXT
 %%% Andrje Karpathy's blog: http://karpathy.github.io/2016/09/07/phd/
@@ -66,16 +66,26 @@ We demonstrate the feasibility of predicting future trajectories of cars for ass
 %%% https://cs.stanford.edu/people/widom/paper-writing.html
 \section{Introduction}
 
-\textbf{\emph{1. What is the problem?}}
+%\textbf{\emph{1.1 What is the problem?}}
 
-Currently, there are two major paradigms for autonomous driving systems built upon vision-based input~\cite{chen2015deepdriving}: mediated perception approaches that firstly explain the vision input and than parse the scene to make a driving policy (usually by a controller with if-then-else rules), and behaviour reflex approaches that directly map the vision input to a driving policy by a regressor.
+Currently, there are two major paradigms for autonomous driving systems built upon vision-based input~\cite{chen2015deepdriving}: mediated perception approaches that firstly explain the vision input and then parse the scene to make a driving policy (usually by a controller with if-then-else rules); and behaviour reflex approaches that directly map the vision input to a driving policy by a regressor.
+In this paper, in the framework of first paradigm, we try to tackle the problem of predicting future trajectories of vehicles given its past information.
 
-In this paper, in the framework of first paradigm, we try to tackle the problem of predicting future trajectories of cars given its past information.
+%\textbf{\emph{1.2. Why is it interesting and important?}}
 
-\textbf{\emph{2. Why is it interesting and important?}}
+ Being able to predict other traffic participants' future trajectories is important because it can help to prevent self-driving car from running into other cars. We need to know not just where other cars are, as in the localization case, but also how fast they are moving in order to avoid collisions.
+For a human driver, reaction time is a crucial factor that includes recognizing the light has changed, deciding to continue or brake, and if stopping engaging the brake (remove foot from accelerator and apply brake). Accident reconstruction specialists commonly use 1.5 seconds~\cite{mcgehee2000driver}.
+Therefore, the ability to predict traffic participants' \emph{future} trajectories will greatly benefits the mediated perception approach's driving policy decision making.
 
-Driver reaction time is a crucial factor for a human driver to react to the traffic participants. Driver reaction time includes recognising the light has changed, deciding to continue or brake, and if stopping engaging the brake (remove foot from accelerator and apply brake). Accident reconstruction specialists commonly use 1.5 seconds~\cite{mcgehee2000driver}.
-Therefore, the ability to predict traffic participants' \emph{future} trajectory will greatly benefits the mediated perception approach's driving policy decision making.
+
+%\textbf{\emph{1.3. Why is it hard? (Or why do naive approaches fail?)}}
+
+Nonetheless, vehicles trajectory prediction is a challenging problem: by dissecting visual scene understanding individually (\emph{e.g.,} object detection, semantic segmentation, instance segmentation),  there are still many open challenges for computer vision community.
+In addition, scene parsing results contain quite some spurious information. 
+Existing methods for scene parsing also mainly focus on static images. 
+However, autonomous driving is intrinsically a dynamic problem. Human driver makes decision by sequence of input frames instead of simply one static frame.
+Therefore, temporal consistency among continuous frames should also be taken into consideration when designing the interpretable system.
+
 
 \begin{figure}[t]
         \centering
@@ -83,44 +93,31 @@ Therefore, the ability to predict traffic participants' \emph{future} trajectory
         \caption{ {\small TODO: Pull figure caption goes here.}}
         \label{fig:pull_figure}
 \end{figure}
-\textbf{\emph{3. Why is it hard? (E.g., why do naive approaches fail?)}}
 
-Individually, for computer vision community, it's an unsolved problem. e.g.: object detection, semantic segmentation, instance segmentation, etc.
-
-
-Currently, most work focus on static images. However, autonomous driving is intrinsically a dynamic problem. Human driver makes decision by sequence of input frames instead of simply one static frame.
-
-\textbf{\emph{4. Why hasn't it been solved before? (Or, what's wrong with previous proposed solutions? How does mine differ?)}}
-
-Scene parsing results contains quite some spurious information.
-
-In traditional vision based tracking problems (\emph{e.g.} ~\cite{wu2013online, wu2015object, mueller2016benchmark}) where target objects go through rather sporadic movements (usually the object trajectory is generated by artificial movement of the target in order to test the robustness of the tracker), the prediction of target's future trajectory is simply a moot problem.
-However, traffic participants generally exhibit regular trajectories (e.g., cars driving on the road and pedestrian walking on the sidewalks).
-
-Currently research community lacks proper evaluation metrics for deciding the temporally future prediction result.
+%\textbf{\emph{1.4. Why hasn't it been solved before? (Or, what's wrong with previous proposed solutions? How does mine differ?)}}
+Vehicles trajectory prediction is also very related to visual tracking.
+In traditional vision based tracking problems (\emph{e.g.},~\cite{wu2013online, wu2015object, mueller2016benchmark}) where target objects go through rather sporadic movements (usually the object trajectory is generated by artificial movement in order to test the robustness of the tracker), the prediction of target's future trajectory is simply a moot problem.
+However, traffic participants generally exhibit regular trajectories (\emph{e.g.,} cars driving on the road, pedestrians walking on the sidewalks). Given law-abiding traffic participants, human drivers subconsciously project visual target's future trajectory.
+Nonetheless, due to the missing bridge between traditional visual tracking community and current autonomous driving research community, there is a lack of proper metrics for evaluating the temporal prediction result.
 
 
-
-\textbf{\emph{5. What are the key components of my approach and results? Also include any specific limitations.}}
-
-In our approach, there are three key components: traffic participants detection, instance tracking and future trajectory prediction.
+%\textbf{\emph{1.5. What are the key components of my approach and results? Also include any specific limitations.}}
 
 % Then have a final paragraph or subsection: "Summary of Contributions". It should list the major contributions in bullet form, mentioning in which sections they can be found. This material doubles as an outline of the rest of the paper, saving space and eliminating redundancy.
+In our approach, there are three key components: traffic participants detection, instance tracking and future trajectory prediction as shown in Fig.~\ref{fig:pull_figure}.Our contributions are as follows:
 
-Our contributions are as follows:
 \begin{itemize}
 
-\item We verify the feasibility of predicting the future trajectories of cars for assisting mediated perception framework. The proposed system stems from the issue of human driver reaction time in the autonomous driving context.
+\item We verify the feasibility of predicting vehicles' future trajectories for assisting mediated perception. The proposed system stems from the issue of human driver reaction time in the autonomous driving context.
 
-\item We present a novel ``tracking-by-detection" framework in the context of autonomous driving for robustly vehicle tracking. The proposed framework greatly enhanced the trackers' robustness by updating tracker's target representation, in the meanwhile solving the problem of instance association between frames.
+\item We present a novel ``tracking-by-detection" framework for robust vehicle tracking. By updating tracker's target representation via detection association, we also solve the problem of instance association between frames.
 
-\item We design various temporal models for the problem of predicting future trajectories based on historical data and show that the temporal model generating intermediate output utilising the whole historical data performs better than the frame-to-frame based output temporal model.
+\item We design various temporal models for the problem of predicting future trajectories based on historical data. Results show that the temporal model generating intermediate represenation performs better than the frame-to-frame based temporal model.
 
-\item We demonstrate the effectiveness of using ``privileged information"(e.g., scene semantics and car pose information) further boost the prediction accuracy. [NOT DONE YET].
+\item We demonstrate the effectiveness of using ``privileged information"(\emph{e.g.}, scene semantics) further boost the prediction accuracy.
 
-\item We formalise the car trajectory problem into a 3D occupancy grid problem given depth information.
 
-\item We construct a time-series dataset for car trajectory prediction based on the SYNTHIA dataset~\cite{ros2016synthia}.
+\item We construct a time-series dataset for car trajectory prediction based on the SYNTHIA dataset~\cite{ros2016synthia} and  formalize the problem into a 3D occupancy grid problem given depth information.
 
 \end{itemize}
 
@@ -195,6 +192,7 @@ We use the state-of-the-art semantic segmentation networks: Dilated Residual Net
 
 
 We compare two temporal models based on LSTM cells for predicting the car trajectory.
+Results show that the temporal model generating intermediate output utilizing the whole historical data performs better than the frame-to-frame based output temporal model.
 
 
 
@@ -254,7 +252,7 @@ Some sample frames with semantic labels and depth information is shown in Fig.~\
 
 \begin{figure}[t]
         \centering
-        \includegraphics[width=0.45\textwidth]{figures/dataset.pdf}
+        \includegraphics[width=0.5\textwidth]{figures/dataset.pdf}
         \caption{ {\small Examples of collected dataset for car trajectory prediction. From top to bottom: RGB, semantic labeling, depth maps for three continuous frames of two dynamic light conditions.}}
         \label{fig:dataset}
 \end{figure}
@@ -286,7 +284,7 @@ We use the pretrained network on the PASCAL VOC detection dataset~\cite{everingh
 A comprehensive survey of trade-offs for modern convolutional object detectors is presented in~\cite{huang2017speed} and we refer keen readers to the aforementioned paper for a more complete comparison to achieve the right speed/memeory/accuracy balance for a given application and platform.
 
 As it is also pointed out in the paper~\cite{huang2017speed} that SSD, albeit is less advantageous in detecting small object, it's very competitive for detecting larger objects. In this paper, we concerns mostly about cars that are close to the driver. Hence, given 0.1\% POR as the the cut-off threshold, the presented problem favors detectors that are robust in detecting larger objects.
-Tab.~\ref{tab:ssd_fasterrcnn} also verifies that SSD is indeed more competitive when objects of interest are large in our problem set. We also compare the influence of confident score cut-off threshold and non-maximum suppression (NMS) threshold. It can been seen that both meta-architectures are robust to the cut-off confident scores. 
+Tab.~\ref{tab:ssd_fasterrcnn} also verifies that SSD is indeed more competitive when objects of interest are large in our problem set. We also compare the influence of confident score cut-off threshold and non-maximum suppression (NMS) threshold. It can been seen that both meta-architectures are robust to the cut-off confident scores.
 In terms of the effect of NMS cut-off threshold, allowing larger threshold enables the detector to have slightly higher recall, it comes at a cost of multiple redundant overlapping detections and much lower f-score overall. In the following experiment, we adopt SSD with confident score of 0.5 as the cut-off threshold and 0.45 as the default jaccard overlap for NMS.
 
 
@@ -405,6 +403,10 @@ TODO: compare the results using Kalman filtering.
 \subsubsection{Evaluation Metrics}
 
 
+\subsubsection{Baselines}
+The Kalman filter is a popular technique for estimating the state of a system. Kalman filters estimate a continuous state and gives a uni-modal distribution. The Kalman filter represents all distributions of the Gaussians and iterates two things: (1) measurement updates; (2) motion updates
+
+
 \begin{figure*}[t]
    \centering
     \begin{subfigure}[c]{0.4\textwidth}
@@ -434,7 +436,7 @@ TODO: compare the results using Kalman filtering.
 
 \section{Conclusions}
 
-Future works include conducting experiment on the real-world images.
+Future works include incorporating vehicle pose from the RGB input as extra source of ``privileged information"; conducting experiment on the real-world images.
 
 \section*{Details of the Code}
  The code will be made public alongside the publication.
