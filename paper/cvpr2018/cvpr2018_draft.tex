@@ -14,7 +14,7 @@
 %\usepackage[linesnumbered,ruled,vlined]{algorithm2e}
 \usepackage[breaklinks=true,bookmarks=false]{hyperref}
 \usepackage{booktabs}
-\usepackage{caption}
+%\usepackage{caption}
 \usepackage{algorithm}
 \usepackage{algorithmic}
 
@@ -81,8 +81,8 @@ Therefore, the ability to predict traffic participants' \emph{future} trajectori
 %\textbf{\emph{1.3. Why is it hard? (Or why do naive approaches fail?)}}
 
 Nonetheless, vehicles trajectory prediction is a challenging problem: by dissecting visual scene understanding individually (\emph{e.g.,} object detection, semantic segmentation, instance segmentation),  there are still many open challenges for computer vision community.
-In addition, scene parsing results contain quite some spurious information. 
-Existing methods for scene parsing also mainly focus on static images. 
+In addition, scene parsing results contain quite some spurious information.
+Existing methods for scene parsing also mainly focus on static images.
 However, autonomous driving is intrinsically a dynamic problem. Human driver makes decision by sequence of input frames instead of simply one static frame.
 Therefore, temporal consistency among continuous frames should also be taken into consideration when designing the interpretable system.
 
@@ -112,7 +112,7 @@ In our approach, there are three key components: traffic participants detection,
 
 \item We present a novel ``tracking-by-detection" framework for robust vehicle tracking. By updating tracker's target representation via detection association, we also solve the problem of instance association between frames.
 
-\item We design various temporal models for the problem of predicting future trajectories based on historical data. Results show that the temporal model generating intermediate represenation performs better than the frame-to-frame based temporal model.
+\item We design various temporal models for the problem of predicting future trajectories based on historical data. Results show that the temporal model generating intermediate representation performs better than the frame-to-frame based temporal model.
 
 \item We demonstrate the effectiveness of using ``privileged information"(\emph{e.g.}, scene semantics) further boost the prediction accuracy.
 
@@ -125,19 +125,32 @@ In our approach, there are three key components: traffic participants detection,
 
 \section{Related Work}
 
-\textbf{\emph{1. Object detection, segmentation, instance segmentation}}
+%\textbf{\emph{1. Object detection, segmentation, instance segmentation}}
+%\subsection{Traffic participants detection and tracking: object detection and instance association}
+\subsection{Object detection}
+Vehicle detection is one key component of an autonomous driving system. Typical algorithms output bounding boxes on detected vehicles.
+A lot of progess has been made in recent years on object detection due to the use of convolutional neural networks (CNNs).
+Modern object detectors based on these networks -- such as the line of works on the R-CNN~\cite{girshick2014rich},
+Fast R-CNN~\cite{Girshick2015Fast}, Faster R-CNN~\cite{ren2015faster_nips}, Mask R-CNN~\cite{he2017mask} and  SSD~\cite{liu2016ssd} -- are now good enough to be deployed in a consumer products.
+% Before the resurgence of convolutional neural network (CNN), Deformable Part Model (DPM) \cite{felzenszwalb2008discriminatively} and Selective Search \cite{Uijlings2013Selective} are the trend of this field.
+% However, after the proposal of 
+ R-CNN~\cite{girshick2014rich} combines Selective Search and deep learning features to detect objects.
+ % At the beginning, R-CNN is a step-by-step and inefficient method. Then, 
+  SPPNet \cite{He2015Spatial} exploits a spatial pyramid pooling layer to extract multi-scale deep features. Later Fast R-CNN~\cite{Girshick2015Fast} introduces the multi-task learning to fine-tune all layers in their network. At last, Faster R-CNN \cite{ren2015faster_nips} proposes a region proposal network (RPN) and integrates RPN and Fast R-CNN to build a end-to-end architecture. Meanwhile, SSD \cite{liu2016ssd} uses a series of boxes and directly gives the probability for each object class. In addition, YOLO \cite{redmon2016you} proposes a fast object detection method, which divides the input image into grids, then predicts object positions and confidences for each category in each grid.
 
-Object detection is an important component in our system. Before the resurgence of convolutional neural network (CNN), Deformable Part Model (DPM) \cite{felzenszwalb2008discriminatively} and Selective Search \cite{Uijlings2013Selective} are the trend of this field. However, after the proposal of R-CNN \cite{girshick2014rich}, which combines Selective Search and deep learning features to detect objects, the architecture of CNN has attracted more attention. At the beginning, R-CNN is a step-by-step and inefficient method. Then, SPPNet \cite{He2015Spatial} exploits a spatial pyramid pooling layer to extract multi-scale deep features and Fast R-CNN \cite{Girshick2015Fast} introduces the multi-task learning to fine-tune all layers in their network. At last, Faster R-CNN \cite{Ren2015Faster} proposes a region proposal network (RPN) and integrates RPN and Fast R-CNN to build a end-to-end architecture. Meanwhile, SSD \cite{liu2016ssd} uses a series of boxes and directly gives the probability for each object class. In addition, YOLO \cite{redmon2016you} proposes a fast object detection method, which divides the input image into grids, then predicts object positions and confidences for each category in each grid.
+%In the field of semantic segmentation, FCN~\cite{long2015fully} firstly transfers the fully-connected layers into convolution layers, turning the segmentation task into a pixel-wise classification task. Deeplab~\cite{chen2016deeplab} proposes a dilated convolution layer to explicitly control the resolution at
+%which feature responses are computed within Deep Convolutional Neural Networks. DRN~\cite{yu2017dilated} further proposes a semantic network by integrating residual structure and dilated convolution. 
 
-At the field of semantic segmentation, many methods with CNN also bring a dramatic improvement. FCN \cite{long2015fully} firstly transfers the fully-connected layers into convolution layers, which turns segmentation task into pixel-wise classification task. Deeplab \cite{chen2016deeplab} considers the limitation of receptive field of CNN, and then proposes a dilated convolution layer to solve this problem. DRN \cite{yu2017dilated} further proposes a semantic network by integrating residual structure and dilated convolution. With the modification of neural network, conditional random field (CRF) is employed into refining the output of network in \cite{chen2016deeplab}. After that, CRF is merged into neural network to become an end-to-end architecture \cite{liu2015semantic,zheng2015conditional,arnab2016higher}
+%With the modification of neural network, conditional random field (CRF) is employed into refining the output of network in \cite{chen2016deeplab}. After that, CRF is merged into neural network to become an end-to-end architecture \cite{liu2015semantic,zheng2015conditional,arnab2016higher}
 
-\textbf{\emph{2. Visual trackers}}
 
-Instance association between frames is a prerequisite to solve the proposed intrinsically temporal problems. ~\cite{behl2017bounding} estimate the 3D scene flow by exploiting recognition to overcome the challenging scenarios in the present of large displacement or local ambiguities. Their method achieve state-of-the-art performance on the KITTI2015 scene flow benchmark. However, a total runtime of 10 minutes per frame is way to prohibitive for the deployment in the context of autonomous driving.
-
-%% DW: (1)traditional segmentic segmentation dataset
-%% DW: (2) synthetic dataset
-%% DW: (3) temporal consistent dataset
+\subsection{Instance association}
+Instance association between frames is a prerequisite to solve the proposed intrinsically temporal problems.  3D scene flow is estimated in~\cite{behl2017bounding} by exploiting recognition to overcome the challenging scenarios in the present of large displacement or local ambiguities. 
+%Their method achieve state-of-the-art performance on the KITTI2015 scene flow benchmark. 
+However, a total runtime of 10 minutes per frame is way too prohibitive for the deployment in the context of autonomous driving.
+To accomplish the task of instance association between frames, we resort to the well studied field of visual tracking. 
+Discriminative Correlation Filters (DCF)~\cite{henriques2015high} have demonstrated excellent performance for high-speed generic visual object tracking.
+Built upon their seminal work, there has been a plethora of recent improvements~\cite{wang2016stct, wang2015visual, hong2015online, ma2015hierarchical,danelljan2016beyond,held2016learning, wu2017kernalised,danelljan2017eco} relying on convolutional neural network (CNN) pretrained on ImageNet as a feature extractor for visual tracking.
 
 \begin{figure*}[t]
         \centering
@@ -146,32 +159,32 @@ Instance association between frames is a prerequisite to solve the proposed intr
         \label{fig:framework}
 \end{figure*}
 
-\textbf{\emph{3. Dataset for autonoumous driving}}
 
-Camvid dataset~\cite{Camvid} consists of a set of monocular images taken in Cambridge UK. However, only 701 images contain pixel-level annotations over a total of 32 categories (combining objects and architectural scenes).
+\subsection{Recurrent neural networks}
 
-Similarly, Daimler Urban Segmentation dataset~\cite{scharwachter2013efficient} contains 500 fully labelled monochrome frames for 5 categories.
+Recent advances in recurrent neural network for modeling visual sequential data are also related to our work.
+%Recently, RNN(recurrent network) and its variant LSTM(long short-term memory) have been successfully used in autonomous driving, due to its advantages for modeling sequential data in vision problems.
+Mostly, RNN is trained as a pilot network in the context of behaviour reflex approaches.
+Long Short Term Memory (LSTM) cells are usually exploited as one intermediate component of an end-to-end driving model.
+ A combination of a fully-convolutional network and an LSTM is proposed in~\cite{xu2017end} to learn from large-scale vehicle action data. Their goal is to predict future egomotion including multi-modal discrete and continuous driving behaviors. 
+ Inverse turning radius is predicted by a LSTM network in~\cite{kim2017interpretable}: they generate a heat map of attention at each time step conditioned on the previous hidden states and a current convolutional feature cube  to produce more succinct visual explanations. ~\cite{duself} used 3D convolutional layers to extract visual features, then fed them into LSTM layers to capture the sequential relation. In addition to using deep features, ~\cite{koutnik2013evolving} trained a large recurrent neural network using a reinforcement learning approach to map images directly to steering angles, with the purpose to keep the car on track.
+ 
+ 
 
+\subsection{Dataset for autonomous driving}
+
+Vision-based semantic segmentation in urban scene is a key functionality for autonomous driving.
+%Camvid dataset~\cite{Camvid} consists of a set of monocular images taken in Cambridge UK. However, only 701 images contain pixel-level annotations over a total of 32 categories (combining objects and architectural scenes).
+%Similarly, Daimler Urban Segmentation dataset~\cite{scharwachter2013efficient} contains 500 fully labelled monochrome frames for 5 categories.
 KITTI benchmark suite~\cite{Geiger2013IJRR} provides a large a mount of images of urban scene from Karlsruhe, Germany, with ground truth data for odometry, object detection, tracking, scene flow and stereo benchmarks. However, a limited 430 labelled images are provided for semantic segmentation.
-
-A common limitation of the aforementioned datasets is the bias introduced by the acquisition of images in a specific city. The LabelMe~\cite{russell2008labelme} project offers the solution by offering around 1,000 fully annotated images of urban environments around the world and more than 3,000 images with partial(noisy) annotations.
-
+%A common limitation of the aforementioned datasets is the bias introduced by the acquisition of images in a specific city. The LabelMe~\cite{russell2008labelme} project offers the solution by offering around 1,000 fully annotated images of urban environments around the world and more than 3,000 images with partial(noisy) annotations.
 More recently, larger project are constructed:
-Cityscapes dataset~\cite{Cordts2016Cityscapes} which consists of a collection of images acquired in 50 cities around Germany, Switzerland and France in difference seasons, and having 5,000 images with fine annotations and 20,000 with coarse annotations over a total of 30 classes.
-
-The use of synthetic data has increased considerably in recent years within computer vision community. ~\cite{mueller2016benchmark} provides a synthetic dataset generation and online tracker evaluation. In~\cite{kaneva2011evaluation}, the authors used a photorealistic virtual world to evaluate the performance of image features under scene changes and image transformations. Synthetic data has also been used for skeleton joints estimation~\cite{shotton2013real}, allowing the classifier invariant to pose, body shape, clothing, etc.
-
-A fine annotated images in Cityscape dataset requires on average 1.5 hours which is very labor intensive. Thus, the cost of scaling large project would required a prohibitive economic investment in order to capture images from a larger variety of countries, in different seasons and different traffic conditions. For these reasons, a novel synthetic dataset of urban scene called SYNTHIA~\cite{ros2016synthia} is proposed to use synthetic imagery that simulate real urban scenes in a vast variety of conditions and produce the appropriate annotations.
-This dataset is a large collection of images with high variability due to changes in illumination, textures, pose of dynamic objects and camera view-points.
-
-%%% ZN: write related works for Recurrent Networks (used in the context of autonomous driving)
-
-
-\textbf{\emph{4. Recurrent Networks (used in the context of autonomous driving)}}
-
-
-Recently, RNN(recurrent network) and its variant LSTM(long short-term memory) have been successfully used in autonomous driving, due to its advantages for modeling sequential data in vision problems. Most of these works exploit LSTM as component of an end-to-end driving model. ~\cite{xu2017end} used the combination of a fully-convolutional network and an LSTM to learn from large-scale vehicle action data, to predict future egomotion including multi-modal discrete and continuous driving behaviors. ~\cite{kim2017interpretable} used a LSTM network to predict the inverse turning radius and generate a heat map of attention at each timestep conditioned on the previous hidden states and a current convolutional feature cube. ~\cite{duself} used 3D convolutional layers to extract visual features, then fed them into LSTM layers to capture the sequential relation. In addition to using deep features, ~\cite{koutnik2013evolving} trained a large recurrent neural network using a reinforcement learning approach to map images directly to steering angles, with the purpose to keep the car on track.
-
+Cityscapes dataset~\cite{Cordts2016Cityscapes} which consists of a collection of images acquired in 50 cities around Germany, Switzerland and France in difference seasons, and having 5,000 images with fine annotations and 20,000 with coarse annotations over a total of 30 classes. Comma.ai~\cite{santana2016learning} provides 7 and a quarter hours of largely highway driving. Udacity~\cite{udacity} dataset includes 65,000 labels across 9,423 frames at full resolution of $1920\times1200$ at 2Hz.
+The use of synthetic data has increased considerably in recent years within computer vision community. A synthetic dataset named Synthia is\cite{mueller2016benchmark} provide originally for urban scene semantic segmentation generation.
+%In~\cite{kaneva2011evaluation}, the authors used a photorealistic virtual world to evaluate the performance of image features under scene changes and image transformations. Synthetic data has also been used for skeleton joints estimation~\cite{shotton2013real}, allowing the classifier invariant to pose, body shape, clothing, etc.
+Synthetic dataset has an obvious advantage: a fine annotated images in Cityscape dataset requires on average 1.5 hours which is very labor intensive. Thus, the cost of scaling large project would required a prohibitive economic investment in order to capture images from a larger variety of countries, in different seasons and different traffic conditions. 
+%For these reasons, a novel synthetic dataset of urban scene called SYNTHIA~\cite{ros2016synthia} is proposed to use synthetic imagery that simulate real urban scenes in a vast variety of conditions and produce the appropriate annotations.
+%This dataset is a large collection of images with high variability due to changes in illumination, textures, pose of dynamic objects and camera view-points.
 
 \section{Proposed Algorithm}
 
@@ -439,7 +452,7 @@ The Kalman filter is a popular technique for estimating the state of a system. K
 Future works include incorporating vehicle pose from the RGB input as extra source of ``privileged information"; conducting experiment on the real-world images.
 
 \section*{Details of the Code}
- The code will be made public alongside the publication.
+ The code will be made public upon publication.
 
 \section*{Acknowledgment}
 
