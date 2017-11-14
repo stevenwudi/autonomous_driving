@@ -382,8 +382,8 @@ class Model_Factory_LSTM():
 
             model_checkpoint = 'Epoch:%2d_net_Coverage:%.4f_Center:%.2f_CoverageR:%.4f_CenterR:%.2f.PTH' % \
                                (epoch, aveErrCoverage, aveErrCenter, aveErrCoverage_realworld, aveErrCenter_realworld)
-            np.save('/media/samsumg_1tb/synthia/SYNTHIA-SEQS-01/tracking_plot/' + 'valid', track_plot)
-
+            if epoch == cf.n_epochs:
+                np.save(os.path.join(self.exp_dir, 'valid'), track_plot)
 
         else:
             print('############### TEST #############################################')
@@ -393,7 +393,7 @@ class Model_Factory_LSTM():
             aveErrCoverage_realworld, aveErrCenter_realworld))
             model_checkpoint = 'Final_test:Coverage:%.4f_Center:%.2f_CoverageR:%.4f_CenterR:%.2f.PTH' % \
                                (aveErrCoverage, aveErrCenter, aveErrCoverage_realworld, aveErrCenter_realworld)
-            np.save('/media/samsumg_1tb/synthia/SYNTHIA-SEQS-01/tracking_plot/' + 'test', track_plot)
+            np.save(os.path.join(self.exp_dir, 'test'), track_plot)
 
             # Plot scores
             # self.aveErrCoverage.append(aveErrCoverage.mean())
