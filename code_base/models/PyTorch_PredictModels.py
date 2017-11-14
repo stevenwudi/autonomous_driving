@@ -245,7 +245,7 @@ class CNN_LSTM_To_FC(nn.Module):
         # for i in range(0, len(images)):
         images_data = [self.conv(image).view(sequenceSize, -1) for image in images]
 
-            # images_data.append(image_data)
+        # images_data.append(image_data)
         images_data = torch.stack(images_data, dim=0)
 
         # lstm part:
