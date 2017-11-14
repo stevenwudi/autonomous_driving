@@ -202,9 +202,9 @@ def prepare_data_image_list(cf):
         train_data_array, valid_data_array, test_data_array, data_mean, data_std = normalise_data_with_img_list(train_data,
                                                                                                                 valid_data,
                                                                                                                 test_data)
-        train_img_list, valid_img_list, test_img_list = get_img_resized_list(cf, train_data[:100,:,:], valid_data[:40,:,:], test_data[:40,:,:])
+        train_img_list, valid_img_list, test_img_list = get_img_resized_list(cf, train_data, valid_data, test_data)
 
-        prepared_data = (train_data_array[:100,:,:], valid_data_array[:40,:,:], test_data_array[:40,:,:], data_mean, data_std, train_img_list, valid_img_list, test_img_list)
+        prepared_data = (train_data_array, valid_data_array, test_data_array, data_mean, data_std, train_img_list, valid_img_list, test_img_list)
 
         if cf.dataloader_save_prepare_data:
             # save data
