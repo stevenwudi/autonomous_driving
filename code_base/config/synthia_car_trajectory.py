@@ -37,7 +37,7 @@ formatting_ground_truth_sequence_car_trajectory = True
 draw_seq                                = 'SYNTHIA-SEQS-06-NIGHT'   # which sequence to draw, need to set the above two flags to False
 
 # Model
-model_name                   = 'LSTM_To_FC'       # Model to use ['LSTM_ManyToMany', 'LSTM_To_FC', 'CNN_LSTM_To_FC']
+model_name                   = 'CNN_LSTM_To_FC'       # Model to use ['LSTM_ManyToMany', 'LSTM_To_FC', 'CNN_LSTM_To_FC']
 debug                        = False
 im_size                      = (760, 1280)
 resize_train                 = (760, 1280)      # Resize the image during training (Height, Width) or None
@@ -104,7 +104,7 @@ focal_length                 = 532.740352  # camera focal lense
 
 # Training parameters
 lr_decay_epoch               = 10          # every lr_decay_epoch, decay learning_rate by 10
-figure_epoch                 = 5           # every fugure_epoch, figure out the losses
+figure_epoch                 = 10           # every fugure_epoch, figure out the losses
 test_epoch                   = 1
 weight_decay                 = 0.              # Weight decay or L2 parameter norm penalty
 n_epochs                     = 200            # Number of epochs during training
@@ -114,7 +114,7 @@ optimizer                    = 'sgd'      # LBFGS','adam','rmsprop','sgd'
 learning_rate                = 0.01          # Training learning rate
 momentum                     = 0.9
 load_trained_model           = False
-train_model_path             = '/home/wzn/PycharmProjects/autonomous_driving/Experiments/car_trajectory_prediction/SYNTHIA-SEQS-01_Mon, 13 Nov 2017-11-13 11:27:35_CNN_LSTM_To_FC/Epoch: 5_net_Coverage:0.0859_Center:231.26_CoverageR:0.0423_CenterR:1.22.PTH'
+train_model_path             = '/home/wzn/PycharmProjects/autonomous_driving/Experiments/car_trajectory_prediction/SYNTHIA-SEQS-01_Tue, 14 Nov 2017-11-14 17:47:21_LSTM_To_FC_Noshuffle_Nosemantics-TrainBatch4/Epoch:63_net_Coverage:0.6020_Center:35.22_CoverageR:0.2917_CenterR:0.79.PTH'
 #### LSTM training variables #################
 # LSTM_ManyToMany
 lstm_input_dims               = [6, 150, 150]    # [layer1_input_dim, layer2_input_dim,...]  layer1_input_dim:[x,y,w,h, d_min, d_max]
