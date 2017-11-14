@@ -118,16 +118,16 @@ def get_img_list(train_data, valid_data, test_data):
 def get_img_resized_list(cf, train_data, valid_data, test_data):
 
     root_dir = '/'.join(cf.dataset_path[0].split('/')[:-1])
-    def data_img_dir(data):
-        return root_dir + '/' + data[0][0][6].split('/')[
-            0] + '/' + 'GT/LABELS' + '/' + cf.data_stereo + '/' + cf.data_camera
+    # def data_img_dir(data):
+    #     return root_dir + '/' + data[0][0][6].split('/')[
+    #         0] + '/' + 'GT/LABELS' + '/' + cf.data_stereo + '/' + cf.data_camera
+    #
+    # train_img_dir = data_img_dir(train_data)
+    # valid_img_dir = data_img_dir(valid_data)
+    # test_img_dir = data_img_dir(test_data)
 
-    train_img_dir = data_img_dir(train_data)
-    valid_img_dir = data_img_dir(valid_data)
-    test_img_dir = data_img_dir(test_data)
-
-    def img_name(img_dir, item):
-        return os.path.join(img_dir, item.split('/')[1])
+    def img_name(item):
+        return os.path.join(root_dir + '/' + item.split('/')[0] + '/' + 'GT/LABELS' + '/' + cf.data_stereo + '/' + cf.data_camera, item.split('/')[1])
 
     def semantic_image(img_name):
         try:
@@ -161,7 +161,7 @@ def get_img_resized_list(cf, train_data, valid_data, test_data):
     for d in valid_data:
         i += 1
         item_list = [x[6] for x in d[:cf.lstm_input_frame]]
-        item_list = [semantic_image(img_name(valid_img_dir, item)) for item in item_list]
+        item_list = [semantic_image(img_name(item)) for item in item_list]
         item_list = torch.stack(item_list, dim=0)
         valid_img_list.append(save_semantics_itemlist('valid_'+str(i), item_list))
 
@@ -170,7 +170,7 @@ def get_img_resized_list(cf, train_data, valid_data, test_data):
     for d in test_data:
         i += 1
         item_list = [x[6] for x in d[:cf.lstm_input_frame]]
-        item_list = [semantic_image(img_name(test_img_dir, item)) for item in item_list]
+        item_list = [semantic_image(img_name(item)) for item in item_list]
         item_list = torch.stack(item_list, dim=0)
         test_img_list.append(save_semantics_itemlist('test_' + str(i), item_list))
 
@@ -179,7 +179,7 @@ def get_img_resized_list(cf, train_data, valid_data, test_data):
     for d in train_data:
         i += 1
         item_list = [x[6] for x in d[:cf.lstm_input_frame]]
-        item_list = [semantic_image(img_name(train_img_dir, item)) for item in item_list]
+        item_list = [semantic_image(img_name(item)) for item in item_list]
         item_list = torch.stack(item_list, dim=0)
         train_img_list.append(save_semantics_itemlist('train_' + str(i), item_list))
 
@@ -202,9 +202,9 @@ def prepare_data_image_list(cf):
         train_data_array, valid_data_array, test_data_array, data_mean, data_std = normalise_data_with_img_list(train_data,
                                                                                                                 valid_data,
                                                                                                                 test_data)
-        train_img_list, valid_img_list, test_img_list = get_img_resized_list(cf, train_data, valid_data, test_data)
+        train_img_list, valid_img_list, test_img_list = get_img_resized_list(cf, train_data[:100,:,:], valid_data[:40,:,:], test_data[:40,:,:])
 
-        prepared_data = (train_data_array, valid_data_array, test_data_array, data_mean, data_std, train_img_list, valid_img_list, test_img_list)
+        prepared_data = (train_data_array[:100,:,:], valid_data_array[:40,:,:], test_data_array[:40,:,:], data_mean, data_std, train_img_list, valid_img_list, test_img_list)
 
         if cf.dataloader_save_prepare_data:
             # save data

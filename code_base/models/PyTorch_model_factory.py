@@ -19,13 +19,13 @@ import sys
 import json
 
 
-def adjust_learning_rate(lr, optimizer, epoch, train_losses, decrease_epoch=10):
+def adjust_learning_rate(lr, optimizer, epoch, lastupdate_epoch, train_losses, decrease_epoch=10):
     """Sets the learning rate to the initial LR decayed by 10 every 30 epochs"""
 
-    if len(train_losses) < 10:
-        return lr
+    if epoch-lastupdate_epoch < 10:
+        return optimizer.param_groups[-1]['lr']
 
-    eva_losses = np.array(train_losses[-5:])
+    eva_losses = np.array(train_losses[-10:])
 
     max_value = eva_losses.max()
     min_value = eva_losses.min()
@@ -34,17 +34,21 @@ def adjust_learning_rate(lr, optimizer, epoch, train_losses, decrease_epoch=10):
 
     if np.abs(max_value-min_value)/max_value < 1e-4 or max_loction>min_location:
         lr = optimizer.param_groups[-1]['lr']
-        lr =lr * 0.1
+        lr = lr * 0.1
+
         if lr >= 1.0e-6:
             for param_group in optimizer.param_groups:
                 param_group['lr'] = lr
+            lastupdate_epoch = epoch
+        else:
+            lr = lr*10
     #
     # lr = lr * (0.1 ** (epoch // decrease_epoch))
     # if lr >= 1.0e-6:
     #     for param_group in optimizer.param_groups:
     #         param_group['lr'] = lr
 
-    return lr
+    return lr, lastupdate_epoch
 
 
 def save_output_images(predictions, filenames, output_dir):
@@ -243,10 +247,10 @@ class Model_Factory_LSTM():
         elif cf.optimizer == 'sgd':
             self.optimiser = optim.SGD(self.net.parameters(), lr=cf.learning_rate, momentum=cf.momentum, weight_decay=cf.weight_decay, nesterov=True)
 
-    def train(self, cf, train_loader, epoch, train_losses):
+    def train(self, cf, train_loader, epoch, lastupdate_epoch, train_losses):
         # begin to train
         self.net.train()
-        lr = adjust_learning_rate(self.cf.learning_rate, self.optimiser, epoch,train_losses , decrease_epoch=cf.lr_decay_epoch)
+        lr, lastupdate_epoch = adjust_learning_rate(self.cf.learning_rate, self.optimiser, epoch, lastupdate_epoch, train_losses , decrease_epoch=cf.lr_decay_epoch)
         print('learning rate:', lr)
 
         # if cf.model_name == 'CNN_LSTM_To_FC':
@@ -286,7 +290,7 @@ class Model_Factory_LSTM():
         train_loss = np.array(train_losses).mean()
         print('Train Loss', epoch, train_loss)
 
-        return train_loss
+        return train_loss, lastupdate_epoch
 
     def test(self, cf, valid_loader, data_mean, data_std, epoch=None):
         # if cf.model_name == 'CNN_LSTM_To_FC':
