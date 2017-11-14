@@ -437,7 +437,7 @@ def ssd_synthia_car_fine_tune():
     :return:
     """
     merged_annotation = '/home/public/synthia/ssd_car_fine_tune/SYNTHIA-SEQS-01-TRAIN_MERGED-shuffle.json'
-    if False:
+    if True:
         print('we combine the training and validation here')
         annotations_url_1 = '/home/public/synthia/SYNTHIA-SEQS-01-TRAIN-shuffle.json'
         annotations_url_2 = '/home/public/synthia/SYNTHIA-SEQS-01-VALIDATE-shuffle.json'

@@ -15,7 +15,8 @@ dataroot_dir                 = '/home/stevenwudi/PycharmProjects/autonomous_driv
 
 
 # Model
-model_name                   = 'drn_d_38'  # Model to use ['fcn8' | 'lenet' | 'alexNet' | 'vgg16' |  'vgg19' | 'resnet50' | 'InceptionV3']
+
+model_name                   = 'segnet_basic'  # Model to use ['fcn8' | 'lenet' | 'alexNet' | 'vgg16' |  'vgg19' | 'resnet50' | 'InceptionV3']
 
 freeze_layers_from           = None            # Freeze layers from 0 to this layer during training (Useful for finetunning) [None | 'base_model' | Layer_id]
 show_model                   = False           # Show the architecture layers
@@ -34,6 +35,7 @@ debug_images_test            = 30              # N images for testing in debug m
 debug_n_epochs               = 3               # N of training epochs in debug mode
 
 # Batch sizes
+
 workers                      = 4
 batch_size_train             = 8              # Batch size during training
 batch_size_valid             = 8              # Batch size during validation
@@ -42,6 +44,7 @@ batch_size_test              = 8              # Batch size during testing
 dataloader_num_workers_train = batch_size_train# Number of dataload works during training
 dataloader_num_workers_valid = batch_size_valid# Number of dataload works during valid
 dataloader_num_workers_test  = batch_size_test # Number of dataload works during test
+
 
 crop_size_train              = (224, 224)      # Crop size during training (Height, Width) or None
 crop_size_valid              = None            # Crop size during validation
@@ -202,7 +205,7 @@ full_to_colour = {0: (0, 0, 0), 1: (128, 128, 128), 2: (128, 0, 0), 3: (128, 64,
 
 ignore_index                        = 0
 test_epoch                          = 1
-batch_size                          = 8
+batch_size                          = 1
 crop_size                           = 720
 train_ratio                         = 0.9
 cb_weights_method                   = None  #'rare_freq_cost'# Label weight balance [None | 'median_freq_cost' | 'rare_freq_cost']
@@ -216,7 +219,7 @@ valid_ratio                  = 0.1
 video_sequence_prediction    = False
 
 load_trained_model           = False           # Load a pretrained model for doing finetuning
-train_model_path             = '/home/stevenwudi/PycharmProjects/autonomous_driving/Experiments/segmentation/SYNTHIA_RAND_CVPR16___Wed, 08 Nov 2017-11-08 11:21:17_drn_d_38/epoch_44_mIOU:.0.603778_net.pth'
+train_model_path             = '/home/stevenwudi/PycharmProjects/autonomous_driving/Experiments/segmentation/SYNTHIA-SEQS-01___Sun, 12 Nov 2017-11-12 21:57:56_drn_d_38/epoch_21_mIOU:.0.339176_net.pth'
 data_type                           = 'RGB'
 data_stereo                         = 'Stereo_Left'
 data_camera                         = 'Omni_F'

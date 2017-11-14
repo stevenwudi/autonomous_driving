@@ -5,7 +5,7 @@ import os
 def get_ground_truth_box(instances, classes):
     # now we count the number of pixels for each instances
     resize_train = (760, 1280)
-    threshold_car_POR_end = 1e-3 / 2
+    threshold_car_POR_end = 1e-3
     car = 8
     unique_labels, counts_label = np.unique(instances, return_counts=True)
     instance_percentage = counts_label / np.prod(resize_train)
@@ -39,13 +39,15 @@ if __name__ == '__main__':
                'SYNTHIA-SEQS-01-NIGHT', 'SYNTHIA-SEQS-01-SPRING', 'SYNTHIA-SEQS-01-SUMMER',
                'SYNTHIA-SEQS-01-SUNSET', 'SYNTHIA-SEQS-01-WINTER', 'SYNTHIA-SEQS-01-WINTERNIGHT'
                ]
-    car_dict_list = []
+    car_dict_list_train = []
+    car_dict_list_validate = []
+    car_dict_list_test = []
     for folder in folders:
         gt_dir = '/home/stevenwudi/PycharmProjects/autonomous_driving/Datasets/' + folder +'/GT/LABELS/Stereo_Left/Omni_F'
         data_dir = '/home/stevenwudi/PycharmProjects/autonomous_driving/Datasets/' + folder +'/RGB/Stereo_Left/Omni_F'
         images = os.listdir(gt_dir)
         images.sort()
-
+        folder_car_dict_list = []
         import json
 
         for img in images:
@@ -61,23 +63,30 @@ if __name__ == '__main__':
                 car_dict['image_name'] = img
                 car_dict['boundingbox'] = car_bbox
                 # print (type(car_bbox[0][0]))
-                car_dict_list.append(car_dict)
+                folder_car_dict_list.append(car_dict)
 
                 # print (car_dict_list)
 
-    num = len(car_dict_list)
-    train_size = int(0.8 * num)
-    test_size = int(0.1 * num)
-    print ('train_size:', train_size)
-    print('test_size:', test_size)
-    json_file_train_path = os.path.join('/home/public/synthia', 'SYNTHIA-SEQS-06-TRAIN.json')
+        num = len(folder_car_dict_list)
+        train_size = int(0.8 * num)
+        test_size = int(0.1 * num)
+        car_dict_list_train += folder_car_dict_list[:train_size]
+        car_dict_list_validate += folder_car_dict_list[train_size:(train_size + test_size)]
+        car_dict_list_test += folder_car_dict_list[(train_size + test_size):]
+        # print ('train_size:', train_size)
+        # print('test_size:', test_size)
+
+    print('train num', len(car_dict_list_train))
+    print('validate num', len(car_dict_list_validate))
+    print('test num', len(car_dict_list_test))
+    json_file_train_path = os.path.join('/home/public/synthia', 'SYNTHIA-SEQS-01-TRAIN-shuffle_0.001.json')
     with open(json_file_train_path, 'w') as fp:
-        python2json = json.dump(car_dict_list[:train_size], fp, indent=4)
+        json.dump(car_dict_list_train, fp, indent=4)
 
-    json_file_validate_path = os.path.join('/home/public/synthia', 'SYNTHIA-SEQS-06-VALIDATE.json')
+    json_file_validate_path = os.path.join('/home/public/synthia', 'SYNTHIA-SEQS-01-VALIDATE-shuffle_0.001.json')
     with open(json_file_validate_path, 'w') as fp:
-        python2json = json.dump(car_dict_list[train_size:(train_size + test_size)], fp, indent=4)
+        json.dump(car_dict_list_validate, fp, indent=4)
 
-    json_file_test_path = os.path.join('/home/public/synthia', 'SYNTHIA-SEQS-06-TEST.json')
+    json_file_test_path = os.path.join('/home/public/synthia', 'SYNTHIA-SEQS-01-TEST-shuffle_0.001.json')
     with open(json_file_test_path, 'w') as fp:
-        python2json = json.dump(car_dict_list[(train_size + test_size):], fp, indent=4)
+        json.dump(car_dict_list_test, fp, indent=4)

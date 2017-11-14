@@ -5,6 +5,8 @@ which in respect may not be the optimal sollution.
 http://pytorch.org/tutorials/beginner/data_loading_tutorial.html#dataset-class
 """
 from __future__ import print_function, division
+
+from matplotlib import pyplot as plt
 import os
 from skimage import io
 from scipy.misc import imresize
@@ -15,6 +17,7 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms as T
 import random
+
 
 class Rescale(object):
     """Rescale the image in a sample to a given size.
@@ -284,7 +287,7 @@ class Dataset_Generators_Synthia_Car_trajectory_segmantic_video():
         # Load training set
         print('\n > Loading training set, currently we have only training set')
 
-        train_dataset = ImageDataGenerator_Synthia_Car_trajectory_segmantic_video(cf, 'train', crop=True, flip=True)
+        train_dataset = ImageDataGenerator_Synthia_Car_trajectory_segmantic_video(cf, 'train', crop=True, flip=False)
         valid_dataset = ImageDataGenerator_Synthia_Car_trajectory_segmantic_video(cf, 'valid', crop=False, flip=False)
         test_dataset = ImageDataGenerator_Synthia_Car_trajectory_segmantic_video(cf, 'test', crop=False, flip=False)
 
@@ -373,6 +376,7 @@ class ImageDataGenerator_Synthia_Car_trajectory_segmantic_video(Dataset):
         #instances = np.uint8(label[:, :, 1])
 
         sample = {'input': input, 'classes': classes}
+        target = classes
 
         # Di Wu also save the image name here for the future documentation and
         # it could be useful for time series prediction
@@ -385,10 +389,16 @@ class ImageDataGenerator_Synthia_Car_trajectory_segmantic_video(Dataset):
             target = classes[y1:y1 + self.crop_size, x1:x1 + self.crop_size]
 
         # Random horizontal flip
+        # something wrong below
         if self.flip:
             if random.random() < 0.5:
-                input = input.transpose(Image.FLIP_LEFT_RIGHT)
-                target = np.fliplr(target)
+               input = input.transpose(Image.FLIP_LEFT_RIGHT)
+               target = np.fliplr(target)
+        plt.figure(1)
+        plt.imshow(input)
+        plt.figure(2)
+        plt.imshow(target)
+        plt.waitforbuttonpress(0.01)
 
         w, h = input.size
         input_t = torch.ByteTensor(torch.ByteStorage.from_buffer(input.tobytes())).view(h, w, 3).permute(2, 0, 1).float().div(255)
