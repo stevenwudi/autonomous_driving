@@ -37,7 +37,7 @@ formatting_ground_truth_sequence_car_trajectory = True
 draw_seq                                = 'SYNTHIA-SEQS-06-NIGHT'   # which sequence to draw, need to set the above two flags to False
 
 # Model
-model_name                   = 'CNN_LSTM_To_FC'       # Model to use ['LSTM_ManyToMany', 'LSTM_To_FC', 'CNN_LSTM_To_FC']
+model_name                   = 'LSTM_To_FC'       # Model to use ['LSTM_ManyToMany', 'LSTM_To_FC', 'CNN_LSTM_To_FC']
 debug                        = False
 im_size                      = (760, 1280)
 resize_train                 = (760, 1280)      # Resize the image during training (Height, Width) or None
@@ -107,7 +107,7 @@ lr_decay_epoch               = 10          # every lr_decay_epoch, decay learnin
 figure_epoch                 = 5           # every fugure_epoch, figure out the losses
 test_epoch                   = 1
 weight_decay                 = 0.              # Weight decay or L2 parameter norm penalty
-n_epochs                     = 100            # Number of epochs during training
+n_epochs                     = 200            # Number of epochs during training
 cuda                         = True
 loss                         = 'SmoothL1Loss'       # 'MSE', 'SmoothL1Loss'
 optimizer                    = 'sgd'      # LBFGS','adam','rmsprop','sgd'
