@@ -1,6 +1,9 @@
 import argparse
 import os
 import sys
+import os
+os.environ['CUDA_VISIBLE_DEVICES'] = '2'
+
 # Di Wu add the following really ugly code so that python can find the path
 sys.path.append(os.getcwd())
 import time
@@ -35,26 +38,28 @@ def process(cf):
         valid_losses = []
         print(' ---> Training data: ' + cf.sequence_name + ' <---')
         for epoch in range(1, cf.n_epochs + 1):
-            train_losses += [model.train(train_images, train_input, train_target, cf)]
+            train_losses += [model.train(cf, DG.train_loader, epoch, train_losses)]
             if cf.valid_model:
-                valid_losses += [model.test(valid_images, valid_input, valid_target, data_std, data_mean, cf, epoch)]
-        print('---> Train losses:')
-        print(train_losses)
-        print('---> Valid losses:')
-        print(valid_losses)
-        # losses figure
-        plt.figure()
-        plt.title('Losses')
-        plt.xlabel('steps')
-        plt.ylabel('losses')
-        p1 = plt.plot(train_losses, color='b')
-        p2 = plt.plot(valid_losses, color='r')
-        plt.legend((p1[0], p2[0]), ('trainLosses', 'validLosses'))
-        figure_path = os.path.join(model.exp_dir, 'loss_figure.jpg')
-        plt.savefig(figure_path)
+                valid_losses += [model.test(cf, DG.valid_loader, DG.data_mean, DG.data_std, epoch)]
+                if epoch > 0 and epoch%cf.figure_epoch == 0:
+                    print('---> Train losses:')
+                    print(train_losses)
+                    print('---> Valid losses:')
+                    print(valid_losses)
+                    # losses figure
+                    plt.figure()
+                    plt.title('Losses')
+                    plt.xlabel('steps')
+                    plt.ylabel('losses')
+                    p1 = plt.plot(train_losses, color='b')
+                    p2 = plt.plot(valid_losses, color='r')
+                    plt.legend((p1[0], p2[0]), ('trainLosses', 'validLosses'))
+                    figure_name = 'loss_figure_' + str(epoch) + '.jpg'
+                    figure_path = os.path.join(model.exp_dir, figure_name)
+                    plt.savefig(figure_path)
 
     if cf.test_model:
-        test_loss = model.test(test_images, test_input, test_target, data_std, data_mean, cf)
+        test_loss = model.test(cf, DG.test_loader, DG.data_mean, DG.data_std, epoch=None)
         print('---> Test losses:')
         print(test_loss)
     print(' ---> Finish experiment: ' + cf.exp_name + ' <---')

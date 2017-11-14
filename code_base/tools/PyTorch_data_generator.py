@@ -105,7 +105,9 @@ class ToTensor(object):
         # numpy image: H x W x C
         # torch image: C X H X W
         image = image.transpose((2, 0, 1))
-        return {'image': torch.from_numpy(image),
+        image_tensor = torch.from_numpy(image)
+        image_tensor = image_tensor.float().div(255)
+        return {'image': image_tensor,
                 'label': torch.from_numpy(label)}
 
 
@@ -121,6 +123,25 @@ class RandomHorizontalFlip(object):
             results = [image, label]
         return results
 
+class Normalize(object):
+    """Given mean: (R, G, B) and std: (R, G, B),
+    will normalize each channel of the torch.*Tensor, i.e.
+    channel = (channel - mean) / std
+    """
+
+    def __init__(self, mean, std):
+        self.mean = torch.FloatTensor(mean)
+        self.std = torch.FloatTensor(std)
+
+    def __call__(self, image, label=None):
+        img = image['image']
+        label = image['label']
+        for t, m, s in zip(img, self.mean, self.std):
+            t.sub_(m).div_(s)
+        if label is None:
+            return image,
+        else:
+            return {'image': img, 'label': label.long()}
 
 class Dataset_Generators_Synthia():
     """ Initially we use synthia dataset"""
@@ -128,6 +149,7 @@ class Dataset_Generators_Synthia():
     def __init__(self, cf):
         self.cf = cf
         # Load training set
+
         print('\n > Loading training, valid, test set')
         train_dataset = ImageDataGenerator_Synthia(cf.dataset_path, 'train', cf=cf, crop=True, flip=True)
         val_dataset = ImageDataGenerator_Synthia(cf.dataset_path, 'valid', cf=cf, crop=False, flip=False)
@@ -137,43 +159,33 @@ class Dataset_Generators_Synthia():
 
 class ImageDataGenerator_Synthia(Dataset):
     def __init__(self, root_dir, dataset_split, cf, crop=True, flip=True):
-        """
-        :param root_dir: Directory will all the images
-        :param label_dir: Directory will all the label images
-        :param transform:  (callable, optional): Optional tra
-        nsform to be applied
-        """
-        self.root_dir = root_dir
-        # with open(os.path.join(root_dir, 'ALL.txt')) as text_file:  # can throw FileNotFoundError
-        #     lines = tuple(l.split() for l in text_file.readlines())
-        self.image_dir = os.path.join(root_dir, 'RGB')
-        self.label_dir = os.path.join(root_dir, 'GTTXT')
-        image_files = sorted(os.listdir(self.image_dir))
-        # if img_name not in ['ap_000_02-11-2015_18-02-19_000062_3_Rand_2.png',
-        #                     'ap_000_02-11-2015_18-02-19_000129_2_Rand_16.png',
-        #                     'ap_000_01-11-2015_19-20-57_000008_1_Rand_0.png']
-        train_num = int(len(image_files) * cf.train_ratio)
-        if dataset_split == 'train':
-            self.image_files = image_files[:train_num]
-            self.image_num = train_num
-            print('Total training number is: %d'%train_num)
-        elif dataset_split == 'valid':
-            self.image_files = image_files[train_num:]
-            self.image_num = len(image_files) - train_num
-            print('Total valid number is: %d' % self.image_num)
-        self.crop = crop
-        self.crop_size = cf.crop_size
-        self.flip = flip
-        self.mean = cf.rgb_mean
-        self.std = cf.rgb_std
-        self.ignore_index = cf.ignore_index
+
+        if (root_dir[-10:] == 'train_rand'):
+            self.root_dir = root_dir
+            self.image_dir = os.path.join(root_dir[:-10], 'RGB')
+            self.image_files = os.listdir(self.image_dir)
+            if error_images is not None:
+                for error in error_images:
+                    if os.path.exists(os.path.join(self.image_dir, error)):
+                        self.image_files.remove(error)
+
+            self.label_dir = os.path.join(root_dir[:-10], 'GTTXT')
+            self.label_files = os.listdir(self.label_dir)
+            self.transform = transform
+        else:
+            self.root_dir = root_dir
+            self.image_dir = os.path.join(root_dir, 'images')
+            self.image_files = os.listdir(self.image_dir)
+            self.label_dir = os.path.join(root_dir, 'masks')
+            self.label_files = os.listdir(self.label_dir)
+            self.transform = transform
 
     def __len__(self):
-        return self.image_num
-
-    def __getitem__(self, item):
-        # Load images and perform augmentations with PIL
-        img_name = os.path.join(self.image_dir, self.image_files[item])
+        return len(self.image_files)
+        # print ('-------')
+        # print (img_name)
+        image = io.imread(img_name)
+        label_name = os.path.join(self.label_dir, self.image_files[item][:-4] + '.txt')
 
         try:
             input = Image.open(img_name)
@@ -223,21 +235,70 @@ class ImageDataGenerator_Synthia(Dataset):
         return input_t, target_t
 
 
+
 class DataGenerator_Synthia_car_trajectory():
         """ Initially we use synthia dataset"""
 
         def __init__(self, cf):
             self.cf = cf
             print('Loading data')
-            train_data, valid_data, test_data, data_mean, data_std, train_img_list, valid_img_list, test_img_list = prepare_data_image_list(cf)
+            train_data, valid_data, test_data, self.data_mean, self.data_std, train_img_list, valid_img_list, test_img_list = prepare_data_image_list(cf)
+
+            # deal images and relocate train_img_list & valid_img_list & test_img_list
+            self.root_dir = '/'.join(cf.dataset_path[0].split('/')[:-1])
+
+
+            # def deal_img_list(img_list, item):
+            #
+            #     # parent dir
+            #     img_dir = self.root_dir + '/' + img_list[item][0].split('/')[
+            #         0] + '/' + 'GT/LABELS' + '/' + self.cf.data_stereo + '/' + self.cf.data_camera
+            #
+            #     def img_name(i):
+            #         return os.path.join(img_dir, img_list[item][i].split('/')[1])
+            #
+            #     def semantic_image(img_name):
+            #         try:
+            #             input = cv.imread(img_name, -1)
+            #             semantic_image = np.int8(input[:, :, 2])
+            #         except IOError:
+            #             # unfortunately, some images are corrupted. Hence, we need to manually exclude them.
+            #             print("Image failed loading: ", img_name)
+            #
+            #         # resize
+            #         semantic_image = imresize(semantic_image, size=0.125, interp='nearest', mode='F')
+            #         # Convert to training labels
+            #         w, h = semantic_image.shape
+            #         # Create one-hot encoding
+            #         semantic_image_one_hot = np.zeros(shape=(self.cf.cnn_class_num, w, h))
+            #         for c in range(self.cf.cnn_class_num):
+            #             semantic_image_one_hot[c][semantic_image == c] = 1
+            #
+            #         # Convert to tensors
+            #         semantic_image_t = torch.Tensor(semantic_image_one_hot)
+            #         return semantic_image_t
+            #
+            #     if self.cf.model_name == 'CNN_LSTM_To_FC':
+            #         semantic_images = torch.stack(
+            #             [semantic_image(img_name(i)) for i in range(self.cf.lstm_input_frame)], dim=0)
+            #
+            #
+            #     return semantic_images
+
+
+
+
             # Load training set
             print('\n > Loading training, valid, test set')
+
             train_dataset = BB_ImageDataGenerator_Synthia(cf, train_data, train_img_list, crop=True, flip=True)
             val_dataset = BB_ImageDataGenerator_Synthia(cf.dataset_path, 'valid', cf=cf, crop=False, flip=False)
             test_dataset = BB_ImageDataGenerator_Synthia(cf.dataset_path, 'test', cf=cf, crop=False, flip=False)
 
-            self.train_loader = DataLoader(train_dataset, batch_size=cf.batch_size, shuffle=True,
+
+            self.train_loader = DataLoader(train_dataset, batch_size=cf.batch_size_train, shuffle=True,
                                            num_workers=cf.workers, pin_memory=True)
+
             self.val_loader = DataLoader(val_dataset, batch_size=1, num_workers=cf.workers, pin_memory=True)
             self.test_loader = DataLoader(test_dataset, batch_size=1, num_workers=cf.workers, pin_memory=True)
 
@@ -257,53 +318,68 @@ class BB_ImageDataGenerator_Synthia(Dataset):
 
         # with open(os.path.join(root_dir, 'ALL.txt')) as text_file:  # can throw FileNotFoundError
         #     lines = tuple(l.split() for l in text_file.readlines())
-        self.image_dir = os.path.join(root_dir, 'RGB')
-        self.label_dir = os.path.join(root_dir, 'GTTXT')
-        image_files = sorted(os.listdir(self.image_dir))
-        train_num = int(len(image_files) * cf.train_ratio)
-        if dataset_split == 'train':
-            self.image_files = image_files[:train_num]
-            self.image_num = train_num
-            print('Total training number is: %d'%train_num)
-        elif dataset_split == 'valid':
-            self.image_files = image_files[train_num:]
-            self.image_num = len(image_files) - train_num
-            print('Total valid number is: %d' % self.image_num)
+        # self.image_dir = os.path.join(self.root_dir, 'RGB')
+        # self.label_dir = os.path.join(self.root_dir, 'GTTXT')
+        # image_files = sorted(os.listdir(self.image_dir))
+        # train_num = int(len(image_files) * cf.train_ratio)
+        # if dataset_split == 'train':
+        #     self.image_files = image_files[:train_num]
+        #     self.image_num = train_num
+        #     print('Total training number is: %d'%train_num)
+        # elif dataset_split == 'valid':
+        #     self.image_files = image_files[train_num:]
+        #     self.image_num = len(image_files) - train_num
+        #     print('Total valid number is: %d' % self.image_num)
         self.crop = crop
-        self.crop_size = cf.crop_size
+        # self.crop_size = cf.crop_size
         self.flip = flip
         self.mean = cf.rgb_mean
         self.std = cf.rgb_std
-        self.ignore_index = cf.ignore_index
+        # self.ignore_index = cf.ignore_index
 
     def __len__(self):
-        return self.image_num
+        return len(self.trajectory_data)
 
     def __getitem__(self, item):
-        trajectory = self.trajectory_data[item]
 
+        # semantics
         img_dir = self.root_dir + '/' + self.img_list[item][0].split('/')[0] + '/' + 'GT/LABELS' + '/' + self.cf.data_stereo + '/' + self.cf.data_camera
-        img_name = os.path.join(img_dir, self.img_list[item][0].split('/')[1])
 
-        try:
-            input = cv.imread(img_name, -1)
-            semantic_image = np.int8(input[:, :, 2])
-        except IOError:
-            # unfortunately, some images are corrupted. Hence, we need to manually exclude them.
-            print("Image failed loading: ", img_name)
+        def img_name(i):
+            return os.path.join(img_dir, self.img_list[item][i].split('/')[1])
 
-        # Convert to training labels
-        w, h = semantic_image.shape
-        # Create one-hot encoding
-        semantic_image_one_hot = np.zeros(shape=(self.cf.cnn_class_num, w, h))
-        for c in range(self.cf.cnn_class_num):
-            semantic_image_one_hot[c][semantic_image == c] = 1
+        def semantic_image(img_name):
+            try:
+                input = cv.imread(img_name, -1)
+                semantic_image = np.int8(input[:, :, 2])
+            except IOError:
+                # unfortunately, some images are corrupted. Hence, we need to manually exclude them.
+                print("Image failed loading: ", img_name)
 
-        # Convert to tensors
+            # resize
+            semantic_image = imresize(semantic_image, size=0.125, interp='nearest', mode='F')
+            # Convert to training labels
+            w, h = semantic_image.shape
+            # Create one-hot encoding
+            semantic_image_one_hot = np.zeros(shape=(self.cf.cnn_class_num, w, h))
+            for c in range(self.cf.cnn_class_num):
+                semantic_image_one_hot[c][semantic_image == c] = 1
+            # Convert to tensors
+            semantic_image_t = torch.Tensor(semantic_image_one_hot)
+            return semantic_image_t
+
+        # trajectory
+        trajectory = self.trajectory_data[item]
         trajectory_t = torch.FloatTensor(trajectory)
-        semantic_image_t = torch.Tensor(semantic_image_one_hot)
+        input_trajectorys = trajectory_t[:self.cf.lstm_input_frame, :]
+        target_trajectorys = trajectory_t[self.cf.lstm_input_frame:, :]
+        # semantics
+        if self.cf.model_name == 'CNN_LSTM_To_FC':
+            semantic_images = torch.stack([semantic_image(img_name(i)) for i in range(self.cf.lstm_input_frame)], dim=0)
+        else:
+            semantic_images = torch.FloatTensor(torch.zeros(input_trajectorys.size()))
 
-        return semantic_image_t, trajectory_t
+        return semantic_images, input_trajectorys, target_trajectorys
 
 
 
