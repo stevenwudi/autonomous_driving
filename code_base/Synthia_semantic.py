@@ -1,12 +1,14 @@
 import argparse
 import os
-os.environ['CUDA_VISIBLE_DEVICES'] = '2'
+os.environ['CUDA_VISIBLE_DEVICES'] = '1'
 import sys
 # Di Wu add the following really ugly code so that python can find the path
 sys.path.append(os.getcwd())
 import time
 from datetime import datetime
 
+import matplotlib
+matplotlib.use('TkAgg')
 from code_base.tools.PyTorch_data_generator import Dataset_Generators_Synthia
 from code_base.models.PyTorch_model_factory import Model_Factory_semantic_seg
 from code_base.config.configuration import Configuration
@@ -44,7 +46,7 @@ def process(cf):
                     model.train(DG.dataloader['train'], epoch)
                     if epoch % cf.test_epoch == 0:
                         if cf.test_model:
-                            model.test(DG.DG.dataloader['valid'], epoch, cf)
+                            model.test(DG.dataloader['valid'], epoch, cf)
 
     # Finish
     print('---> Test on continuous video sequences: ' + cf.exp_name + ' <---')

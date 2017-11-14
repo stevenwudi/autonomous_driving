@@ -69,7 +69,7 @@ class Model_Factory_semantic_seg():
             self.net = DRNSeg('drn_d_38', cf.num_classes, pretrained=True, linear_up=False)
         # Set the loss criterion
         if cf.cb_weights_method == 'rare_freq_cost':
-            print('Use ' +cf.cb_weights_method+', loss weight method!')
+            print('Use ' + cf.cb_weights_method+', loss weight method!')
             loss_weight = torch.Tensor([0]+cf.cb_weights)
             self.crit = nn.NLLLoss2d(weight=loss_weight, ignore_index=cf.ignore_index).cuda()
         else:
@@ -131,6 +131,7 @@ class Model_Factory_semantic_seg():
             pred = output.permute(0, 2, 3, 1).contiguous().view(-1, self.num_classes).max(1)[1].view(b, h, w)
             total_ious.append(iou(pred, target, self.num_classes))
 
+        if False:
             image = np.squeeze(input.data.cpu().numpy())
             image[0, :, :] = image[0, :, :] * cf.rgb_std[0] + cf.rgb_mean[0]
             image[1, :, :] = image[1, :, :] * cf.rgb_std[1] + cf.rgb_mean[1]
