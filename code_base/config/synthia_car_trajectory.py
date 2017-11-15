@@ -51,7 +51,7 @@ dataloader_num_workers_train = 1        # Number of dataload works during traini
 dataloader_num_workers_valid = 1        # Number of dataload works during valid
 dataloader_num_workers_test  = 1        # Number of dataload works during test
 data_shuffle                 = True            # shuffle data for averrage distribution
-dataloader_load_shuffle_prepare_data = False     # whether or not load prepare_data for DataLoader
+dataloader_load_shuffle_prepare_data = True     # whether or not load prepare_data for DataLoader
 dataloader_load_shuffle_prepare_data_path = '/media/samsumg_1tb/synthia/SYNTHIA-SEQS-01/prepared_data_shuffle.npy'
 dataloader_save_shuffle_prepare_data = True     # whether or not save generated prepare_data for DataLoader
 dataloader_save_shuffle_prepare_data_path = '/media/samsumg_1tb/synthia/SYNTHIA-SEQS-01/prepared_data_shuffle.npy'
@@ -108,7 +108,7 @@ test_model                   = True           # Predict using the model
 focal_length                 = 532.740352  # camera focal lense
 
 # Training parameters
-lr_decay_epoch               = 10          # every lr_decay_epoch, decay learning_rate by 10
+lr_decay_epoch               = 30          # every lr_decay_epoch, decay learning_rate by 10
 figure_epoch                 = 10           # every fugure_epoch, figure out the losses
 test_epoch                   = 1
 weight_decay                 = 0.              # Weight decay or L2 parameter norm penalty
