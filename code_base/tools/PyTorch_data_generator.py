@@ -235,9 +235,9 @@ class DataGenerator_Synthia_car_trajectory():
             self.root_dir = '/'.join(cf.dataset_path[0].split('/')[:-1])
 
             print('\n > Loading training, valid, test set')
-            train_dataset = Resized_BB_ImageDataGenerator_Synthia(cf, train_data, train_img_list, crop=False, flip=False)
-            valid_dataset = Resized_BB_ImageDataGenerator_Synthia(cf, valid_data, valid_img_list,  crop=False, flip=False)
-            test_dataset = Resized_BB_ImageDataGenerator_Synthia(cf, test_data, test_img_list, crop=False, flip=False)
+            train_dataset = Resized_BB_ImageDataGenerator_Synthia(cf, True, train_data, train_img_list, crop=False, flip=False)
+            valid_dataset = Resized_BB_ImageDataGenerator_Synthia(cf, False, valid_data, valid_img_list,  crop=False, flip=False)
+            test_dataset = Resized_BB_ImageDataGenerator_Synthia(cf, False, test_data, test_img_list, crop=False, flip=False)
 
             self.train_loader = DataLoader(train_dataset, batch_size=cf.batch_size_train, shuffle=True,
                                            num_workers=cf.workers, pin_memory=True)
@@ -327,7 +327,7 @@ class BB_ImageDataGenerator_Synthia(Dataset):
 
 # resized semantic image
 class Resized_BB_ImageDataGenerator_Synthia(Dataset):
-    def __init__(self, cf, trajectory_data, img_list, crop=True, flip=True):
+    def __init__(self, cf, trainornot, trajectory_data, img_list, crop=True, flip=True):
         """
         :param root_dir: Directory will all the images
         :param label_dir: Directory will all the label images
@@ -336,6 +336,7 @@ class Resized_BB_ImageDataGenerator_Synthia(Dataset):
         """
         self.trajectory_data = trajectory_data
         self.cf = cf
+        self.trainOrNot = trainornot
         self.img_list = img_list
         self.root_dir = '/'.join(cf.dataset_path[0].split('/')[:-1])
         self.crop = crop
@@ -353,8 +354,12 @@ class Resized_BB_ImageDataGenerator_Synthia(Dataset):
         # trajectory
         trajectory = self.trajectory_data[item]
         trajectory_t = torch.FloatTensor(trajectory)
-        input_trajectorys = trajectory_t[:self.cf.lstm_input_frame, :]
-        target_trajectorys = trajectory_t[self.cf.lstm_input_frame:, :]
+        if self.cf.model_name == 'LSTM_ManyToMany' and self.trainOrNot:
+            input_trajectorys = trajectory_t[:-1, :]
+            target_trajectorys = trajectory_t[1:, :]
+        else:
+            input_trajectorys = trajectory_t[:self.cf.lstm_input_frame, :]
+            target_trajectorys = trajectory_t[self.cf.lstm_input_frame:, :]
 
         # semantics
         if self.cf.model_name == 'CNN_LSTM_To_FC' or self.cf.model_name == 'DropoutCNN_LSTM_To_FC':
