@@ -22,7 +22,7 @@ import json
 def adjust_learning_rate(lr, optimizer, epoch, lastupdate_epoch, train_losses, decrease_epoch=10):
     """Sets the learning rate to the initial LR decayed by 10 every 30 epochs"""
 
-    if epoch-lastupdate_epoch < 10:
+    if epoch - lastupdate_epoch < 10:
         return optimizer.param_groups[-1]['lr'], lastupdate_epoch
 
     eva_losses = np.array(train_losses[-10:])
@@ -32,7 +32,7 @@ def adjust_learning_rate(lr, optimizer, epoch, lastupdate_epoch, train_losses, d
     # max_loction = eva_losses.argmax()
     # min_location = eva_losses.argmin()
 
-    if np.abs(max_value-min_value)/max_value < 1e-4:
+    if np.abs(max_value - min_value) / max_value < 1e-3:
         lr = optimizer.param_groups[-1]['lr']
         lr = lr * 0.1
 
@@ -41,7 +41,7 @@ def adjust_learning_rate(lr, optimizer, epoch, lastupdate_epoch, train_losses, d
                 param_group['lr'] = lr
             lastupdate_epoch = epoch
         else:
-            lr = lr*10
+            lr = lr * 10
     #
     # lr = lr * (0.1 ** (epoch // decrease_epoch))
     # if lr >= 1.0e-6:
@@ -74,7 +74,8 @@ def save_output_images(predictions, filenames, output_dir):
 class Model_Factory_semantic_seg():
     def __init__(self, cf):
         # If we load from a pretrained model
-        self.exp_dir = cf.savepath + '___' + datetime.now().strftime('%a, %d %b %Y-%m-%d %H:%M:%S') + '_' + cf.model_name
+        self.exp_dir = cf.savepath + '___' + datetime.now().strftime(
+            '%a, %d %b %Y-%m-%d %H:%M:%S') + '_' + cf.model_name
         os.mkdir(self.exp_dir)
         # Enable log file
         self.log_file = os.path.join(self.exp_dir, "logfile.log")
@@ -94,13 +95,11 @@ class Model_Factory_semantic_seg():
             self.net = DRNSeg('drn_d_38', cf.num_classes, pretrained=True, linear_up=False)
         # Set the loss criterion
         if cf.cb_weights_method == 'rare_freq_cost':
-            print('Use ' +cf.cb_weights_method+', loss weight method!')
-            loss_weight = torch.Tensor([0]+cf.cb_weights)
+            print('Use ' + cf.cb_weights_method + ', loss weight method!')
+            loss_weight = torch.Tensor([0] + cf.cb_weights)
             self.crit = nn.NLLLoss2d(weight=loss_weight, ignore_index=cf.ignore_index).cuda()
         else:
             self.crit = nn.NLLLoss2d(ignore_index=cf.ignore_index).cuda()
-
-
 
         # we print the configuration file here so that the configuration is traceable
         self.cf = cf
@@ -108,7 +107,7 @@ class Model_Factory_semantic_seg():
 
         # Construct optimiser
         if cf.load_trained_model:
-            print("Load from pretrained_model weight: "+cf.train_model_path)
+            print("Load from pretrained_model weight: " + cf.train_model_path)
             self.net.load_state_dict(torch.load(cf.train_model_path))
 
         # self.net = DRNSegF(self.net, 20)
@@ -124,7 +123,8 @@ class Model_Factory_semantic_seg():
             else:
                 params += [{'params': [value]}]
         if cf.optimizer == 'rmsprop':
-            self.optimiser = optim.RMSprop(params, lr=cf.learning_rate, momentum=cf.momentum, weight_decay=cf.weight_decay)
+            self.optimiser = optim.RMSprop(params, lr=cf.learning_rate, momentum=cf.momentum,
+                                           weight_decay=cf.weight_decay)
         elif cf.optimizer == 'sgd':
             self.optimiser = optim.SGD(params, lr=cf.learning_rate, momentum=cf.momentum, weight_decay=cf.weight_decay)
         elif cf.optimizer == 'adam':
@@ -152,13 +152,12 @@ class Model_Factory_semantic_seg():
         self.net.eval()
         total_ious = []
         for i, (input, target) in enumerate(val_loader):
-            input, target = Variable(input.cuda(async=True), volatile=True), Variable(target.cuda(async=True), volatile=True)
+            input, target = Variable(input.cuda(async=True), volatile=True), Variable(target.cuda(async=True),
+                                                                                      volatile=True)
             output = F.log_softmax(self.net(input))
             b, _, h, w = output.size()
             pred = output.permute(0, 2, 3, 1).contiguous().view(-1, self.num_classes).max(1)[1].view(b, h, w)
             total_ious.append(iou(pred, target, self.num_classes))
-
-
 
         # Calculate average IoU
         total_ious_t = torch.Tensor(total_ious).transpose(0, 1)
@@ -168,12 +167,13 @@ class Model_Factory_semantic_seg():
 
         for i, class_iou in enumerate(total_ious_t):
             if i != cf.ignore_index:
-                ious[i-1] = class_iou[class_iou == class_iou].mean()  # Calculate mean, ignoring NaNs
+                ious[i - 1] = class_iou[class_iou == class_iou].mean()  # Calculate mean, ignoring NaNs
         print(ious, ious.mean())
         self.scores.append(ious)
 
         # Save weights and scores
-        torch.save(self.net.state_dict(), os.path.join(self.exp_dir, 'epoch_' + str(epoch) + '_' + 'mIOU:.%4f'%ious.mean() + '_net.pth'))
+        torch.save(self.net.state_dict(),
+                   os.path.join(self.exp_dir, 'epoch_' + str(epoch) + '_' + 'mIOU:.%4f' % ious.mean() + '_net.pth'))
         torch.save(self.scores, os.path.join(self.exp_dir, 'scores.pth'))
 
         # Plot scores
@@ -190,7 +190,7 @@ class Model_Factory_semantic_seg():
 class Model_Factory_LSTM():
     def __init__(self, cf):
         # If we load from a pretrained model
-        self.model_name = cf.model_name   #['LSTM_ManyToMany', 'LSTM_To_FC']
+        self.model_name = cf.model_name  # ['LSTM_ManyToMany', 'LSTM_To_FC']
         if cf.model_name == 'LSTM_ManyToMany':
             self.net = LSTM_ManyToMany(input_dims=cf.lstm_input_dims,
                                        hidden_sizes=cf.lstm_hidden_sizes,
@@ -210,6 +210,13 @@ class Model_Factory_LSTM():
                                       future_frame=cf.cnnLstmToFc_future,
                                       output_dim=cf.cnnLstmToFc_output_dim,
                                       cuda=cf.cuda)
+        elif cf.model_name == 'DropoutCNN_LSTM_To_FC':
+            self.net = DropoutCNN_LSTM_To_FC(conv_paras=cf.cnnLstmToFc_conv_paras,
+                                             input_dims=cf.cnnLstmToFc_input_dims,
+                                             hidden_sizes=cf.cnnLstmToFc_hidden_sizes,
+                                             future_frame=cf.cnnLstmToFc_future,
+                                             output_dim=cf.cnnLstmToFc_output_dim,
+                                             cuda=cf.cuda)
         # Set the loss criterion
         if cf.loss == 'MSE':
             self.crit = nn.MSELoss()
@@ -234,7 +241,7 @@ class Model_Factory_LSTM():
 
         # Construct optimiser
         if cf.load_trained_model:
-            print("Load from pretrained_model weight: "+cf.train_model_path)
+            print("Load from pretrained_model weight: " + cf.train_model_path)
             self.net.load_state_dict(torch.load(cf.train_model_path))
 
         # use LBFGS as optimizer since we can load the whole data to train
@@ -243,14 +250,17 @@ class Model_Factory_LSTM():
         elif cf.optimizer == 'adam':
             self.optimiser = optim.Adam(self.net.parameters(), lr=cf.learning_rate, weight_decay=cf.weight_decay)
         elif cf.optimizer == 'rmsprop':
-            self.optimiser = optim.RMSprop(self.net.parameters(), lr=cf.learning_rate, momentum=cf.momentum, weight_decay=cf.weight_decay)
+            self.optimiser = optim.RMSprop(self.net.parameters(), lr=cf.learning_rate, momentum=cf.momentum,
+                                           weight_decay=cf.weight_decay)
         elif cf.optimizer == 'sgd':
-            self.optimiser = optim.SGD(self.net.parameters(), lr=cf.learning_rate, momentum=cf.momentum, weight_decay=cf.weight_decay, nesterov=True)
+            self.optimiser = optim.SGD(self.net.parameters(), lr=cf.learning_rate, momentum=cf.momentum,
+                                       weight_decay=cf.weight_decay, nesterov=True)
 
     def train(self, cf, train_loader, epoch, lastupdate_epoch, train_losses):
         # begin to train
         self.net.train()
-        lr, lastupdate_epoch = adjust_learning_rate(self.cf.learning_rate, self.optimiser, epoch, lastupdate_epoch, train_losses , decrease_epoch=cf.lr_decay_epoch)
+        lr, lastupdate_epoch = adjust_learning_rate(self.cf.learning_rate, self.optimiser, epoch, lastupdate_epoch,
+                                                    train_losses, decrease_epoch=cf.lr_decay_epoch)
         print('learning rate:', lr)
 
         # if cf.model_name == 'CNN_LSTM_To_FC':
@@ -271,13 +281,15 @@ class Model_Factory_LSTM():
         #         return loss
         #     self.optimiser.step(closure)
         # else:
-        train_losses=[]
+        train_losses = []
         for i, (sementic, input_trajectory, target_trajectory) in enumerate(train_loader):
             self.optimiser.zero_grad()
             sementic, input_trajectory, target_trajectory = Variable(sementic.cuda(async=True), requires_grad=False), \
-                                                            Variable(input_trajectory.cuda(async=True), requires_grad=False), \
-                                                            Variable(target_trajectory.cuda(async=True), requires_grad=False)
-            if cf.model_name == 'CNN_LSTM_To_FC':
+                                                            Variable(input_trajectory.cuda(async=True),
+                                                                     requires_grad=False), \
+                                                            Variable(target_trajectory.cuda(async=True),
+                                                                     requires_grad=False)
+            if cf.model_name == 'CNN_LSTM_To_FC' or cf.model_name == 'DropoutCNN_LSTM_To_FC':
                 input = tuple([sementic, input_trajectory])
             else:
                 input = tuple([input_trajectory])
@@ -297,6 +309,7 @@ class Model_Factory_LSTM():
         #     input = tuple([valid_images, valid_input])
         # else:
         #     input = tuple([valid_input])
+        self.net.eval()
 
         def evaluation(output_trajectories, target_trajectories):
             # evaluations
@@ -321,7 +334,7 @@ class Model_Factory_LSTM():
         valid_losses = []
         errCoverage = []
         iou_2d = []
-        errCenter_realworld =[]
+        errCenter_realworld = []
         iou_3d = []
 
         for i, (sementic, input_trajectory, target_trajectory) in enumerate(valid_loader):
@@ -329,7 +342,7 @@ class Model_Factory_LSTM():
             sementic, input_trajectory, target_trajectory = Variable(sementic.cuda(async=True)), \
                                                             Variable(input_trajectory.cuda(async=True)), \
                                                             Variable(target_trajectory.cuda(async=True))
-            if cf.model_name == 'CNN_LSTM_To_FC':
+            if cf.model_name == 'CNN_LSTM_To_FC' or cf.model_name == 'DropoutCNN_LSTM_To_FC':
                 input = tuple([sementic, input_trajectory])
             else:
                 input = tuple([input_trajectory])
@@ -378,7 +391,7 @@ class Model_Factory_LSTM():
             print('Valid Loss', epoch, self.loss)
             print('2D aveErrCoverage: %.4f, aveErrCenter: %.2f' % (aveErrCoverage, aveErrCenter))
             print('3D aveErrCoverage_realworld: %.4f, aveErrCenter_realworld: %.4f' % (
-            aveErrCoverage_realworld, aveErrCenter_realworld))
+                aveErrCoverage_realworld, aveErrCenter_realworld))
 
             model_checkpoint = 'Epoch:%2d_net_Coverage:%.4f_Center:%.2f_CoverageR:%.4f_CenterR:%.2f.PTH' % \
                                (epoch, aveErrCoverage, aveErrCenter, aveErrCoverage_realworld, aveErrCenter_realworld)
@@ -390,7 +403,7 @@ class Model_Factory_LSTM():
             print('Test Loss', epoch, self.loss)
             print('2D aveErrCoverage: %.4f, aveErrCenter: %.2f' % (aveErrCoverage, aveErrCenter))
             print('3D aveErrCoverage_realworld: %.4f, aveErrCenter_realworld: %.4f' % (
-            aveErrCoverage_realworld, aveErrCenter_realworld))
+                aveErrCoverage_realworld, aveErrCenter_realworld))
             model_checkpoint = 'Final_test:Coverage:%.4f_Center:%.2f_CoverageR:%.4f_CenterR:%.2f.PTH' % \
                                (aveErrCoverage, aveErrCenter, aveErrCoverage_realworld, aveErrCenter_realworld)
             np.save(os.path.join(self.exp_dir, 'test'), track_plot)
@@ -408,5 +421,3 @@ class Model_Factory_LSTM():
         #     return self.loss.data.cpu().numpy()[0]
         # else:
         return self.loss
-
-
