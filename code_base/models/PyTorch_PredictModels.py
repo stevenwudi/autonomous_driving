@@ -24,16 +24,27 @@ class LSTM_ManyToMany(nn.Module):
         # some superParameters & input output dimensions
         self.input_dims = input_dims
         self.hidden_sizes = hidden_sizes
-        self.outlayer_input_dim = outlayer_input_dim
-        self.outlayer_output_dim = outlayer_output_dim
+        # self.outlayer_input_dim = outlayer_input_dim
+        self.output_dim = outlayer_output_dim
 
         # build lstm layer, parameters are (input_dim,hidden_size,num_layers)
         for i, input_dim in enumerate(self.input_dims):
             self.__setattr__('lstm' + str(i), nn.LSTM(input_size=input_dim, hidden_size=self.hidden_sizes[i], num_layers=1, batch_first=True))
 
 
-        # build output layer, which is a linear layer
-        self.linear = nn.Linear(in_features=self.outlayer_input_dim, out_features=self.outlayer_output_dim)
+        # # build output layer, which is a linear layer
+        # self.linear = nn.Linear(in_features=self.outlayer_input_dim, out_features=self.outlayer_output_dim)
+
+        # fully connected part
+        # self.future_frame = future_frame
+        # self.output_dim = output_dim
+        # self.output_size = self.future_frame * self.output_dim
+        self.fc_hidden1_size = int((self.hidden_sizes[-1] + self.output_dim) / 2)
+        # build fc model
+        self.linear1 = nn.Linear(self.hidden_sizes[-1], self.fc_hidden1_size)
+        self.nonlinear1 = nn.ReLU()
+        self.linear2 = nn.Linear(self.fc_hidden1_size, self.output_dim)
+
         if cuda:
             self.dtype = torch.cuda.FloatTensor
         else:
@@ -55,7 +66,7 @@ class LSTM_ManyToMany(nn.Module):
         # hidden state & cell state for t=seq_len, size as h0 or c0
         hn = {}
         cn = {}
-        # compute
+        # compute for lstm part
         input_t = input
         for i in range(0, len(self.hidden_sizes)):
             # init hidden state & cell state
@@ -64,18 +75,23 @@ class LSTM_ManyToMany(nn.Module):
             lstm = self.__getattr__('lstm'+str(i))
             output_t, (hn[i], cn[i]) = lstm(input_t, (h0, c0))
             input_t = output_t
-        outputs_linear = self.linear(input_t)
+        # compute for fully connected part
+        # outputs_linear = self.linear(input_t)
+
+        output_linear1 = self.linear1(input_t)
+        output_nonlinear1 = self.nonlinear1(output_linear1)
+        output_linear2 = self.linear2(output_nonlinear1)
 
         # result of train or test, shape(batch size,sequence size, feature size)
-        outputs += [outputs_linear]
+        outputs += [output_linear2]
 
         # result of predict, shape as (batch size,future, feature size)
-        outputs_pre = [outputs_linear[:, -1, :]]
+        outputs_pre = [output_linear2[:, -1, :]]
         # if we should predict the future
         if future-1 > 0:
             ht = hn
             ct = cn
-            output_linear = outputs_linear[:, -1, :]  # the last output during test
+            output_linear = output_linear2[:, -1, :]  # the last output during test
             size = output_linear.size()
             output_linear = output_linear.resize(size[0], 1, size[1])
             for j in range(future-1):
@@ -84,7 +100,11 @@ class LSTM_ManyToMany(nn.Module):
                     lstm = self.__getattr__('lstm' + str(i))
                     output_t, (ht[i], ct[i]) = lstm(input_t, (ht[i], ct[i]))
                     input_t = output_t
-                output_linear = self.linear(input_t)
+                # compute for fully connected part
+                # output_linear = self.linear(input_t)
+                output_linear1 = self.linear1(input_t)
+                output_nonlinear1 = self.nonlinear1(output_linear1)
+                output_linear = self.linear2(output_nonlinear1)
                 outputs_pre += [output_linear.squeeze(1)]
         outputs_pre = torch.stack(outputs_pre, 1)
 
