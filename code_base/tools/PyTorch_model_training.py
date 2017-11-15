@@ -25,6 +25,15 @@ def normalise_data(train_data, valid_data, test_data):
     test_data /= data_std
     return train_data, valid_data, test_data, data_mean, data_std
 
+def restore_normalised_Data(train_data, valid_data, test_data, data_mean,data_std):
+    train_data *= data_std
+    train_data += data_mean
+    valid_data *= data_std
+    valid_data += data_mean
+    test_data *= data_std
+    test_data += data_mean
+
+    return train_data, valid_data, test_data
 
 def prepare_data(cf):
     save_dir = os.path.join(cf.shared_path, cf.problem_type)
@@ -187,28 +196,68 @@ def get_img_resized_list(cf, train_data, valid_data, test_data):
 
 #
 def prepare_data_image_list(cf):
-    if cf.dataloader_load_prepare_data:
-        # load data
-        prepared_data = tuple(np.load(cf.dataloader_load_prepare_data_path))
-    else:
-        import pickle
-        with open(os.path.join(cf.shared_path, cf.problem_type, cf.sequence_name + '_train.npy'), 'rb') as fp:
-            train_data = pickle.load(fp)
-        with open(os.path.join(cf.shared_path, cf.problem_type, cf.sequence_name + '_valid.npy'), 'rb') as fp:
-            valid_data = pickle.load(fp)
-        with open(os.path.join(cf.shared_path, cf.problem_type, cf.sequence_name + '_test.npy'), 'rb') as fp:
-            test_data = pickle.load(fp)
+    if cf.data_shuffle == False:
+        if cf.dataloader_load_prepare_data:
+            # load data
+            prepared_data = tuple(np.load(cf.dataloader_load_prepare_data_path))
+        else:
+            import pickle
+            with open(os.path.join(cf.shared_path, cf.problem_type, cf.sequence_name + '_train.npy'), 'rb') as fp:
+                train_data = pickle.load(fp)
+            with open(os.path.join(cf.shared_path, cf.problem_type, cf.sequence_name + '_valid.npy'), 'rb') as fp:
+                valid_data = pickle.load(fp)
+            with open(os.path.join(cf.shared_path, cf.problem_type, cf.sequence_name + '_test.npy'), 'rb') as fp:
+                test_data = pickle.load(fp)
 
-        train_data_array, valid_data_array, test_data_array, data_mean, data_std = normalise_data_with_img_list(train_data,
-                                                                                                                valid_data,
-                                                                                                                test_data)
-        train_img_list, valid_img_list, test_img_list = get_img_resized_list(cf, train_data, valid_data, test_data)
+            train_data_array, valid_data_array, test_data_array, data_mean, data_std = normalise_data_with_img_list(train_data,
+                                                                                                                    valid_data,
+                                                                                                                    test_data)
+            train_img_list, valid_img_list, test_img_list = get_img_resized_list(cf, train_data, valid_data, test_data)
 
-        prepared_data = (train_data_array, valid_data_array, test_data_array, data_mean, data_std, train_img_list, valid_img_list, test_img_list)
+            prepared_data = (train_data_array, valid_data_array, test_data_array, data_mean, data_std, train_img_list, valid_img_list, test_img_list)
 
-        if cf.dataloader_save_prepare_data:
             # save data
-            np.save(cf.dataloader_save_prepare_data_path, prepared_data)
+            if cf.dataloader_save_prepare_data:
+                np.save(cf.dataloader_save_prepare_data_path, prepared_data)
+
+    # data shuffle
+    else:
+        if cf.dataloader_load_shuffle_prepare_data:
+            # load data
+            prepared_data = tuple(np.load(cf.dataloader_load_shuffle_prepare_data_path))
+        else:
+            # load nushuffle data
+            prepared_data = tuple(np.load(cf.dataloader_load_prepare_data_path))
+            train_data_array, valid_data_array, test_data_array, data_mean, data_std, train_img_list, valid_img_list, test_img_list = prepared_data
+            # restore normalized data
+            train_data, valid_data, test_data = restore_normalised_Data(train_data_array, valid_data_array, test_data_array, data_mean, data_std)
+            # concat all data
+            train_size = train_data.shape[0]
+            valid_size = valid_data.shape[0]
+            all_data = np.concatenate((train_data, valid_data, test_data), axis=0)
+            # concat all image_list
+            all_imglist = train_img_list + valid_img_list + test_img_list
+            # shuffle data and shuffle img
+            np.random.seed(10)
+            np.random.shuffle(all_data)
+            np.random.seed(10)
+            np.random.shuffle(all_imglist)
+            # class train\valid\test data & img
+            train_data = all_data[:train_size, :, :]
+            valid_data = all_data[train_size:train_size + valid_size, :, :]
+            test_data = all_data[train_size + valid_size:, :, :]
+            train_img_list = all_imglist[:train_size]
+            valid_img_list = all_imglist[train_size:train_size + valid_size]
+            test_img_list = all_imglist[train_size + valid_size:]
+            # normalize data
+            train_data, valid_data, test_data, data_mean, data_std = normalise_data(train_data, valid_data, test_data)
+
+            prepared_data = (
+            train_data, valid_data, test_data, data_mean, data_std, train_img_list, valid_img_list, test_img_list)
+
+            # save data
+            if cf.dataloader_save_shuffle_prepare_data:
+                np.save(cf.dataloader_save_shuffle_prepare_data_path, prepared_data)
 
     return prepared_data
 
