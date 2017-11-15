@@ -2,7 +2,7 @@ import argparse
 import os
 import sys
 import os
-os.environ['CUDA_VISIBLE_DEVICES'] = '1'
+os.environ['CUDA_VISIBLE_DEVICES'] = '3'
 # Di Wu add the following really ugly code so that python can find the path
 sys.path.append(os.getcwd())
 import time
@@ -31,9 +31,9 @@ def process(cf):
     print('\n > Building model...')
     model = Model_Factory_LSTM(cf)
 
-    # # for experimentt
-    # model.test(cf, DG.valid_loader, DG.data_mean, DG.data_std, 63)
-
+    # for experimentt
+    model.test(cf, DG.test_loader, DG.data_mean, DG.data_std)
+'''
     if cf.train_model:
         train_losses = []
         valid_losses = []
@@ -66,7 +66,7 @@ def process(cf):
         print('---> Test losses:')
         print(test_loss)
     print(' ---> Finish experiment: ' + cf.exp_name + ' <---')
-
+'''
 
 def main():
     # Get parameters from arguments

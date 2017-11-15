@@ -252,12 +252,12 @@ def prepare_data_image_list(cf):
             # normalize data
             train_data, valid_data, test_data, data_mean, data_std = normalise_data(train_data, valid_data, test_data)
 
-            prepared_data = (
-            train_data, valid_data, test_data, data_mean, data_std, train_img_list, valid_img_list, test_img_list)
+            prepared_data = (train_data, valid_data, test_data, data_mean, data_std, train_img_list, valid_img_list, test_img_list)
 
             # save data
             if cf.dataloader_save_shuffle_prepare_data:
                 np.save(cf.dataloader_save_shuffle_prepare_data_path, prepared_data)
+
 
     return prepared_data
 
