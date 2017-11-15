@@ -91,7 +91,7 @@ Therefore, temporal consistency among continuous frames should also be taken int
 \begin{figure}[t]
         \centering
         \includegraphics[width=0.45\textwidth]{figures/pull_figure.pdf}
-        \caption{ {\small TODO: Pull figure caption goes here.}}
+        \caption{ {\small We propose a system to predict future trajectories of vehicles. Given a historical information, obtained by detection, tracking and semantic segmentation, a network based on Long Short Term Memory (LSTM) structure is trained to generate future information.}}
         \label{fig:pull_figure}
 \end{figure}
 
@@ -156,7 +156,7 @@ Built upon their seminal work, there has been a plethora of recent improvements~
 \begin{figure*}[t]
         \centering
         \includegraphics[width=0.95\textwidth]{figures/framework.pdf}
-        \caption{ {\small TODO: framework caption goes here.}}
+        \caption{ {\small The framework of our vehicle future trajectory prediction system. The input is the sequence data from a synthetic scene in \cite{mueller2016benchmark}. Historical information are extracted by detection & tracking and semantic segmentation. All of the information is fed into our LSTM model to predict future trajectories.}}
         \label{fig:framework}
 \end{figure*}
 
@@ -223,7 +223,7 @@ Auxiliary information $A$ could be scene semantics to regularize the path of fut
 \begin{figure}[t]
         \centering
         \includegraphics[width=0.5\textwidth]{figures/network_detail.pdf}
-        \caption{ {\small TODO: network detail.}}
+        \caption{ {\small Different networks to predict future trajectory. Left: FrameToFrame, using historical trajectories with many-to-many LSTM to predict; Middle:FrameToSeq, using historical trajectories with many-to-many LSTM ; Right:SEG-LSTM, the proposed model by using historical trajectories and semantic segmentation information.}}
         \label{fig:dataset}
 \end{figure}
 \subsection{SEG-LSTM Architecture}
@@ -236,7 +236,7 @@ As shown in figure 3, we compare three temporal models based on LSTM cells for p
 
 The second architecture(FtoS) is also composed of LSTM part and fully connected part, which are same as the one of the FtoF architecture, but the connecting method is different. Rather than predicting frame-to-frame, this architecture can directly predict a trajectory sequences. FtoS uses an LSTM as an encoder to fuse all past trajectory information into a single LSTM hidden state, corresponding to the hidden state in last LSTM layer at last time-step T. This state is complete, in the sense it contains all historical trajectory information of the tracking car. And then we use a fully connected network as decoder to directly predict trajectory during next continuous frames.
 
-In addition to  historical trajectory information, the third architecture(SEG-LSTM) also fuses semantics of  historical frames as auxiliary information. The input to the bottom-most LSTM layer is the 3D occupancy of historical trajectory. The second LSTM layer fuses the outputs of the bottom-most LSTM with the frame's semantic information, which is extracted from the semantic segmentation through a four-layer CNN, to produce a joint representation of the semantic auxiliary information and the historical trajectory.  As described above, the 3D occupancy just has six dimensions,{x, y, w, h, dmin, dmax}. So the bottom-most LSTM not only can learn the temporal information between time-varing trajectory,  but also can balance trajectory information and the semantic information. The LSTM part  and fully connected part is same as the one of above two architecture, and the CNN part is composed of four convolutional block. Each block includes a convolutional layer, a ReLU activation layer, a Maxpooling layer and a dropout layer except for the last block which has no dropout layer. Each convolutional layer has four channels and 3×3 kernel. Results show that the SEG-LSTM model performs better than the other two temporal model.
+In addition to  historical trajectory information, the third architecture(SEG-LSTM) also fuses semantics of  historical frames as auxiliary information. The input to the bottom-most LSTM layer is the 3D occupancy of historical trajectory. The second LSTM layer fuses the outputs of the bottom-most LSTM with the frame's semantic information, which is extracted from the semantic segmentation through a four-layer CNN, to produce a joint representation of the semantic auxiliary information and the historical trajectory.  As described above, the 3D occupancy just has six dimensions,{x, y, w, h, dmin, dmax}. So the bottom-most LSTM not only can learn the temporal information between time-varing trajectory,  but also can balance trajectory information and the semantic information. The LSTM part  and fully connected part is same as the one of above two architecture, and the CNN part is composed of four convolutional block. Each block includes a convolutional layer, a ReLU activation layer, a Maxpooling layer and a dropout layer except for the last block which has no dropout layer. Each convolutional layer has four channels and 3¡Á3 kernel. Results show that the SEG-LSTM model performs better than the other two temporal model.
 
 
 
@@ -434,7 +434,7 @@ We adopt the state-of-the-art semantic segmentation networks: Dilated Residual N
 \begin{figure}[t]
         \centering
         \includegraphics[width=0.5\textwidth]{figures/evaluation.pdf}
-        \caption{ {\small TODO: evaluation caption goes here.}}
+        \caption{ {\small The evaluation of 2D and 3D prediction. 2D: It is the bounding box to cover the whole vehicle. 3D: The depth channel is combined with 2D bounding box to predict trajectory.}}
         \label{fig:evaluation}
 \end{figure}
 
