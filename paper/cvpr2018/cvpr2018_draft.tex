@@ -211,8 +211,8 @@ H, J \in \Re^{6} =  \{x, y, w, h, d_{min}, d_{max}\}
 where $\{x,y,w,h\}$ define target's 2D boundingbox in image pixel space and $\{d_{min}, d_{max}\}$ define the minimum and maximum relative distance between host car and the tracking target acquired from the depth camera. Given RGB cameras' focal length $f$, the pixel space 2D boundingbox can be projected into 3D real-world coordinate $\{x_r,y_r,w_r,h_r\}$ as:
 \begin{align}
     x_r = \frac{x}{f}d &, y_r = \frac{y}{f} d  \label{eq:focal_length_1}  \\
-    w_r = \frac{w}{f}d &, h_r = \frac{h}{f} d  
-    \label{eq:focal_length_2} 
+    w_r = \frac{w}{f}d &, h_r = \frac{h}{f} d
+    \label{eq:focal_length_2}
 \end{align}
 where $d$ is distance between  the center of the lens and the center of target and we use $d_{min}$ as a close approximation.
 
@@ -417,7 +417,7 @@ We adopt the state-of-the-art semantic segmentation networks: Dilated Residual N
     \end{subfigure}
     \\
      \begin{subfigure}[c]{0.4\textwidth}
-     \includegraphics[width=7cm,height=5cm, clip]{figures/precision_plot_3d_20.png}
+     \includegraphics[width=7cm,height=5cm, clip]{figures/precision_plot_3d_20cm.png}
     \caption{\small{Precision plot for 3D}}
     \end{subfigure}%
     \begin{subfigure}[c]{0.4\textwidth}
@@ -444,7 +444,7 @@ Following the evaluation strategy  of~\cite{wu2013online}, all trajectories are 
 % All sequences are evaluated using One-Pass Evaluation (OPE) as in~\cite{wu2013online}.
 
 \vspace{\baselineskip}
-\noindent \textbf{3D Evaluation Methodology:} Given depth map and the parameter of camera focal lens, we can formalize the problem into a 3D occupancy grid estimation. The real world coordinates $[x_r, y_r, w_r, h_r] $can be obtained according to Eq.~\ref{eq:focal_length_1}~\ref{eq:focal_length_2}. The 3D jaccard index can be similarly formalized as the volume intersection over union: $\frac{V_g \cap V_p}{V_g \cup V_p}$, where $V_g, V_p$ are the ground truth and predicted space occupancy. 3D center error correspondingly is defined as the mean square root in 3D space. 
+\noindent \textbf{3D Evaluation Methodology:} Given depth map and the parameter of camera focal lens, we can formalize the problem into a 3D occupancy grid estimation. The real world coordinates $[x_r, y_r, w_r, h_r] $can be obtained according to Eq.~\ref{eq:focal_length_1}~\ref{eq:focal_length_2}. The 3D jaccard index can be similarly formalized as the volume intersection over union: $\frac{V_g \cap V_p}{V_g \cup V_p}$, where $V_g, V_p$ are the ground truth and predicted space occupancy. 3D center error correspondingly is defined as the mean square root in 3D space.
 
 
 \vspace{\baselineskip}
@@ -463,7 +463,7 @@ the initial uncertainly covariance as 1e4, measurement noise and motion noise ar
         %\begin{tabu}{|l *{2}{c}|}
         \begin{tabu}{@{}ccc@{}}\toprule
         [-1pt] \tabucline[1pt]{1-3}
-        
+
 
             Configuration  &     mean coverage      & center error   \\
                        2D   &       (\%) &             (pixel)     \\ \hline
@@ -476,12 +476,12 @@ the initial uncertainly covariance as 1e4, measurement noise and motion noise ar
             {\small \textbf{FtS}  }              &  73.93      &   15.32  \\
 
             {\small \textbf{SEG-LSTM} }         &  \textbf{77.53  }    & \textbf{ 12.63 }   \\
-          [-1pt] \tabucline[1pt]{1-3}      
+          [-1pt] \tabucline[1pt]{1-3}
         \end{tabu}
         %\end{tabular}
 
     \caption{ {\small
-    Results of 2D performance evaluation on mean coverage (higher is better) and center error (lower is better). Mean coverage is the average 
+    Results of 2D performance evaluation on mean coverage (higher is better) and center error (lower is better). Mean coverage is the average
      }
           } \label{table_baseline2}
 \end{table}
