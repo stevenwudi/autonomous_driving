@@ -211,7 +211,8 @@ class Model_Factory_LSTM():
                                       output_dim=cf.cnnLstmToFc_output_dim,
                                       cuda=cf.cuda)
         elif cf.model_name == 'DropoutCNN_LSTM_To_FC':
-            self.net = DropoutCNN_LSTM_To_FC(conv_paras=cf.cnnLstmToFc_conv_paras,
+            self.net = DropoutCNN_LSTM_To_FC(cf=cf,
+                                             conv_paras=cf.cnnLstmToFc_conv_paras,
                                              input_dims=cf.cnnLstmToFc_input_dims,
                                              hidden_sizes=cf.cnnLstmToFc_hidden_sizes,
                                              future_frame=cf.cnnLstmToFc_future,

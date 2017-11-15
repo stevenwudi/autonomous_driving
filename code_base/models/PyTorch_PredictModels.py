@@ -284,7 +284,7 @@ class DropoutCNN_LSTM_To_FC(nn.Module):
     The lstm model can be seen as a encoder, while the FC model as a decoder.
     """
 
-    def __init__(self, conv_paras, input_dims, hidden_sizes, future_frame, output_dim, cuda=True):
+    def __init__(self, cf, conv_paras, input_dims, hidden_sizes, future_frame, output_dim, cuda=True):
         '''
         :param convs: a list composed of dicts representing parameters of each conv, {'in_channels': ,
                                                                                       'out_channels': ,
@@ -300,23 +300,42 @@ class DropoutCNN_LSTM_To_FC(nn.Module):
         super(DropoutCNN_LSTM_To_FC, self).__init__()
         # cnn part
         self.convparas = conv_paras
-        self.conv = nn.Sequential(nn.Conv2d(**self.convparas[0]),
-                                  nn.ReLU(),
-                                  nn.Dropout2d(p=0.5),
-                                  nn.MaxPool2d(2),
-                                  nn.Conv2d(**self.convparas[1]),
-                                  nn.ReLU(),
-                                  nn.Dropout2d(p=0.5),
-                                  nn.MaxPool2d(2),
-                                  nn.Conv2d(**self.convparas[2]),
-                                  nn.ReLU(),
-                                  nn.Dropout2d(p=0.5),
-                                  nn.MaxPool2d(2),
-                                  nn.Conv2d(**self.convparas[3]),
-                                  nn.ReLU(),
-                                  nn.Dropout2d(p=0.5),
-                                  nn.MaxPool2d(2)
-                                  )
+        if cf.dropoutAfterMaxpooling == False:
+            self.conv = nn.Sequential(nn.Conv2d(**self.convparas[0]),
+                                      nn.ReLU(),
+                                      nn.Dropout2d(p=0.5),
+                                      nn.MaxPool2d(2),
+                                      nn.Conv2d(**self.convparas[1]),
+                                      nn.ReLU(),
+                                      nn.Dropout2d(p=0.5),
+                                      nn.MaxPool2d(2),
+                                      nn.Conv2d(**self.convparas[2]),
+                                      nn.ReLU(),
+                                      nn.Dropout2d(p=0.5),
+                                      nn.MaxPool2d(2),
+                                      nn.Conv2d(**self.convparas[3]),
+                                      nn.ReLU(),
+                                      nn.Dropout2d(p=0.5),
+                                      nn.MaxPool2d(2)
+                                      )
+        else:
+            self.conv = nn.Sequential(nn.Conv2d(**self.convparas[0]),
+                                      nn.ReLU(),
+                                      nn.MaxPool2d(2),
+                                      nn.Dropout2d(p=0.5),
+                                      nn.Conv2d(**self.convparas[1]),
+                                      nn.ReLU(),
+                                      nn.MaxPool2d(2),
+                                      nn.Dropout2d(p=0.5),
+                                      nn.Conv2d(**self.convparas[2]),
+                                      nn.ReLU(),
+                                      nn.MaxPool2d(2),
+                                      nn.Dropout2d(p=0.5),
+                                      nn.Conv2d(**self.convparas[3]),
+                                      nn.ReLU(),
+                                      # nn.Dropout2d(p=0.5),
+                                      nn.MaxPool2d(2)
+                                      )
 
         # lstm part; build lstm layer, parameters are (input_dim,hidden_size,num_layers)
         self.input_dims = input_dims
