@@ -231,6 +231,9 @@ class DataGenerator_Synthia_car_trajectory():
             print('Loading data')
             train_data, valid_data, test_data, self.data_mean, self.data_std, train_img_list, valid_img_list, test_img_list = prepare_data_image_list(cf)
 
+            # # for experiment
+            # test_data[693,:,:]
+            # test_img_list[693]
             # deal images and relocate train_img_list & valid_img_list & test_img_list
             self.root_dir = '/'.join(cf.dataset_path[0].split('/')[:-1])
 
@@ -245,7 +248,6 @@ class DataGenerator_Synthia_car_trajectory():
                                            pin_memory=True)
             self.test_loader = DataLoader(test_dataset, batch_size=cf.batch_size_test, num_workers=cf.workers,
                                           pin_memory=True)
-
 
 class BB_ImageDataGenerator_Synthia(Dataset):
     def __init__(self, cf, trajectory_data, img_list, crop=True, flip=True):

@@ -16,6 +16,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 import os
 import sys
+import pickle
 import json
 
 
@@ -343,6 +344,8 @@ class Model_Factory_LSTM():
         errCenter_realworld = []
         iou_3d = []
 
+        # for experiment: output predicted trajectory
+        predicted_trajectory = []
         for i, (sementic, input_trajectory, target_trajectory) in enumerate(valid_loader):
             # print(i)
             sementic, input_trajectory, target_trajectory = Variable(sementic.cuda(async=True)), \
@@ -354,6 +357,9 @@ class Model_Factory_LSTM():
                 input = tuple([input_trajectory])
 
             output_trajectory = self.net(*input, future=cf.lstm_predict_frame)[-1]
+            # for experiment: output predicted trajectory
+            predicted_trajectory.append(output_trajectory.data.cpu().numpy())
+
             # cal loss
             loss = self.crit(output_trajectory, target_trajectory)
             valid_losses.append(loss.data[0])
@@ -369,6 +375,10 @@ class Model_Factory_LSTM():
             iou_3d.append(evalua_values[7])
             # output_trajectories.append(output)
             # target_trajectories.append(target_trajectory)
+        # for experiment: output predicted trajectory
+        path = '/media/samsumg_1tb/cvpr_trajectory_data_final/FrameToFrame_Shuffle/predicted_trajectory.npy'
+        np.save(path, np.array(predicted_trajectory))
+
 
         # loss mean
         track_plot = {}
@@ -376,6 +386,7 @@ class Model_Factory_LSTM():
         track_plot['iou_2d'] = iou_2d
         track_plot['errCenter_realworld'] = errCenter_realworld
         track_plot['iou_3d'] = iou_3d
+
 
         self.loss = np.array(valid_losses).mean()
         # print('Valid Loss', epoch, self.loss)
@@ -402,7 +413,9 @@ class Model_Factory_LSTM():
             model_checkpoint = 'Epoch:%2d_net_Coverage:%.4f_Center:%.2f_CoverageR:%.4f_CenterR:%.2f.PTH' % \
                                (epoch, aveErrCoverage, aveErrCenter, aveErrCoverage_realworld, aveErrCenter_realworld)
             if epoch == cf.n_epochs:
-                np.save(os.path.join(self.exp_dir, 'valid'), track_plot)
+                # np.save(os.path.join(self.exp_dir, 'valid'), tuple(track_plot))
+                with open(os.path.join(self.exp_dir, 'valid.pickle'), 'wb') as handle:
+                    pickle.dump(track_plot, handle, protocol=2)
 
         else:
             print('############### TEST #############################################')
@@ -412,7 +425,9 @@ class Model_Factory_LSTM():
                 aveErrCoverage_realworld, aveErrCenter_realworld))
             model_checkpoint = 'Final_test:Coverage:%.4f_Center:%.2f_CoverageR:%.4f_CenterR:%.2f.PTH' % \
                                (aveErrCoverage, aveErrCenter, aveErrCoverage_realworld, aveErrCenter_realworld)
-            np.save(os.path.join(self.exp_dir, 'test'), track_plot)
+            # np.save(os.path.join(self.exp_dir, 'test'), tuple(track_plot))
+            with open(os.path.join(self.exp_dir, 'test.pickle'), 'wb') as handle:
+                pickle.dump(track_plot, handle, protocol=2)
 
             # Plot scores
             # self.aveErrCoverage.append(aveErrCoverage.mean())
