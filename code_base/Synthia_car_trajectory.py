@@ -2,7 +2,6 @@ import argparse
 import sys
 import os
 os.environ['CUDA_VISIBLE_DEVICES'] = '2'
-
 # Di Wu add the following really ugly code so that python can find the path
 sys.path.append(os.getcwd())
 import time
@@ -10,7 +9,6 @@ from datetime import datetime
 import matplotlib
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
-
 
 from code_base.config.configuration import Configuration
 from code_base.tools.utils import HMS, configurationPATH
@@ -32,12 +30,17 @@ def process(cf):
     print('\n > Building model...')
     model = Model_Factory_LSTM(cf)
 
+    # for experimentt
+    model.test(cf, DG.test_loader, DG.data_mean, DG.data_std)
+'''
     if cf.train_model:
         train_losses = []
         valid_losses = []
         print(' ---> Training data: ' + cf.sequence_name + ' <---')
+        lastupdate_epoch = 0
         for epoch in range(1, cf.n_epochs + 1):
-            train_losses += [model.train(cf, DG.train_loader, epoch, train_losses)]
+            train_loss, lastupdate_epoch = model.train(cf, DG.train_loader, epoch, lastupdate_epoch, train_losses)
+            train_losses.append(train_loss)
             if cf.valid_model:
                 valid_losses += [model.test(cf, DG.valid_loader, DG.data_mean, DG.data_std, epoch)]
                 if epoch > 0 and epoch%cf.figure_epoch == 0:
@@ -62,14 +65,13 @@ def process(cf):
         print('---> Test losses:')
         print(test_loss)
     print(' ---> Finish experiment: ' + cf.exp_name + ' <---')
-
+'''
 
 def main():
     # Get parameters from arguments
     parser = argparse.ArgumentParser(description='Model training')
     #parser.add_argument('-c', '--config_path', type=str, default='/home/stevenwudi/PycharmProjects/autonomous_driving/code_base/config/synthia_car_trajectory.py', help='Configuration file')
     parser.add_argument('-c', '--config_path', type=str, default='/home/stevenwudi/PycharmProjects/autonomous_driving/code_base/config/synthia_complete_pipeline.py', help='Configuration file')
-
     arguments = parser.parse_args()
     assert arguments.config_path is not None, 'Please provide a path using -c config/pathname in the command line'
     print('\n > Start Time:')

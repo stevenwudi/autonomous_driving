@@ -29,9 +29,11 @@ ssd_input_shape              = (512, 512, 3)
 ssd_conf                     = 0.5
 
 
-# Dataset
 
+# local_path                   = '/home/wzn/PycharmProjects/autonomous_driving'
+# Dataset
 local_path                   = '/home/stevenwudi/PycharmProjects/autonomous_driving'
+
 shared_path                  = '/home/public/synthia'
 dataset_name2                = None            # Second dataset name. None if not Domain Adaptation
 perc_mb2                     = None            # Percentage of data from the second dataset in each minibatch
@@ -42,27 +44,36 @@ formatting_ground_truth_sequence_car_trajectory = True
 draw_seq                                = 'SYNTHIA-SEQS-06-NIGHT'   # which sequence to draw, need to set the above two flags to False
 
 # Model
-model_name                   = 'LSTM_ManyToMany'       # Model to use ['LSTM_ManyToMany', 'LSTM_To_FC', 'CNN_LSTM_To_FC']
+model_name                   = 'LSTM_ManyToMany'       # Model to use ['LSTM_ManyToMany', 'LSTM_To_FC', 'CNN_LSTM_To_FC', 'DropoutCNN_LSTM_To_FC']
+
 debug                        = False
 im_size                      = (760, 1280)
 resize_train                 = (760, 1280)      # Resize the image during training (Height, Width) or None
 #random_size_crop             = (350*2, 460*2)      # Random size crop of the image during training
-
+#------ DataLoader ------#
 workers                      = 4              #  how many subprocesses to use for data loading. 0 means that the data will be loaded in the main process
-batch_size_train             = 20             # Batch size during training
-batch_size_valid             = 1              # Batch size during validation
-batch_size_test              = 1              # Batch size during testing
-
+batch_size_train             = 4            # Batch size during training
+batch_size_valid             = 64              # Batch size during validation
+batch_size_test              = 64              # Batch size during testing
 dataloader_num_workers_train = 1        # Number of dataload works during training
 dataloader_num_workers_valid = 1        # Number of dataload works during valid
 dataloader_num_workers_test  = 1        # Number of dataload works during test
+data_shuffle                 = True            # shuffle data for averrage distribution
+dataloader_load_shuffle_prepare_data = True     # whether or not load prepare_data for DataLoader
+dataloader_load_shuffle_prepare_data_path = '/media/samsumg_1tb/synthia/SYNTHIA-SEQS-01/prepared_data_shuffle.npy'
+dataloader_save_shuffle_prepare_data = True     # whether or not save generated prepare_data for DataLoader
+dataloader_save_shuffle_prepare_data_path = '/media/samsumg_1tb/synthia/SYNTHIA-SEQS-01/prepared_data_shuffle.npy'
+dataloader_load_prepare_data = True     # whether or not load prepare_data for DataLoader
+dataloader_load_prepare_data_path = '/media/samsumg_1tb/synthia/SYNTHIA-SEQS-01/prepared_data.npy'
+dataloader_save_prepare_data = True     # whether or not save generated prepare_data for DataLoader
+dataloader_save_prepare_data_path = '/media/samsumg_1tb/synthia/SYNTHIA-SEQS-01/prepared_data.npy'
 # Data shuffle
 shuffle_train                = False            # No shuffling because the time sequence matters
 shuffle_valid                = False           # Whether to shuffle the validation data
 shuffle_test                 = False           # Whether to shuffle the testing data
 
 #############################
-dataroot_dir                        = '/home/stevenwudi/PycharmProjects/autonomous_driving/Datasets'
+dataroot_dir                        = '/home/wzn/PycharmProjects/autonomous_driving/Datasets'
 data_type                           = 'RGB'
 data_stereo                         = 'Stereo_Left'
 data_camera                         = 'Omni_F'
@@ -105,23 +116,23 @@ test_model                   = True           # Predict using the model
 focal_length                 = 532.740352  # camera focal lense
 
 # Training parameters
-lr_decay_epoch               = 10          # every lr_decay_epoch, decay learning_rate by 10
-figure_epoch                 = 5           # every fugure_epoch, figure out the losses
+lr_decay_epoch               = 40          # every lr_decay_epoch, decay learning_rate by 10
+figure_epoch                 = 10           # every fugure_epoch, figure out the losses
 test_epoch                   = 1
 weight_decay                 = 0.              # Weight decay or L2 parameter norm penalty
-n_epochs                     = 100            # Number of epochs during training
+n_epochs                     = 303            # Number of epochs during training
 cuda                         = True
 loss                         = 'SmoothL1Loss'       # 'MSE', 'SmoothL1Loss'
-optimizer                    = 'adam'      # LBFGS','adam','rmsprop','sgd'
-learning_rate                = 0.001          # Training learning rate
+optimizer                    = 'sgd'      # LBFGS','adam','rmsprop','sgd'
+learning_rate                = 0.01          # Training learning rate
 momentum                     = 0.9
-load_trained_model           = False
-train_model_path             = '/home/stevenwudi/PycharmProjects/autonomous_driving/Experiments/car_trajectory_prediction/SYNTHIA-SEQS-01___Mon, 06 Nov 2017-11-06 16:08:14/Epoch:100_net_aveErrCoverage:0.8343_aveErrCenter:17.47___.pth'
+load_trained_model           = True
+train_model_path             = '/home/wzn/PycharmProjects/autonomous_driving/Experiments/car_trajectory_prediction/SYNTHIA-SEQS-01_Wed, 15 Nov 2017-11-15 18:00:00_LSTM_ManyToMany_Shuffle/Epoch:54_net_Coverage:0.6730_Center:22.88_CoverageR:0.3607_CenterR:0.69.PTH'
 #### LSTM training variables #################
 # LSTM_ManyToMany
-lstm_input_dims               = [6, 150, 150]    # [layer1_input_dim, layer2_input_dim,...]  layer1_input_dim:[x,y,w,h, d_min, d_max]
-lstm_hidden_sizes             = [150, 150, 150]    # [layer1_hidden_size, layer2_hidden_size,...]
-outlayer_input_dim            = 150          # outlayer's input dim.Generally, identify to hidden_sizes[-1]
+lstm_input_dims               = [6, 100, 300]    # [layer1_input_dim, layer2_input_dim,...]  layer1_input_dim:[x,y,w,h, d_min, d_max]
+lstm_hidden_sizes             = [100, 300, 300]    # [layer1_hidden_size, layer2_hidden_size,...]
+outlayer_input_dim            = 300          # outlayer's input dim.Generally, identify to hidden_sizes[-1]
 outlayer_output_dim           = 6            # outlayer output: [x,y,w,h, d_min, d_max]
 
 # LSTM_To_FC
@@ -135,13 +146,14 @@ cnn_class_num                 = 15
 def cnnDict(in_channels, out_channels, kernel_size, stride, padding):
     return {'in_channels': in_channels, 'out_channels': out_channels, 'kernel_size': kernel_size, 'stride': stride, 'padding': padding}
 
-cnnLstmToFc_conv_paras        = [cnnDict(cnn_class_num,15,3,1,1), cnnDict(15,10,3,1,1),cnnDict(10,5,3,1,1),cnnDict(5,5,3,1,1)]              # a list composed of dicts representing parameters of each conv, {'in_channels': ,
+cnnLstmToFc_conv_paras        = [cnnDict(2,4,3,1,1), cnnDict(4,4,3,1,1),cnnDict(4,4,3,1,1),cnnDict(4,4,3,1,1)]              # a list composed of dicts representing parameters of each conv, {'in_channels': ,
                                                                                       # 'out_channels': ,
                                                                                       # 'kernel_size': ,
                                                                                       # 'stride': ,
                                                                                       # 'padding': }
-
-cnnLstmToFc_input_dims        = [6, 350, 350]              # a list involving each lstm_layer's input_dim
-cnnLstmToFc_hidden_sizes      = [100, 350, 350]              # a list involving each lstm_layer's hidden_size
+dropoutAfterMaxpooling        = True
+cnnLstmToFc_input_dims        = [6, 300, 300]              # a list involving each lstm_layer's input_dim
+cnnLstmToFc_hidden_sizes      = [100, 300, 300]              # a list involving each lstm_layer's hidden_size
 cnnLstmToFc_future            = lstm_predict_frame # the number of predicting frames
 cnnLstmToFc_output_dim        = 6               # outlayer output: [x,y,w,h, d_min, d_max]
+

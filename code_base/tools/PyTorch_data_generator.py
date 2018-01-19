@@ -160,7 +160,7 @@ class Dataset_Generators_Synthia():
 
 
 class ImageDataGenerator_Synthia(Dataset):
-    def __init__(self, root_dir, dataset_split, cf, crop=True, flip=True):
+    def __init__(self, root_dir, dataset_split, cf, crop=True, flip=True, error_images=None):
 
         if (root_dir[-10:] == 'train_rand'):
             self.root_dir = root_dir
@@ -245,63 +245,25 @@ class DataGenerator_Synthia_car_trajectory():
             print('Loading data')
             train_data, valid_data, test_data, self.data_mean, self.data_std, train_img_list, valid_img_list, test_img_list = prepare_data_image_list(cf)
 
+            # # for experiment
+            # test_data[693,:,:]
+            # test_img_list[693]
             # deal images and relocate train_img_list & valid_img_list & test_img_list
             self.root_dir = '/'.join(cf.dataset_path[0].split('/')[:-1])
 
-
-            # def deal_img_list(img_list, item):
-            #
-            #     # parent dir
-            #     img_dir = self.root_dir + '/' + img_list[item][0].split('/')[
-            #         0] + '/' + 'GT/LABELS' + '/' + self.cf.data_stereo + '/' + self.cf.data_camera
-            #
-            #     def img_name(i):
-            #         return os.path.join(img_dir, img_list[item][i].split('/')[1])
-            #
-            #     def semantic_image(img_name):
-            #         try:
-            #             input = cv.imread(img_name, -1)
-            #             semantic_image = np.int8(input[:, :, 2])
-            #         except IOError:
-            #             # unfortunately, some images are corrupted. Hence, we need to manually exclude them.
-            #             print("Image failed loading: ", img_name)
-            #
-            #         # resize
-            #         semantic_image = imresize(semantic_image, size=0.125, interp='nearest', mode='F')
-            #         # Convert to training labels
-            #         w, h = semantic_image.shape
-            #         # Create one-hot encoding
-            #         semantic_image_one_hot = np.zeros(shape=(self.cf.cnn_class_num, w, h))
-            #         for c in range(self.cf.cnn_class_num):
-            #             semantic_image_one_hot[c][semantic_image == c] = 1
-            #
-            #         # Convert to tensors
-            #         semantic_image_t = torch.Tensor(semantic_image_one_hot)
-            #         return semantic_image_t
-            #
-            #     if self.cf.model_name == 'CNN_LSTM_To_FC':
-            #         semantic_images = torch.stack(
-            #             [semantic_image(img_name(i)) for i in range(self.cf.lstm_input_frame)], dim=0)
-            #
-            #
-            #     return semantic_images
-
-
-
-
-            # Load training set
             print('\n > Loading training, valid, test set')
 
-            train_dataset = BB_ImageDataGenerator_Synthia(cf, train_data, train_img_list, crop=True, flip=True)
-            val_dataset = BB_ImageDataGenerator_Synthia(cf.dataset_path, 'valid', cf=cf, crop=False, flip=False)
-            test_dataset = BB_ImageDataGenerator_Synthia(cf.dataset_path, 'test', cf=cf, crop=False, flip=False)
-
+            train_dataset = Resized_BB_ImageDataGenerator_Synthia(cf, True, train_data, train_img_list, crop=False, flip=False)
+            valid_dataset = Resized_BB_ImageDataGenerator_Synthia(cf, False, valid_data, valid_img_list,  crop=False, flip=False)
+            test_dataset = Resized_BB_ImageDataGenerator_Synthia(cf, False, test_data, test_img_list, crop=False, flip=False)
 
             self.train_loader = DataLoader(train_dataset, batch_size=cf.batch_size_train, shuffle=True,
                                            num_workers=cf.workers, pin_memory=True)
 
-            self.val_loader = DataLoader(val_dataset, batch_size=1, num_workers=cf.workers, pin_memory=True)
-            self.test_loader = DataLoader(test_dataset, batch_size=1, num_workers=cf.workers, pin_memory=True)
+            self.valid_loader = DataLoader(valid_dataset, batch_size=cf.batch_size_valid, num_workers=cf.workers,
+                                           pin_memory=True)
+            self.test_loader = DataLoader(test_dataset, batch_size=cf.batch_size_test, num_workers=cf.workers,
+                                          pin_memory=True)
 
 
 class BB_ImageDataGenerator_Synthia(Dataset):
@@ -382,6 +344,49 @@ class BB_ImageDataGenerator_Synthia(Dataset):
 
         return semantic_images, input_trajectorys, target_trajectorys
 
+# resized semantic image
+class Resized_BB_ImageDataGenerator_Synthia(Dataset):
+    def __init__(self, cf, trainornot, trajectory_data, img_list, crop=True, flip=True):
+        """
+        :param root_dir: Directory will all the images
+        :param label_dir: Directory will all the label images
+        :param transform:  (callable, optional): Optional tra
+        nsform to be applied
+        """
+        self.trajectory_data = trajectory_data
+        self.cf = cf
+        self.trainOrNot = trainornot
+        self.img_list = img_list
+        self.root_dir = '/'.join(cf.dataset_path[0].split('/')[:-1])
+        self.crop = crop
+        # self.crop_size = cf.crop_size
+        self.flip = flip
+        self.mean = cf.rgb_mean
+        self.std = cf.rgb_std
+        # self.ignore_index = cf.ignore_index
+
+    def __len__(self):
+        return len(self.trajectory_data)
+
+    def __getitem__(self, item):
+
+        # trajectory
+        trajectory = self.trajectory_data[item]
+        trajectory_t = torch.FloatTensor(trajectory)
+        if self.cf.model_name == 'LSTM_ManyToMany' and self.trainOrNot:
+            input_trajectorys = trajectory_t[:-1, :]
+            target_trajectorys = trajectory_t[1:, :]
+        else:
+            input_trajectorys = trajectory_t[:self.cf.lstm_input_frame, :]
+            target_trajectorys = trajectory_t[self.cf.lstm_input_frame:, :]
+
+        # semantics
+        if self.cf.model_name == 'CNN_LSTM_To_FC' or self.cf.model_name == 'DropoutCNN_LSTM_To_FC':
+            semantic_images = np.load(self.img_list[item])[0]
+        else:
+            semantic_images = torch.FloatTensor(torch.zeros(input_trajectorys.size()))
+
+        return semantic_images, input_trajectorys, target_trajectorys
 
 
 class Dataset_Generators_Cityscape():

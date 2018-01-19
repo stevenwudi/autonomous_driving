@@ -1,6 +1,8 @@
 import h5py
 import os
 import numpy as np
+import cv2 as cv
+from scipy.misc import imresize
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -23,6 +25,15 @@ def normalise_data(train_data, valid_data, test_data):
     test_data /= data_std
     return train_data, valid_data, test_data, data_mean, data_std
 
+def restore_normalised_Data(train_data, valid_data, test_data, data_mean,data_std):
+    train_data *= data_std
+    train_data += data_mean
+    valid_data *= data_std
+    valid_data += data_mean
+    test_data *= data_std
+    test_data += data_mean
+
+    return train_data, valid_data, test_data
 
 def prepare_data(cf):
     save_dir = os.path.join(cf.shared_path, cf.problem_type)
@@ -31,7 +42,7 @@ def prepare_data(cf):
     valid_data = f['valid_data']
     test_data = f['test_data']
 
-    # --------> to test data shuffle
+    #--------> to test data shuffle
     np.random.seed(10)
     train_size = train_data.shape[0]
     valid_size = valid_data.shape[0]
@@ -41,11 +52,13 @@ def prepare_data(cf):
     np.random.shuffle(all_data)
     # train_data = all_data[:train_size, :, :]
     train_data = all_data[:512, :, :]
-    valid_data = all_data[train_size:train_size + valid_size, :, :]
-    test_data = all_data[train_size + valid_size:, :, :]
-    # --------< to test data shuffle     
+    valid_data = all_data[train_size:train_size+valid_size, :, :]
+    test_data = all_data[train_size+valid_size:, :, :]
+    # --------< to test data shuffle
 
-    train_data, valid_data, test_data, data_mean, data_std = normalise_data(train_data, valid_data, test_data)
+    train_data, valid_data, test_data, data_mean, data_std = normalise_data(train_data,
+                                                                            valid_data,
+                                                                            test_data)
 
     if cf.cuda:
         print('Data using CUDA')
@@ -69,9 +82,9 @@ def prepare_data(cf):
 
 
     # images: the input images, may be semantic segmentation or RGB. size as (batchSize, sequenceSize, Cin, Hin, Win)
-    train_images = Variable(torch.zeros(train_input.size(0), train_input.size(1), 1, 100, 100).type(dtype), requires_grad=False)
-    valid_images = Variable(torch.zeros(valid_input.size(0), valid_input.size(1), 1, 100, 100).type(dtype), requires_grad=False)
-    test_images = Variable(torch.zeros(test_input.size(0), test_input.size(1), 1, 100, 100).type(dtype), requires_grad=False)
+    train_images = Variable(torch.zeros(train_input.size(0), train_input.size(1), 1, 10, 10).type(dtype), requires_grad=False)
+    valid_images = Variable(torch.zeros(valid_input.size(0), valid_input.size(1), 1, 10, 10).type(dtype), requires_grad=False)
+    test_images = Variable(torch.zeros(test_input.size(0), test_input.size(1), 1, 10, 10).type(dtype), requires_grad=False)
 
     return train_images, valid_images, test_images, train_input, train_target, valid_input, valid_target, test_input, test_target, data_mean, data_std
 
@@ -111,21 +124,142 @@ def get_img_list(train_data, valid_data, test_data):
 
     return train_img_list, valid_img_list, test_img_list
 
+def get_img_resized_list(cf, train_data, valid_data, test_data):
 
+    root_dir = '/'.join(cf.dataset_path[0].split('/')[:-1])
+    # def data_img_dir(data):
+    #     return root_dir + '/' + data[0][0][6].split('/')[
+    #         0] + '/' + 'GT/LABELS' + '/' + cf.data_stereo + '/' + cf.data_camera
+    #
+    # train_img_dir = data_img_dir(train_data)
+    # valid_img_dir = data_img_dir(valid_data)
+    # test_img_dir = data_img_dir(test_data)
+
+    def img_name(item):
+        return os.path.join(root_dir + '/' + item.split('/')[0] + '/' + 'GT/LABELS' + '/' + cf.data_stereo + '/' + cf.data_camera, item.split('/')[1])
+
+    def semantic_image(img_name):
+        try:
+            input = cv.imread(img_name, -1)
+            semantic_image = np.int8(input[:, :, 2])
+        except IOError:
+            # unfortunately, some images are corrupted. Hence, we need to manually exclude them.
+            print("Image failed loading: ", img_name)
+        # resize
+        semantic_image = imresize(semantic_image, size=0.125, interp='nearest', mode='F')
+        # Convert to training labels
+        w, h = semantic_image.shape
+        # Create one-hot encoding
+        semantic_image_one_hot = np.zeros(shape=(2, w, h))
+        car_chanel = 8
+        road_chanel = 3
+        for c, chanel in enumerate([car_chanel, road_chanel]):
+            semantic_image_one_hot[c][semantic_image == chanel] = 1
+        # Convert to tensors
+        semantic_image_t = torch.Tensor(semantic_image_one_hot)
+        return semantic_image_t
+
+    save_root_dir = '/media/samsumg_1tb/synthia/SYNTHIA-SEQS-01/resized_semantic_images/'
+    def save_semantics_itemlist(name, itemlist):
+        path = save_root_dir + name + '.npy'
+        np.save(path, [itemlist])
+        return path
+
+    valid_img_list = []
+    i = 0
+    for d in valid_data:
+        i += 1
+        item_list = [x[6] for x in d[:cf.lstm_input_frame]]
+        item_list = [semantic_image(img_name(item)) for item in item_list]
+        item_list = torch.stack(item_list, dim=0)
+        valid_img_list.append(save_semantics_itemlist('valid_'+str(i), item_list))
+
+    test_img_list = []
+    i = 0
+    for d in test_data:
+        i += 1
+        item_list = [x[6] for x in d[:cf.lstm_input_frame]]
+        item_list = [semantic_image(img_name(item)) for item in item_list]
+        item_list = torch.stack(item_list, dim=0)
+        test_img_list.append(save_semantics_itemlist('test_' + str(i), item_list))
+
+    train_img_list = []
+    i = 0
+    for d in train_data:
+        i += 1
+        item_list = [x[6] for x in d[:cf.lstm_input_frame]]
+        item_list = [semantic_image(img_name(item)) for item in item_list]
+        item_list = torch.stack(item_list, dim=0)
+        train_img_list.append(save_semantics_itemlist('train_' + str(i), item_list))
+
+    return train_img_list, valid_img_list, test_img_list
+
+#
 def prepare_data_image_list(cf):
-    import pickle
-    with open(os.path.join(cf.shared_path, cf.problem_type, cf.sequence_name + '_train.npy'), 'rb') as fp:
-        train_data = pickle.load(fp)
-    with open(os.path.join(cf.shared_path, cf.problem_type, cf.sequence_name + '_valid.npy'), 'rb') as fp:
-        valid_data = pickle.load(fp)
-    with open(os.path.join(cf.shared_path, cf.problem_type, cf.sequence_name + '_test.npy'), 'rb') as fp:
-        test_data = pickle.load(fp)
+    if cf.data_shuffle == False:
+        if cf.dataloader_load_prepare_data:
+            # load data
+            prepared_data = tuple(np.load(cf.dataloader_load_prepare_data_path))
+        else:
+            import pickle
+            with open(os.path.join(cf.shared_path, cf.problem_type, cf.sequence_name + '_train.npy'), 'rb') as fp:
+                train_data = pickle.load(fp)
+            with open(os.path.join(cf.shared_path, cf.problem_type, cf.sequence_name + '_valid.npy'), 'rb') as fp:
+                valid_data = pickle.load(fp)
+            with open(os.path.join(cf.shared_path, cf.problem_type, cf.sequence_name + '_test.npy'), 'rb') as fp:
+                test_data = pickle.load(fp)
 
-    train_data_array, valid_data_array, test_data_array, data_mean, data_std = normalise_data_with_img_list(train_data, valid_data, test_data)
+            train_data_array, valid_data_array, test_data_array, data_mean, data_std = normalise_data_with_img_list(train_data,
+                                                                                                                    valid_data,
+                                                                                                                    test_data)
+            train_img_list, valid_img_list, test_img_list = get_img_resized_list(cf, train_data, valid_data, test_data)
 
-    train_img_list, valid_img_list, test_img_list = get_img_list(train_data, valid_data, test_data)
+            prepared_data = (train_data_array, valid_data_array, test_data_array, data_mean, data_std, train_img_list, valid_img_list, test_img_list)
 
-    return train_data_array, valid_data_array, test_data_array, data_mean, data_std, train_img_list, valid_img_list, test_img_list
+            # save data
+            if cf.dataloader_save_prepare_data:
+                np.save(cf.dataloader_save_prepare_data_path, prepared_data)
+
+    # data shuffle
+    else:
+        if cf.dataloader_load_shuffle_prepare_data:
+            # load data
+            prepared_data = tuple(np.load(cf.dataloader_load_shuffle_prepare_data_path))
+        else:
+            # load nushuffle data
+            prepared_data = tuple(np.load(cf.dataloader_load_prepare_data_path))
+            train_data_array, valid_data_array, test_data_array, data_mean, data_std, train_img_list, valid_img_list, test_img_list = prepared_data
+            # restore normalized data
+            train_data, valid_data, test_data = restore_normalised_Data(train_data_array, valid_data_array, test_data_array, data_mean, data_std)
+            # concat all data
+            train_size = train_data.shape[0]
+            valid_size = valid_data.shape[0]
+            all_data = np.concatenate((train_data, valid_data, test_data), axis=0)
+            # concat all image_list
+            all_imglist = train_img_list + valid_img_list + test_img_list
+            # shuffle data and shuffle img
+            np.random.seed(10)
+            np.random.shuffle(all_data)
+            np.random.seed(10)
+            np.random.shuffle(all_imglist)
+            # class train\valid\test data & img
+            train_data = all_data[:train_size, :, :]
+            valid_data = all_data[train_size:train_size + valid_size, :, :]
+            test_data = all_data[train_size + valid_size:, :, :]
+            train_img_list = all_imglist[:train_size]
+            valid_img_list = all_imglist[train_size:train_size + valid_size]
+            test_img_list = all_imglist[train_size + valid_size:]
+            # normalize data
+            train_data, valid_data, test_data, data_mean, data_std = normalise_data(train_data, valid_data, test_data)
+
+            prepared_data = (train_data, valid_data, test_data, data_mean, data_std, train_img_list, valid_img_list, test_img_list)
+
+            # save data
+            if cf.dataloader_save_shuffle_prepare_data:
+                np.save(cf.dataloader_save_shuffle_prepare_data_path, prepared_data)
+
+
+    return prepared_data
 
 
 def calc_seq_err_robust(results, rect_anno, focal_length):
@@ -138,6 +272,14 @@ def calc_seq_err_robust(results, rect_anno, focal_length):
 
     seq_length = results.shape[1]
 
+    aveErrCoverages = []
+    aveErrCenters = []
+    errCenters = []
+    iou_2ds = []
+    aveErrCoverage_realworlds = []
+    aveErrCenter_realworlds = []
+    errCenter_realworlds = []
+    iou_3ds = []
     for batch_num in range(len(results)):
         res = results[batch_num]
         anno = rect_anno[batch_num]
@@ -169,8 +311,24 @@ def calc_seq_err_robust(results, rect_anno, focal_length):
         aveErrCoverage_realworld = totalerrCoverage_realworld / float(seq_length)
         aveErrCenter_realworld = totalerrCenter_realworld / float(seq_length)
 
-    return aveErrCoverage, aveErrCenter, errCenter, iou_2d, \
-           aveErrCoverage_realworld, aveErrCenter_realworld, errCenter_realworld, iou_3d
+
+        aveErrCoverages.append(aveErrCoverage)
+        aveErrCenters.append(aveErrCenter)
+        errCenters.append(errCenter)
+        iou_2ds.append(iou_2d)
+
+        aveErrCoverage_realworlds.append(aveErrCoverage_realworld)
+        aveErrCenter_realworlds.append(aveErrCenter_realworld)
+        errCenter_realworlds.append(errCenter_realworld)
+        iou_3ds.append(iou_3d)
+
+    aveErrCoverage = np.array(aveErrCoverages).mean()
+    aveErrCenter = np.array(aveErrCenters).mean()
+    aveErrCoverage_realworld = np.array(aveErrCoverage_realworlds).mean()
+    aveErrCenter_realworld = np.array(aveErrCenter_realworlds).mean()
+
+    return aveErrCoverage, aveErrCenter, errCenters, iou_2ds, \
+           aveErrCoverage_realworld, aveErrCenter_realworld, errCenter_realworlds, iou_3ds
 
 
 def ssd_2d(x, y):

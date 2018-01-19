@@ -15,11 +15,31 @@
 /paper/cvpr2018RebuttalKit/*
 /paper/Video_making/
 
+<<<<<<< HEAD
+=======
+!/paper/cvpr2018/cvpr2018_draft.tex
+!/paper/cvpr2018/egbib.bib
+!/paper/cvpr2018/ieee.bst
+!/paper/cvpr2018/cvpr.sty
+
+
+
+000115.png
+000115-GTLable.png
+taskForWzn
+testforwzn.py
+
+
+
+!/paper/cvpr2018/figures
+
+>>>>>>> aa394631a69cc73a02b97cd2050a9a93064283aa
 # ECO matlab folder ignore
 /code_base/ECO/
 /code_base/ECO/feature_extraction/networks
 /code_base/ECO/sequences
 
+<<<<<<< HEAD
 # paper writing
 !/paper/cvpr2018/cvpr2018_3790.tex
 !/paper/cvpr2018/cvpr2018_3790.pdf
@@ -35,3 +55,6 @@
 !/paper/cvpr2018RebuttalKit/ieee.bst
 !/paper/cvpr2018RebuttalKit/cvpr.sty
 
+=======
+/plot-figure.py
+>>>>>>> aa394631a69cc73a02b97cd2050a9a93064283aa

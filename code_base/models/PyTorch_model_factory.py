@@ -14,35 +14,28 @@ from datetime import datetime
 from matplotlib import pyplot as plt
 import os
 import sys
+<<<<<<< HEAD
+=======
+import pickle
+import json
+>>>>>>> aa394631a69cc73a02b97cd2050a9a93064283aa
 import numpy as np
 
 
-def adjust_learning_rate(lr, optimizer, epoch,train_losses, decrease_epoch=10):
+def adjust_learning_rate(lr, optimizer, epoch, lastupdate_epoch, train_losses, decrease_epoch=10):
     """Sets the learning rate to the initial LR decayed by 10 every 30 epochs"""
 
-    if len(train_losses) < 5:
-        return lr
-
-    eva_losses = train_losses[-5:]
-
-    max_value = eva_losses.max()
-    min_value = eva_losses.min()
-    max_loction = eva_losses.argmax()
-    min_location = eva_losses.argmin()
-
-    if np.abs(max_value-min_value)/max_value < 1e-3 or max_loction>min_location:
-        lr = optimizer.param_groups[-1]['lr']
-        lr =lr * 0.1
+    if epoch > 0 and epoch%decrease_epoch == 0:
+        lr = lr * (0.1 ** (epoch // decrease_epoch))
         if lr >= 1.0e-6:
             for param_group in optimizer.param_groups:
                 param_group['lr'] = lr
-    #
-    # lr = lr * (0.1 ** (epoch // decrease_epoch))
-    # if lr >= 1.0e-6:
-    #     for param_group in optimizer.param_groups:
-    #         param_group['lr'] = lr
+        else:
+            lr = optimizer.param_groups[-1]['lr']
+    else:
+        lr = optimizer.param_groups[-1]['lr']
 
-    return lr
+    return lr, lastupdate_epoch
 
 
 def save_output_images(predictions, filenames, output_dir):
@@ -78,7 +71,8 @@ def load_net_synthia(state_dict, net):
 class Model_Factory_semantic_seg():
     def __init__(self, cf):
         # If we load from a pretrained model
-        self.exp_dir = cf.savepath + '___' + datetime.now().strftime('%a, %d %b %Y-%m-%d %H:%M:%S') + '_' + cf.model_name
+        self.exp_dir = cf.savepath + '___' + datetime.now().strftime(
+            '%a, %d %b %Y-%m-%d %H:%M:%S') + '_' + cf.model_name
         os.mkdir(self.exp_dir)
         # Enable log file
         self.log_file = os.path.join(self.exp_dir, "logfile.log")
@@ -98,8 +92,13 @@ class Model_Factory_semantic_seg():
             self.net = DRNSeg('drn_d_38', cf.num_classes, pretrained=True, linear_up=False)
         # Set the loss criterion
         if cf.cb_weights_method == 'rare_freq_cost':
+<<<<<<< HEAD
             print('Use ' + cf.cb_weights_method+', loss weight method!')
             loss_weight = torch.Tensor([0]+cf.cb_weights)
+=======
+            print('Use ' + cf.cb_weights_method + ', loss weight method!')
+            loss_weight = torch.Tensor([0] + cf.cb_weights)
+>>>>>>> aa394631a69cc73a02b97cd2050a9a93064283aa
             self.crit = nn.NLLLoss2d(weight=loss_weight, ignore_index=cf.ignore_index).cuda()
         else:
             self.crit = nn.NLLLoss2d(ignore_index=cf.ignore_index).cuda()
@@ -110,9 +109,9 @@ class Model_Factory_semantic_seg():
 
         # Construct optimiser
         if cf.load_trained_model:
-            print("Load from pretrained_model weight: "+cf.train_model_path)
-            load_net_synthia(torch.load(cf.train_model_path), self.net)
-            # self.net.load_state_dict(torch.load(cf.train_model_path))
+            print("Load from pretrained_model weight: " + cf.train_model_path)
+            self.net.load_state_dict(torch.load(cf.train_model_path))
+
 
         # self.net = DRNSegF(self.net, 20)
         params_dict = dict(self.net.named_parameters())
@@ -127,7 +126,8 @@ class Model_Factory_semantic_seg():
             else:
                 params += [{'params': [value]}]
         if cf.optimizer == 'rmsprop':
-            self.optimiser = optim.RMSprop(params, lr=cf.learning_rate, momentum=cf.momentum, weight_decay=cf.weight_decay)
+            self.optimiser = optim.RMSprop(params, lr=cf.learning_rate, momentum=cf.momentum,
+                                           weight_decay=cf.weight_decay)
         elif cf.optimizer == 'sgd':
             self.optimiser = optim.SGD(params, lr=cf.learning_rate, momentum=cf.momentum, weight_decay=cf.weight_decay)
         elif cf.optimizer == 'adam':
@@ -170,13 +170,15 @@ class Model_Factory_semantic_seg():
         self.net.eval()
         total_ious = []
         for i, (input, target) in enumerate(val_loader):
-            input, target = Variable(input.cuda(async=True), volatile=True), Variable(target.cuda(async=True), volatile=True)
+            input, target = Variable(input.cuda(async=True), volatile=True), Variable(target.cuda(async=True),
+                                                                                      volatile=True)
             output = F.log_softmax(self.net(input))
             b, _, h, w = output.size()
             pred = output.permute(0, 2, 3, 1).contiguous().view(-1, self.num_classes).max(1)[1].view(b, h, w)
             total_ious.append(iou(pred, target, self.num_classes))
 
 
+<<<<<<< HEAD
         if False:
             image = np.squeeze(input.data.cpu().numpy())
             image[0, :, :] = image[0, :, :] * cf.rgb_std[0] + cf.rgb_mean[0]
@@ -190,6 +192,21 @@ class Model_Factory_semantic_seg():
             plt.subplot(1,3,3);plt.imshow(class_image);plt.title('GT')
             plt.waitforbuttonpress(1)
             print('Training testing')
+=======
+            # image = np.squeeze(input.data.cpu().numpy())
+            # image[0, :, :] = image[0, :, :] * cf.rgb_std[0] + cf.rgb_mean[0]
+            # image[1, :, :] = image[1, :, :] * cf.rgb_std[1] + cf.rgb_mean[1]
+            # image[2, :, :] = image[2, :, :] * cf.rgb_std[2] + cf.rgb_mean[2]
+            # pred_image = np.squeeze(pred.data.cpu().numpy())
+            # class_image = np.squeeze(target.data.cpu().numpy())
+            # plt.figure()
+            # plt.subplot(1,3,1);plt.imshow(image.transpose(1, 2, 0));plt.title('RGB')
+            # plt.subplot(1,3,2);plt.imshow(pred_image);plt.title('Prediction')
+            # plt.subplot(1,3,3);plt.imshow(class_image);plt.title('GT')
+            # plt.waitforbuttonpress(1)
+            # print('Training testing')
+
+>>>>>>> aa394631a69cc73a02b97cd2050a9a93064283aa
 
         # Calculate average IoU
         total_ious_t = torch.Tensor(total_ious).transpose(0, 1)
@@ -199,12 +216,13 @@ class Model_Factory_semantic_seg():
 
         for i, class_iou in enumerate(total_ious_t):
             if i != cf.ignore_index:
-                ious[i-1] = class_iou[class_iou == class_iou].mean()  # Calculate mean, ignoring NaNs
+                ious[i - 1] = class_iou[class_iou == class_iou].mean()  # Calculate mean, ignoring NaNs
         print(ious, ious.mean())
         self.scores.append(ious)
 
         # Save weights and scores
-        torch.save(self.net.state_dict(), os.path.join(self.exp_dir, 'epoch_' + str(epoch) + '_' + 'mIOU:.%4f'%ious.mean() + '_net.pth'))
+        torch.save(self.net.state_dict(),
+                   os.path.join(self.exp_dir, 'epoch_' + str(epoch) + '_' + 'mIOU:.%4f' % ious.mean() + '_net.pth'))
         torch.save(self.scores, os.path.join(self.exp_dir, 'scores.pth'))
 
         # Plot scores
@@ -353,7 +371,7 @@ class Model_Factory_semantic_seg():
 class Model_Factory_LSTM():
     def __init__(self, cf):
         # If we load from a pretrained model
-        self.model_name = cf.model_name   #['LSTM_ManyToMany', 'LSTM_To_FC']
+        self.model_name = cf.model_name  # ['LSTM_ManyToMany', 'LSTM_To_FC']
         if cf.model_name == 'LSTM_ManyToMany':
             self.net = LSTM_ManyToMany(input_dims=cf.lstm_input_dims,
                                        hidden_sizes=cf.lstm_hidden_sizes,
@@ -373,6 +391,14 @@ class Model_Factory_LSTM():
                                       future_frame=cf.cnnLstmToFc_future,
                                       output_dim=cf.cnnLstmToFc_output_dim,
                                       cuda=cf.cuda)
+        elif cf.model_name == 'DropoutCNN_LSTM_To_FC':
+            self.net = DropoutCNN_LSTM_To_FC(cf=cf,
+                                             conv_paras=cf.cnnLstmToFc_conv_paras,
+                                             input_dims=cf.cnnLstmToFc_input_dims,
+                                             hidden_sizes=cf.cnnLstmToFc_hidden_sizes,
+                                             future_frame=cf.cnnLstmToFc_future,
+                                             output_dim=cf.cnnLstmToFc_output_dim,
+                                             cuda=cf.cuda)
         # Set the loss criterion
         if cf.loss == 'MSE':
             self.crit = nn.MSELoss()
@@ -397,7 +423,7 @@ class Model_Factory_LSTM():
 
         # Construct optimiser
         if cf.load_trained_model:
-            print("Load from pretrained_model weight: "+cf.train_model_path)
+            print("Load from pretrained_model weight: " + cf.train_model_path)
             self.net.load_state_dict(torch.load(cf.train_model_path))
 
         # use LBFGS as optimizer since we can load the whole data to train
@@ -406,14 +432,17 @@ class Model_Factory_LSTM():
         elif cf.optimizer == 'adam':
             self.optimiser = optim.Adam(self.net.parameters(), lr=cf.learning_rate, weight_decay=cf.weight_decay)
         elif cf.optimizer == 'rmsprop':
-            self.optimiser = optim.RMSprop(self.net.parameters(), lr=cf.learning_rate, momentum=cf.momentum, weight_decay=cf.weight_decay)
+            self.optimiser = optim.RMSprop(self.net.parameters(), lr=cf.learning_rate, momentum=cf.momentum,
+                                           weight_decay=cf.weight_decay)
         elif cf.optimizer == 'sgd':
-            self.optimiser = optim.SGD(self.net.parameters(), lr=cf.learning_rate, momentum=cf.momentum, weight_decay=cf.weight_decay, nesterov=True)
+            self.optimiser = optim.SGD(self.net.parameters(), lr=cf.learning_rate, momentum=cf.momentum,
+                                       weight_decay=cf.weight_decay, nesterov=True)
 
-    def train(self, cf, train_loader, epoch, train_losses):
+    def train(self, cf, train_loader, epoch, lastupdate_epoch, train_losses):
         # begin to train
         self.net.train()
-        lr = adjust_learning_rate(self.cf.learning_rate, self.optimiser, epoch,train_losses , decrease_epoch=cf.lr_decay_epoch)
+        lr, lastupdate_epoch = adjust_learning_rate(self.cf.learning_rate, self.optimiser, epoch, lastupdate_epoch,
+                                                    train_losses, decrease_epoch=cf.lr_decay_epoch)
         print('learning rate:', lr)
 
         # if cf.model_name == 'CNN_LSTM_To_FC':
@@ -434,33 +463,35 @@ class Model_Factory_LSTM():
         #         return loss
         #     self.optimiser.step(closure)
         # else:
-        train_losses=[]
+        train_losses = []
         for i, (sementic, input_trajectory, target_trajectory) in enumerate(train_loader):
             self.optimiser.zero_grad()
             sementic, input_trajectory, target_trajectory = Variable(sementic.cuda(async=True), requires_grad=False), \
-                                                            Variable(input_trajectory.cuda(async=True), requires_grad=False), \
-                                                            Variable(target_trajectory.cuda(async=True), requires_grad=False)
-            if cf.model_name == 'CNN_LSTM_To_FC':
+                                                            Variable(input_trajectory.cuda(async=True),
+                                                                     requires_grad=False), \
+                                                            Variable(target_trajectory.cuda(async=True),
+                                                                     requires_grad=False)
+            if cf.model_name == 'CNN_LSTM_To_FC' or cf.model_name == 'DropoutCNN_LSTM_To_FC':
                 input = tuple([sementic, input_trajectory])
             else:
                 input = tuple([input_trajectory])
             output = self.net(*input)[0]
             self.loss = self.crit(output, target_trajectory)
             train_losses.append(self.loss.data[0])
-            # print(epoch, i, self.loss.data[0])
             self.loss.backward()
             self.optimiser.step()
 
         train_loss = np.array(train_losses).mean()
         print('Train Loss', epoch, train_loss)
 
-        return train_loss
+        return train_loss, lastupdate_epoch
 
     def test(self, cf, valid_loader, data_mean, data_std, epoch=None):
         # if cf.model_name == 'CNN_LSTM_To_FC':
         #     input = tuple([valid_images, valid_input])
         # else:
         #     input = tuple([valid_input])
+        self.net.eval()
 
         def evaluation(output_trajectories, target_trajectories):
             # evaluations
@@ -485,20 +516,25 @@ class Model_Factory_LSTM():
         valid_losses = []
         errCoverage = []
         iou_2d = []
-        errCenter_realworld =[]
+        errCenter_realworld = []
         iou_3d = []
 
+        # for experiment: output predicted trajectory
+        predicted_trajectory = []
         for i, (sementic, input_trajectory, target_trajectory) in enumerate(valid_loader):
-            print(i)
+            # print(i)
             sementic, input_trajectory, target_trajectory = Variable(sementic.cuda(async=True)), \
                                                             Variable(input_trajectory.cuda(async=True)), \
                                                             Variable(target_trajectory.cuda(async=True))
-            if cf.model_name == 'CNN_LSTM_To_FC':
+            if cf.model_name == 'CNN_LSTM_To_FC' or cf.model_name == 'DropoutCNN_LSTM_To_FC':
                 input = tuple([sementic, input_trajectory])
             else:
                 input = tuple([input_trajectory])
 
             output_trajectory = self.net(*input, future=cf.lstm_predict_frame)[-1]
+            # for experiment: output predicted trajectory
+            predicted_trajectory.append(output_trajectory.data.cpu().numpy())
+
             # cal loss
             loss = self.crit(output_trajectory, target_trajectory)
             valid_losses.append(loss.data[0])
@@ -514,6 +550,10 @@ class Model_Factory_LSTM():
             iou_3d.append(evalua_values[7])
             # output_trajectories.append(output)
             # target_trajectories.append(target_trajectory)
+        # for experiment: output predicted trajectory
+        path = '/media/samsumg_1tb/cvpr_trajectory_data_final/FrameToFrame_Shuffle/predicted_trajectory.npy'
+        np.save(path, np.array(predicted_trajectory))
+
 
         # loss mean
         track_plot = {}
@@ -521,6 +561,7 @@ class Model_Factory_LSTM():
         track_plot['iou_2d'] = iou_2d
         track_plot['errCenter_realworld'] = errCenter_realworld
         track_plot['iou_3d'] = iou_3d
+
 
         self.loss = np.array(valid_losses).mean()
         # print('Valid Loss', epoch, self.loss)
@@ -542,22 +583,26 @@ class Model_Factory_LSTM():
             print('Valid Loss', epoch, self.loss)
             print('2D aveErrCoverage: %.4f, aveErrCenter: %.2f' % (aveErrCoverage, aveErrCenter))
             print('3D aveErrCoverage_realworld: %.4f, aveErrCenter_realworld: %.4f' % (
-            aveErrCoverage_realworld, aveErrCenter_realworld))
+                aveErrCoverage_realworld, aveErrCenter_realworld))
 
             model_checkpoint = 'Epoch:%2d_net_Coverage:%.4f_Center:%.2f_CoverageR:%.4f_CenterR:%.2f.PTH' % \
                                (epoch, aveErrCoverage, aveErrCenter, aveErrCoverage_realworld, aveErrCenter_realworld)
-            np.save('/media/samsumg_1tb/synthia/SYNTHIA-SEQS-01/tracking_plot/' + 'valid', track_plot)
-
+            if epoch == cf.n_epochs:
+                # np.save(os.path.join(self.exp_dir, 'valid'), tuple(track_plot))
+                with open(os.path.join(self.exp_dir, 'valid.pickle'), 'wb') as handle:
+                    pickle.dump(track_plot, handle, protocol=2)
 
         else:
             print('############### TEST #############################################')
             print('Test Loss', epoch, self.loss)
             print('2D aveErrCoverage: %.4f, aveErrCenter: %.2f' % (aveErrCoverage, aveErrCenter))
             print('3D aveErrCoverage_realworld: %.4f, aveErrCenter_realworld: %.4f' % (
-            aveErrCoverage_realworld, aveErrCenter_realworld))
+                aveErrCoverage_realworld, aveErrCenter_realworld))
             model_checkpoint = 'Final_test:Coverage:%.4f_Center:%.2f_CoverageR:%.4f_CenterR:%.2f.PTH' % \
                                (aveErrCoverage, aveErrCenter, aveErrCoverage_realworld, aveErrCenter_realworld)
-            np.save('/media/samsumg_1tb/synthia/SYNTHIA-SEQS-01/tracking_plot/' + 'test', track_plot)
+            # np.save(os.path.join(self.exp_dir, 'test'), tuple(track_plot))
+            with open(os.path.join(self.exp_dir, 'test.pickle'), 'wb') as handle:
+                pickle.dump(track_plot, handle, protocol=2)
 
             # Plot scores
             # self.aveErrCoverage.append(aveErrCoverage.mean())
@@ -572,5 +617,3 @@ class Model_Factory_LSTM():
         #     return self.loss.data.cpu().numpy()[0]
         # else:
         return self.loss
-
-
