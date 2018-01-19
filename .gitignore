@@ -12,13 +12,26 @@
 /Summaries
 /Experiments
 /paper/cvpr2018/*
+/paper/cvpr2018RebuttalKit/*
+/paper/Video_making/
 
-!/paper/cvpr2018/cvpr2018_draft.tex
-!/paper/cvpr2018/egbib.bib
-!/paper/cvpr2018/ieee.bst
-!/paper/cvpr2018/cvpr.sty
-!/paper/cvpr2018/figures
 # ECO matlab folder ignore
 /code_base/ECO/
 /code_base/ECO/feature_extraction/networks
 /code_base/ECO/sequences
+
+# paper writing
+!/paper/cvpr2018/cvpr2018_3790.tex
+!/paper/cvpr2018/cvpr2018_3790.pdf
+!/paper/cvpr2018/egbib.bib
+!/paper/cvpr2018/ieee.bst
+!/paper/cvpr2018/cvpr.sty
+!/paper/cvpr2018/figures
+
+# rebuttal
+!/paper/cvpr2018RebuttalKit/egrebuttal_3790.tex
+!/paper/cvpr2018RebuttalKit/egrebuttal_3790.pdf
+!/paper/cvpr2018RebuttalKit/egbib.bib
+!/paper/cvpr2018RebuttalKit/ieee.bst
+!/paper/cvpr2018RebuttalKit/cvpr.sty
+

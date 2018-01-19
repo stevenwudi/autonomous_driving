@@ -1,0 +1,122 @@
+\documentclass[10pt,twocolumn,letterpaper]{article}
+
+\usepackage{cvpr}
+\usepackage{times}
+\usepackage{epsfig}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amssymb}
+% Include other packages here, before hyperref.
+
+% If you comment hyperref and then uncomment it, you should delete
+% egpaper.aux before re-running latex.  (Or just hit 'q' on the first latex
+% run, let it finish, and you should be clear).
+\usepackage[pagebackref=true,breaklinks=true,letterpaper=true,colorlinks,bookmarks=false]{hyperref}
+
+%%%%%%%%% PAPER ID  - PLEASE UPDATE
+\def\cvprPaperID{3790} % *** Enter the CVPR Paper ID here
+\def\httilde{\mbox{\tt\raisebox{-.5ex}{\symbol{126}}}}
+
+\begin{document}
+
+%%%%%%%%% TITLE - PLEASE UPDATE
+\title{\LaTeX\ Guidelines for Author Response}  % **** Enter the paper title here
+
+\maketitle
+\thispagestyle{empty}
+
+
+%%%%%%%%% BODY TEXT - ENTER YOUR RESPONSE BELOW
+\section{Introduction}
+We would first like to thank the reviewers for your valuable feedback which helped us to improve the analysis of the proposed method and the overall presentation of the paper. 
+Due to space constraints with significant improvement made to the new version of the paper, we would kindly ask reviewers refer the \href{http://www.texample.net/tikz/resources/}{new version of the paper}. we address only the major criticisms below.
+
+
+\subsection{Common}
+\noindent \textbf{1) Unlike stated in the paper, vehicle tracking in images has been studied for years. There are summary papers (e.g. VEHICLE DETECTION AND TRACKING TECHNIQUES: A CONCISE REVIEW Raad Ahmed Hadi1,2 , Ghazali Sulong1 and Loay Edwar George, SIPIJ). There is no mention of prior art.}
+
+\noindent \textbf{Where are comparisons with other activity forecasting/trajectory prediction works?}
+
+\noindent \textbf{I think the authors should reimplement SocialLSTM for 2D data (Stanford UAV dataset seems to be a 2D standard prediction task -- just throw away images and just use the xy plane coordinates, e.g. center of detected bounding box).}
+\noindent \textbf{There is no comparison to existing methods, the authors mention that this is due to the lack of existing datasets.}
+
+
+
+\noindent \textbf{Who else has experimented on the SYNTHIA dataset? Or are the authors the first ones? Are the authors releasing a specific publicly-available prediction challenge based on SYNTHIA?}
+\noindent \textbf{It is not clear if the dataset is released with the paper.}
+
+Currently, experiments on the SYNTHIA dataset~\cite{HernandezBMVC17,ros2016synthia} focus on single frame, static images for semantic labeling or scene representation. To our knowledge, our paper is the first attempt to utilize \textbf{\emph{continuous video streams}} for the prediction problems. We would like to release publicly-available prediction challenge based on Synthia to spur future research upon paper publication.
+\subsection{R1}
+
+
+\noindent \textbf{They adopt fDSST[6] and use it to track detections. What is the novelty, except for the implementation with specific parameters?}
+
+\noindent \textbf{3) 3 very similar LSTMs with different input}
+
+\noindent \textbf{4) The one LSTM with more information performs better. That is not surprising and not a real insight.}
+
+\noindent \textbf{There are a number of inaccuracies}
+\noindent \textbf{e.g. line 044, where the authors state that automated driving models are either neural networks or controllers with if-then-else rules}
+\noindent \textbf{or line 304, that states that the closest related work to their tracking is an ego-motion regression by Xu,Gao and Darrell}
+\noindent \textbf{Line 471 calls Synthia images photo-realistic.}
+
+\noindent \textbf{The actual contributions, and evaluation could be clearer. It took some time to understand the different metrics for detection and tracking as they are supposed to be fused.}
+
+
+\noindent \textbf{The actual contribution is not significant enough and could be described more clearly.}
+
+\subsection{R2}
+
+
+
+\noindent \textbf{SocialLSTM used “Avg. disp. Error”, “Avg. non-linear disp. error” , and “final disp. Error” What was the justification for the metrics the authors chose?}
+
+\noindent \textbf{Line 124 - The authors discuss a "lack of proper metrics for evaluating the temporal prediction result." How are the current metrics poorly suited to the task? What would be better?}
+
+\noindent \textbf{In the SocialLSTM paper’s Related Work section, there are about 20 sources that focus on “Activity forecasting”}
+
+\noindent \textbf{The details about the fusion of “location” and “semantic” information into the LSTM hidden state seemed missing (was a bit vague). A figure of the architecture of the SEG-LSTM would go a long way in clarifying this (or are the authors using Xu et al.'s "End-to-end Learning of Driving Models from Large-scale Video Datasets" FCN-LSTM from Trevor Darrell's group?).}
+
+\noindent \textbf{How is this more than just an engineering pipeline, combining tracking (distilling bounding boxes to coordinates), and then adding an LSTM? SocialLSTM already did the second part in principle.}
+
+\noindent \textbf{I was a bit confused about why the “tracking-by-detection” framework was novel -- how is it different from “Tracking-learning-detection” (TLD),from Z. Kalal, K. Mikolajczyk, and J. Matas. In TPAMI 2012?}
+
+\noindent \textbf{Why are scene semantics privileged (which you also call “auxiliary”) information? If the pipeline relies on fusing the “location” and “semantic” stream, if privileged information is missing at test time, then won’t the pipeline break? (privileged information is usually present at train time, but absent at test time).}
+
+ \noindent \textbf{Can multiple objects be tracked at once, or just one? The video in the supplementary material only showed one object being tracked. What was the average number of objects in each SYNTHIA scene frame?}
+
+ \noindent \textbf{The focus of the paper seems a bit unclear: apparently, the goal is to “predict car’s future odometry given previous egomotion visual input”. But the paper is about prediction of other vehicles’ trajectories, not about predicting one’s own car odometry (which is different).}
+
+\noindent \textbf{I felt like the detection/tracking theme slightly bogs down the main focus of prediction in the paper. I think refocusing it on prediction would strengthen the argument.}
+
+
+\subsection{R3}
+\noindent \textbf{There are too many contributions. For example, I would combine 1 and 3 and maybe also 2 and 4. In general, it is better to have a few strong contributions than many weak ones.}
+\noindent \textbf{Section 3 is quite short and it seems that the tracking methodology would fit well here. In general a lot of methodology detail is actually in section 4 (implementation details). Maybe consider reorganizing a little bit.}
+
+\noindent \textbf{In a real car accurate depth information might not be available. Also, tracking and semantic segmentation results in the real world will probably be noisier than for synthetic data. Experiments on real data would make the results much stronger.}
+
+\noindent \textbf{Figure 6: It would be nice to have some state-of-the-art tracking results as reference e.g. ECO, STAPLE CA, SiamFC}
+
+\noindent \textbf{Do you think the results you obtained with the Synthia data will transfer to real-world data?}
+
+\noindent \textbf{Not exactly a request, but maybe something to consider for future work: There are photo-realistic simulators available now (CARLA, Sim4CV, etc.) which allow simulation of autonomous driving with ‘real’ physics and photo-realism similar to Synthia. It would be interesting to implement this system and evaluate ‘real-world’ performance.}
+
+\subsection{Original requirement}
+After receiving paper reviews, authors may optionally submit a rebuttal to address the reviewers' comments, which will be limited to a {\bf one page} PDF file.  Please follow the steps and style guidelines outlined below for submitting your author response.
+
+Note that the author rebuttal is optional and, following similar guidelines to previous CVPR conferences, it is meant to provide you with an opportunity to rebut factual errors or to supply additional information requested by the reviewers. It is NOT intended to add new contributions (theorems, algorithms, experiments) that were not included in the original submission and were not requested by the reviewers. You may optionally add a figure, graph or proof to your rebuttal to better illustrate your answer to the reviewers' comments.
+
+The rebuttal must adhere to the same blind-submission as the original submission and must comply with this rebuttal-formatted template.
+
+%-------------------------------------------------------------------------
+
+Author responses must be no longer than 1 page in length including any references and figures.  Overlength responses will simply not be reviewed.  This includes responses where the margins and formatting are deemed to have been significantly altered from those laid down by this style guide.  Note that this \LaTeX\ guide already sets figure captions and references in a smaller font.
+
+
+{\small
+\bibliographystyle{ieee}
+\bibliography{egbib}
+}
+
+\end{document}
