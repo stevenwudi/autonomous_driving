@@ -311,6 +311,7 @@ def calc_seq_err_robust(results, rect_anno, focal_length):
         aveErrCoverage_realworld = totalerrCoverage_realworld / float(seq_length)
         aveErrCenter_realworld = totalerrCenter_realworld / float(seq_length)
 
+
         aveErrCoverages.append(aveErrCoverage)
         aveErrCenters.append(aveErrCenter)
         errCenters.append(errCenter)
@@ -328,6 +329,7 @@ def calc_seq_err_robust(results, rect_anno, focal_length):
 
     return aveErrCoverage, aveErrCenter, errCenters, iou_2ds, \
            aveErrCoverage_realworld, aveErrCenter_realworld, errCenter_realworlds, iou_3ds
+
 
 def ssd_2d(x, y):
     s = 0

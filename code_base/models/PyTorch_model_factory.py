@@ -23,27 +23,6 @@ import json
 def adjust_learning_rate(lr, optimizer, epoch, lastupdate_epoch, train_losses, decrease_epoch=10):
     """Sets the learning rate to the initial LR decayed by 10 every 30 epochs"""
 
-    # if epoch - lastupdate_epoch < 10:
-    #     return optimizer.param_groups[-1]['lr'], lastupdate_epoch
-    #
-    # eva_losses = np.array(train_losses[-10:])
-    #
-    # max_value = eva_losses.max()
-    # min_value = eva_losses.min()
-    # # max_loction = eva_losses.argmax()
-    # # min_location = eva_losses.argmin()
-    #
-    # if np.abs(max_value - min_value) / max_value < 1e-3:
-    #     lr = optimizer.param_groups[-1]['lr']
-    #     lr = lr * 0.1
-    #
-    #     if lr >= 1.0e-6:
-    #         for param_group in optimizer.param_groups:
-    #             param_group['lr'] = lr
-    #         lastupdate_epoch = epoch
-    #     else:
-    #         lr = lr * 10
-
     if epoch > 0 and epoch%decrease_epoch == 0:
         lr = lr * (0.1 ** (epoch // decrease_epoch))
         if lr >= 1.0e-6:
