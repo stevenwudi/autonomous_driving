@@ -8,7 +8,7 @@ import os
 import imutils
 import json
 import h5py
-from code_base.tools.PyTorch_data_generator_car_trajectory import Dataset_Generators_Synthia_Car_trajectory
+from code_base.tools.PyTorch_data_generator_car_trajectory import Dataset_Generators_Synthia_Car_trajectory, Dataset_Generators_Synthia_Car_trajectory_NEW
 import pickle
 from scipy.misc import imresize
 from skimage.filters import threshold_otsu
@@ -477,6 +477,25 @@ def gt_collection_examintion(cf):
         # f.create_dataset('test_data', data=test_data)
         # f.close()
     # Finish
+    # Total train length is 10291, valid length is 1275, test length is 1294.
+    print(' ---> Finish experiment: ' + cf.exp_name + ' <---')
+
+
+def video_sequence_prediction(cf, model):
+    # Create the data generators
+    cf.batch_size_train = 1  # because we want to read every single image sequentially
+    dataset_path_list = cf.dataset_path
+    processed_list = os.listdir(cf.seg_img_path)
+    for dataset_path in dataset_path_list:
+        sequence_name = dataset_path.split('/')[-1]
+        cf.dataset_path = dataset_path
+        DG = Dataset_Generators_Synthia_Car_trajectory_NEW(cf)
+        train_set = DG.dataloader['train']
+        model.test_frame(train_set, cf, sequence_name)
+
+        if sequence_name == cf.draw_seq:
+            draw_selected_gt_car_trajectory(DG, cf, sequence_name, draw_image='image')
+
     # Total train length is 10291, valid length is 1275, test length is 1294.
     print(' ---> Finish experiment: ' + cf.exp_name + ' <---')
 
