@@ -1,5 +1,4 @@
 import argparse
-import os
 import sys
 import os
 os.environ['CUDA_VISIBLE_DEVICES'] = '2'
