@@ -123,6 +123,7 @@ class RandomHorizontalFlip(object):
             results = [image, label]
         return results
 
+
 class Normalize(object):
     """Given mean: (R, G, B) and std: (R, G, B),
     will normalize each channel of the torch.*Tensor, i.e.
@@ -142,6 +143,7 @@ class Normalize(object):
             return image,
         else:
             return {'image': img, 'label': label.long()}
+
 
 class Dataset_Generators_Synthia():
     """ Initially we use synthia dataset"""
@@ -233,7 +235,6 @@ class ImageDataGenerator_Synthia(Dataset):
         input_t[2].sub_(self.mean[2]).div_(self.std[2])
 
         return input_t, target_t
-
 
 
 class DataGenerator_Synthia_car_trajectory():

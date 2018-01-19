@@ -31,7 +31,7 @@ def process(cf):
 def main():
     # Get parameters from arguments
     parser = argparse.ArgumentParser(description='Model training')
-    parser.add_argument('-c', '--config_path', type=str, default='/home/stevenwudi/PycharmProjects/autonomous_driving/code_base/config/synthia_car_trajectory.py', help='Configuration file')
+    parser.add_argument('-c', '--config_path', type=str, default='/home/stevenwudi/PycharmProjects/autonomous_driving/code_base/config/synthia_complete_pipeline.py', help='Configuration file')
     arguments = parser.parse_args()
     assert arguments.config_path is not None, 'Please provide a path using -c config/pathname in the command line'
     print('\n > Start Time:')

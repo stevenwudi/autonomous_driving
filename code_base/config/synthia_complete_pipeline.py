@@ -5,7 +5,7 @@ sequence_name                = 'SYNTHIA-SEQS-01'
 car_detection                = False
 car_tracking                 = True
 tracker                      = 'dlib_dsst'  #['dlib_dsst', 'ECO_HC', 'KCF']
-draw_flag                    = True
+draw_flag                    = False
 car_detection_method         = 'ssd512'
 get_sequence_car_detection   = True
 get_sequence_car_tracking    = True
@@ -17,9 +17,7 @@ threshold_car_POR_end        = 1e-3  # threshold for car start tracking using pi
 minimum_detection_length     = 3
 
 data_path ='/home/stevenwudi/PycharmProjects/autonomous_driving/Datasets'
-
-sequence_name                = 'G'
-
+video_sequence_prediction = False
 
 ####  SSD parameters (currently, we only suppose keras with Tensorflow backend, TODO: use Pytorch!
 ssd_prior_boxes              = '/home/stevenwudi/PycharmProjects/autonomous_driving/code_base/models/prior_boxes_ssd512.pkl'
@@ -36,7 +34,7 @@ shared_path                  = '/home/public/synthia'
 dataset_name2                = None            # Second dataset name. None if not Domain Adaptation
 perc_mb2                     = None            # Percentage of data from the second dataset in each minibatch
 class_mode                   = problem_type
-collect_data                 = False
+collect_data                 = True
 get_ground_truth_sequence_car_trajectory = True  # flag to get get_ground_truth_sequence_car_trajectory
 formatting_ground_truth_sequence_car_trajectory = True
 draw_seq                                = 'SYNTHIA-SEQS-06-NIGHT'   # which sequence to draw, need to set the above two flags to False
