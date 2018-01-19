@@ -11,14 +11,9 @@ from torch.nn import functional as F
 from torchvision.utils import save_image
 from code_base.tools.logger import Logger
 from datetime import datetime
-import numpy as np
-
-import numpy as np
 from matplotlib import pyplot as plt
 import os
 import sys
-
-import json
 import numpy as np
 
 

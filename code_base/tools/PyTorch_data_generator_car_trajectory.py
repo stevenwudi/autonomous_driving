@@ -134,7 +134,7 @@ class Dataset_Generators_Synthia_Car_trajectory():
         self.std = cf.rgb_std
         # Load training set
         print('\n > Loading training set, currently we have only training set')
-        if not cf. video_sequence_prediction:
+        if not cf.video_sequence_prediction:
             dataloaders_single = {x: ImageDataGenerator_Synthia_Car_trajectory(
                 cf=cf,
                 transform=T.Compose([

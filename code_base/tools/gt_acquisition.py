@@ -14,6 +14,7 @@ from scipy.misc import imresize
 from skimage.filters import threshold_otsu
 from skimage.filters import threshold_yen
 from skimage.filters import threshold_li
+import collections
 
 
 def convert_key_to_string(car_tracking_dict):
@@ -648,6 +649,17 @@ def get_sequence_car_tracking(DG, cf, sequence_name, show_set='train'):
     """
     print("Processing sequence: "+cf.dataset_path)
     train_set = DG.dataloader[show_set]
+    if cf.tracker == 'fDSST':
+        import time
+        from code_base.tools.bmvc_2014_pami_2014_fDSST import bmvc_2014_pami_2014_fDSST
+        print('starting matlab engine...')
+        start_time = time.time()
+        import matlab.engine
+        import matlab
+        matlab_eng = matlab.engine.start_matlab("-nojvm -nodisplay -nosplash")
+        matlab_eng.addpath('./tools/piotr_hog_matlab')
+        total_time = time.time() - start_time
+        print('matlab engine started, used %.2f second'%(total_time))
 
     car_detection_path_list = cf.savepath.split('/')
     car_detection_path_list[-2] = 'car_detection'  # this is a hard coded script, sorry
@@ -674,19 +686,24 @@ def get_sequence_car_tracking(DG, cf, sequence_name, show_set='train'):
         classes = classes_torch.numpy().astype('uint8')
         depth = depth_torch.numpy()
         img_name = sample_batched['img_name'][0]  # because for GT construction, the batch size is always 1
-        car_tracking_dict = get_car_tracking_box(cf, input_image, depth, car_tracking_dict, img_name, car_detect_dict)
+        if cf.tracker == 'fDSST':
+            car_tracking_dict = get_car_tracking_box(cf, input_image, depth, car_tracking_dict, img_name,
+                                                     car_detect_dict, matlab_eng, bmvc_2014_pami_2014_fDSST)
+        else:
+            car_tracking_dict = get_car_tracking_box(cf, input_image, depth, car_tracking_dict, img_name, car_detect_dict)
 
     # we sort the dict by keys
-    car_tracking_dict_sorted = collections.OrderedDict(sorted(car_tracking_dict.items()))
-    json_file_path = os.path.join(cf.savepath, sequence_name+'.json')
-    with open(json_file_path, 'w') as fp:
-        json.dump(car_tracking_dict_sorted, fp, indent=4)
-    print('Saving: '+json_file_path)
+    for key in car_tracking_dict.keys():
+        del car_tracking_dict[key]['tracker']
+
+    npy_file_path = os.path.join(cf.savepath, sequence_name)
+    np.save(npy_file_path, car_tracking_dict)
 
     return car_tracking_dict
 
 
-def get_car_tracking_box(cf, input_image, depth, car_tracking_dict, img_name, car_detect_dict):
+def get_car_tracking_box(cf, input_image, depth, car_tracking_dict, img_name, car_detect_dict, matlab_eng=None,
+                         bmvc_2014_pami_2014_fDSST=None):
     from code_base.tools.yolo_utils import box_iou, BoundBox
     if cf.tracker == 'dlib_dsst':
         import dlib
@@ -701,6 +718,7 @@ def get_car_tracking_box(cf, input_image, depth, car_tracking_dict, img_name, ca
         print("Elapsed time is " + str(time.time() - tic) + " seconds.")
         tic = time.time()
     elif cf.tracker == 'KCF':
+        # NOT implemented yet
         import cv2
         KCF_tracker = cv2.Tracker_create('KCF')
 
@@ -741,6 +759,17 @@ def get_car_tracking_box(cf, input_image, depth, car_tracking_dict, img_name, ca
                 elif cf.tracker == 'KCF':
                     bbox = (xdmin, ydmin, xdmax-xdmin, ydmax-ydmin)
                     car_tracking_dict[CAR_ID]['tracker'] = KCF_tracker.init(input_image.transpose(1, 2, 0), bbox)
+                elif cf.tracker == 'fDSST':
+                    w, h = xdmax-xdmin, ydmax-ydmin
+                    bbox = [xdmin, ydmin, w, h]
+                    car_tracking_dict[CAR_ID]['tracker'] = bmvc_2014_pami_2014_fDSST(number_of_scales=17,
+                                                                                     padding=2.0,
+                                                                                     interpolate_response=True,
+                                                                                     kernel='linear',
+                                                                                     compressed_features='gray_hog',
+                                                                                     matlab_eng=matlab_eng)
+                    car_tracking_dict[CAR_ID]['tracker'].train(input_image.transpose(1, 2, 0), bbox)
+
                 CAR_ID += 1
 
     else:
@@ -754,8 +783,8 @@ def get_car_tracking_box(cf, input_image, depth, car_tracking_dict, img_name, ca
                     pos = car_tracking_dict[car_idx]['tracker'].get_position()
                     bx.x, bx.y, bx.c = pos.left(), pos.top(), car_idx
                     bx.w, bx.h = pos.width(), pos.height()
-                elif cf.tracker == 'KCF':
-                    ok, bbox = KCF_tracker.update(input_image.transpose(1, 2, 0))
+                elif cf.tracker == 'fDSST':
+                    bbox = car_tracking_dict[car_idx]['tracker'].detect(input_image.transpose(1, 2, 0), 1)
                     bx.x, bx.y, bx.c = bbox[0], bbox[1], car_idx
                     bx.w, bx.h = bbox[2], bbox[3]
                 boxes_pred.append(bx)
@@ -796,6 +825,10 @@ def get_car_tracking_box(cf, input_image, depth, car_tracking_dict, img_name, ca
                     bbox = (int(gx.x), int(gx.y), int(gx.w), int(gx.h))
                     car_tracking_dict[matched_idx[t_idx]]['tracker'].init(
                         input_image.transpose(1, 2, 0), bbox)
+                elif cf.tracker == 'fDSST':
+                    bbox = (int(gx.x), int(gx.y), int(gx.w), int(gx.h))
+                    car_tracking_dict[matched_idx[t_idx]]['tracker'].train(
+                        input_image.transpose(1, 2, 0), bbox)
 
                 car_tracking_dict[matched_idx[t_idx]]['last_matched_detection_frame'] = img_name
                 if len(np.nonzero(matched_iou)) > 1:
@@ -835,6 +868,16 @@ def get_car_tracking_box(cf, input_image, depth, car_tracking_dict, img_name, ca
                     elif cf.tracker == 'KCF':
                         bbox = (xdmin, ydmin, xdmax-xdmin, ydmax-ydmin)
                         car_tracking_dict[CAR_ID]['tracker'] = KCF_tracker.init(input_image.transpose(1, 2, 0), bbox)
+                    elif cf.tracker == 'fDSST':
+                        bbox = (xdmin, ydmin, xdmax - xdmin, ydmax - ydmin)
+                        car_tracking_dict[CAR_ID]['tracker'] = car_tracking_dict[CAR_ID]['tracker'] = bmvc_2014_pami_2014_fDSST(number_of_scales=17,
+                                                                                     padding=2.0,
+                                                                                     interpolate_response=True,
+                                                                                     kernel='linear',
+                                                                                     compressed_features='gray_hog',
+                                                                                     matlab_eng=matlab_eng)
+                        car_tracking_dict[CAR_ID]['tracker'].train(input_image.transpose(1, 2, 0), bbox)
+
 
         # we update the tracked dictionary here:
         for car_idx in car_tracking_dict.keys():
@@ -843,8 +886,9 @@ def get_car_tracking_box(cf, input_image, depth, car_tracking_dict, img_name, ca
                     pos = car_tracking_dict[car_idx]['tracker'].get_position()
                     xdmin, ydmin, xdmax, ydmax = int(pos.left()), int(pos.top()), int(pos.left() + pos.width()), int(
                         pos.top() + pos.height())
-                elif cf.tracker == 'KCF':
-                    ok, bbox = KCF_tracker.update(input_image.transpose(1, 2, 0))
+
+                elif cf.tracker == 'fDSST':
+                    bbox = car_tracking_dict[car_idx]['tracker'].detect(input_image.transpose(1, 2, 0), 1)
                     xdmin, ydmin, xdmax, ydmax = int(bbox[0]), int(bbox[1]), int(bbox[0] + bbox[2]), int(bbox[1] + bbox[3])
 
                 xdmin, ydmin, xdmax, ydmax = max(0, xdmin), max(0, ydmin), min(w, xdmax), min(h, ydmax)
@@ -886,12 +930,12 @@ def get_car_tracking_box(cf, input_image, depth, car_tracking_dict, img_name, ca
                     )
                     tracking_figure_axes.add_patch(tracking_rect)
                     tracking_figure_axes.annotate(str(car_idx), xy=(pos.left(), pos.top() + 20), color='red')
-                elif cf.tracker == 'KCF':
-                    ok, bbox = KCF_tracker.update(input_image.transpose(1, 2, 0))
+                elif cf.tracker == 'fDSST':
+                    xdmin, ydmin, xdmax, ydmax = int(bbox[0] * w), int(bbox[1] * h), int(bbox[0] + bbox[2]) * w, int(bbox[1] + bbox[3])*h
                     tracking_rect = Rectangle(
-                        xy=(int(bbox[0]), int(bbox[1])),
-                        width=int(bbox[2]),
-                        height=int(bbox[3]),
+                        xy=(int(xdmin), int(ydmin)),
+                        width=int(xdmax-xdmin),
+                        height=int(ydmax-ydmin),
                         facecolor='none',
                         edgecolor='r',
                     )
