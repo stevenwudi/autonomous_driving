@@ -28,42 +28,52 @@
 
 %%%%%%%%% BODY TEXT - ENTER YOUR RESPONSE BELOW
 \section{Introduction}
-We would first like to thank the reviewers for your valuable feedback which helped us to improve the analysis of the proposed method and the overall presentation of the paper. 
+We would first like to thank the reviewers for your valuable feedback which helped us to improve the analysis of the proposed method and the overall presentation of the paper.
 Due to space constraints with significant improvement made to the new version of the paper, we would kindly ask reviewers refer the \href{http://www.texample.net/tikz/resources/}{new version of the paper}. we address only the major criticisms below.
 
 
-\subsection{Common}
-\noindent \textbf{1) Unlike stated in the paper, vehicle tracking in images has been studied for years. There are summary papers (e.g. VEHICLE DETECTION AND TRACKING TECHNIQUES: A CONCISE REVIEW Raad Ahmed Hadi1,2 , Ghazali Sulong1 and Loay Edwar George, SIPIJ). There is no mention of prior art.}
 
-\noindent \textbf{Where are comparisons with other activity forecasting/trajectory prediction works?}
+We have rewritten our contributions in Section 1 and make our contributions more clearly.
+
+
+We have restructured our methodology in section 3 and further explain the intuition behind the chosen architecture. 
+
+
+\subsection{Common}
 
 \noindent \textbf{I think the authors should reimplement SocialLSTM for 2D data (Stanford UAV dataset seems to be a 2D standard prediction task -- just throw away images and just use the xy plane coordinates, e.g. center of detected bounding box).}
+
+\noindent We have re-implemented Social-LSTM for 2D data. blablabla details...
+
+\noindent \textbf{1) Unlike stated in the paper, vehicle tracking in images has been studied for years. There are summary papers (e.g. VEHICLE DETECTION AND TRACKING TECHNIQUES: A CONCISE REVIEW Raad Ahmed Hadi1,2 , Ghazali Sulong1 and Loay Edwar George, SIPIJ). There is no mention of prior art.}
+\noindent \textbf{Where are comparisons with other activity forecasting/trajectory prediction works?}
 \noindent \textbf{There is no comparison to existing methods, the authors mention that this is due to the lack of existing datasets.}
 
+We have restructured our related works. Specifically, we have supplemented works on activity forecasting/trajectory prediction works in the ``RNN for sequence prediction" part.
 
 
 \noindent \textbf{Who else has experimented on the SYNTHIA dataset? Or are the authors the first ones? Are the authors releasing a specific publicly-available prediction challenge based on SYNTHIA?}
 \noindent \textbf{It is not clear if the dataset is released with the paper.}
 
-Currently, experiments on the SYNTHIA dataset~\cite{HernandezBMVC17,ros2016synthia} focus on single frame, static images for semantic labeling or scene representation. To our knowledge, our paper is the first attempt to utilize \textbf{\emph{continuous video streams}} for the prediction problems. We would like to release publicly-available prediction challenge based on Synthia to spur future research upon paper publication.
-\subsection{R1}
+\noindent \textbf{There is no comparison to existing methods, the authors mention that this is due to the lack of existing datasets.}
 
+\noindent Currently, experiments on the SYNTHIA dataset~\cite{HernandezBMVC17,ros2016synthia} focus on single frame, static images for semantic labeling or scene representation. To our knowledge, our paper is the first attempt to utilize \textbf{\emph{continuous video streams}} for the prediction problems. We would like to release publicly-available prediction challenge based on Synthia to spur future research upon paper publication.
 
+\noindent \textbf{I was a bit confused about why the “tracking-by-detection” framework was novel -- how is it different from “Tracking-learning-detection” (TLD),from Z. Kalal, K. Mikolajczyk, and J. Matas. In TPAMI 2012?}
+\noindent \textbf{Figure 6: It would be nice to have some state-of-the-art tracking results as reference e.g. ECO, STAPLE CA, SiamFC}
 \noindent \textbf{They adopt fDSST[6] and use it to track detections. What is the novelty, except for the implementation with specific parameters?}
 
-\noindent \textbf{3) 3 very similar LSTMs with different input}
+\noindent  Most of the modern trackers focus on the problem of ``class-agnostic" generic object tracking. In order to adapt to temporal changes, a continuous learning strategy is applied, where the model is updated rigorously in every frame. Such update is excessive and sensitive to sudden changed caused by, \emph{e.g.}, scale variations, deformations, and out-of-plane rotations. This excessive update strategy cause both lower frame-rates and degradation of robustness due to over-fitting to the recent frames~\cite{danelljan2017eco}.
+In the context of autonomous driving, however, we know in advance the classes of object of interests for tracking (\emph{e.g.}, cars, pedestrians, cyclists). Therefore, with this extra source of information, we propose to use the neural nets object detection result as a more robust template to update the tacker's model to overcome the problem of model drifting. Hence the tracker is served solely as instance associator for the traffic participant.
 
+
+\subsection{R1}
+\noindent \textbf{3) 3 very similar LSTMs with different input}
 \noindent \textbf{4) The one LSTM with more information performs better. That is not surprising and not a real insight.}
 
-\noindent \textbf{There are a number of inaccuracies}
-\noindent \textbf{e.g. line 044, where the authors state that automated driving models are either neural networks or controllers with if-then-else rules}
-\noindent \textbf{or line 304, that states that the closest related work to their tracking is an ego-motion regression by Xu,Gao and Darrell}
-\noindent \textbf{Line 471 calls Synthia images photo-realistic.}
-
-\noindent \textbf{The actual contributions, and evaluation could be clearer. It took some time to understand the different metrics for detection and tracking as they are supposed to be fused.}
+\noindent Explain the intuition....
 
 
-\noindent \textbf{The actual contribution is not significant enough and could be described more clearly.}
 
 \subsection{R2}
 
@@ -71,7 +81,7 @@ Currently, experiments on the SYNTHIA dataset~\cite{HernandezBMVC17,ros2016synth
 
 \noindent \textbf{SocialLSTM used ``Avg. disp. Error", ``Avg. non-linear disp. error" , and ``final disp. Error" What was the justification for the metrics the authors chose?}
 
-\noindent The ``Average displacement error" is 
+\noindent The ``average displacement error" is essentially the same as the ``center error" in Tab.3 of our paper and the subtle difference is that the former is in unit space and the latter is in pixel space. Similarly ``Final displacement error" is the last frame's ``center error" is unit space. ``average non-linear displacement error"
 
 \noindent \textbf{Line 124 - The authors discuss a "lack of proper metrics for evaluating the temporal prediction result." How are the current metrics poorly suited to the task? What would be better?}
 
@@ -81,7 +91,7 @@ Currently, experiments on the SYNTHIA dataset~\cite{HernandezBMVC17,ros2016synth
 
 \noindent \textbf{How is this more than just an engineering pipeline, combining tracking (distilling bounding boxes to coordinates), and then adding an LSTM? SocialLSTM already did the second part in principle.}
 
-\noindent \textbf{I was a bit confused about why the “tracking-by-detection” framework was novel -- how is it different from “Tracking-learning-detection” (TLD),from Z. Kalal, K. Mikolajczyk, and J. Matas. In TPAMI 2012?}
+
 
 \noindent \textbf{Why are scene semantics privileged (which you also call “auxiliary”) information? If the pipeline relies on fusing the “location” and “semantic” stream, if privileged information is missing at test time, then won’t the pipeline break? (privileged information is usually present at train time, but absent at test time).}
 
@@ -96,13 +106,16 @@ Currently, experiments on the SYNTHIA dataset~\cite{HernandezBMVC17,ros2016synth
 \noindent \textbf{There are too many contributions. For example, I would combine 1 and 3 and maybe also 2 and 4. In general, it is better to have a few strong contributions than many weak ones.}
 \noindent \textbf{Section 3 is quite short and it seems that the tracking methodology would fit well here. In general a lot of methodology detail is actually in section 4 (implementation details). Maybe consider reorganizing a little bit.}
 
+\noindent We thank the reviewer for the very meticulous review.  We have refined our contributions in the introduction section and restructured the methodology section. We have also corrected the grammatical misuses accordingly.
+
+
+
+
 \noindent \textbf{In a real car accurate depth information might not be available. Also, tracking and semantic segmentation results in the real world will probably be noisier than for synthetic data. Experiments on real data would make the results much stronger.}
-
-\noindent \textbf{Figure 6: It would be nice to have some state-of-the-art tracking results as reference e.g. ECO, STAPLE CA, SiamFC}
-
 \noindent \textbf{Do you think the results you obtained with the Synthia data will transfer to real-world data?}
-
 \noindent \textbf{Not exactly a request, but maybe something to consider for future work: There are photo-realistic simulators available now (CARLA, Sim4CV, etc.) which allow simulation of autonomous driving with ‘real’ physics and photo-realism similar to Synthia. It would be interesting to implement this system and evaluate ‘real-world’ performance.}
+
+\noindent We have indeed noticed the recently released photo-realistic simulators CARLA~\cite{CARLA} and Sim4CV~\cite{Sim4CV}. And we found that CARLA is especially suited as a further extension to verify our proposed system due to the availability of continuous video streams and ground truth segmentation. In terms of transferring to real-world data, from the semantic segmentation results of Synthia, we have observed that model trained on synthetic dataset produced good segmentations by itself on real datasets, and dramatically boosted accuracy in combination with real data. Hence, we believe the hybrid of synthetic data and real-world data would be the most data efficient and promising way for the model generalization. Model verification on public real-world datasets, e.g., Comma.ai~\cite{santana2016learning} Udacity~\cite{udacity} dataset would be our forthcoming imminent works.
 
 
 {\small
