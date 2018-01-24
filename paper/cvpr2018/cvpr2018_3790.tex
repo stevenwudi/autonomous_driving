@@ -246,7 +246,14 @@ where $d$ is distance between  the center of the camera lens and the center of t
 
 %Auxiliary information $\mathcal{A}$ could be scene semantics to regularize the path of future trajectory or car pose information to decide whether it's an approaching car or a parallel driving car.
 
-
+\begin{figure}[t]
+        \centering
+        \includegraphics[width=0.45\textwidth]{figures/network_detail.pdf}
+        \caption{
+        \small{TODO: SEGLSTM HERE!}
+        }
+        \label{fig:SEGLSTM}
+\end{figure}
 \subsection{Sequence modeling}
 
 For predicting the vehicle's future trajectory, we compare three temporal models based on LSTM cells. A ``social pooling tensor" that implicitly reasons about the motion of neighboring traffic participants can be inserted into existing recurrent network architectures without any extra training supervision or modification to the optimization process as shown in Fig.~\ref{fig:lstm}. The first two models take sequential 3D occupancy as input. In the third model, we  explore using semantic segmentation as a side ``auxiliary" information $\mathcal{A}$ to better guide the trajectory prediction.
@@ -274,9 +281,14 @@ j_{t+1, \ldots, T_F}, \leftarrow  \bm{\mathcal{M}}(j_H): \mathcal{J_H}
 \end{equation}
 The whole sequence inference paradigm is more stable than the first FtF approach because of the elimination of the dependency of previous token. Such dependency will introduce the discrepancy between how the model is used at training and inference. Inference with the whole sequence will generate smoother predictions.
 
+
+
+
+
+
 \vspace{\baselineskip}
 \noindent \textbf{SEG-LSTM model:}
- takes advantages of scene semantics from  historical frames as auxiliary information $\mathcal{A}$. The second LSTM layer fuses the output from the bottom-most LSTM that encodes co-ordinates embeddings with higher level semantic information. Semantic inputs are one-hot encoded images with channel number $\mathcal{C}$ as the number of semantic categories  as in Fig.[????]. The higher level semantic is extracted from the semantic input through a four-layer CNN, producing a joint representation of the semantic auxiliary information and the historical trajectory.
+ takes advantages of scene semantics from  historical frames as auxiliary information $\mathcal{A}$. The second LSTM layer fuses the output from the bottom-most LSTM that encodes co-ordinates embeddings with higher level semantic information. Semantic inputs are one-hot encoded images with channel number $\mathcal{C}$ as the number of semantic categories  as in Fig.~\ref{fig:SEGLSTM}. The higher level semantic is extracted from the semantic input through a four-layer CNN, producing a joint representation of the semantic auxiliary information and the historical trajectory.
  
  As described above, the input in the form of 3D occupancy has only six dimensions: $[x, y, w, h, d_{min}, d_{max}]$ encoding the co-ordinates information. So the bottom-most LSTM not only can learn the temporal information between time-varying trajectories,  but also can balance input dimensions of both trajectory information and the semantic information.
 %Results show that the SEG-LSTM model performs better than the other two temporal model.
@@ -482,22 +494,22 @@ We adopt the state-of-the-art semantic segmentation networks: Dilated Residual N
        \centering
         \begin{subfigure}[c]{0.24\textwidth}
         \centering
-                \includegraphics[width=4cm,height=3cm, clip]{figures/precision_plot_2d.png}
+                \includegraphics[width=4.2cm,height=3.5cm, clip]{figures/precision_plot_2d.png}
     \caption{\small{2D Precision plot}}
         \end{subfigure}
         \begin{subfigure}[c]{0.24\textwidth}
         \centering
-                \includegraphics[width=4cm,height=3cm, clip]{figures/success_plot_2d.png}
+                \includegraphics[width=4.2cm,height=3.5cm, clip]{figures/success_plot_2d.png}
         \caption{\small{2D success plot}}
         \end{subfigure}
        \begin{subfigure}[c]{0.24\textwidth}
         \centering
-                \includegraphics[width=4cm,height=3cm, clip]{figures/precision_plot_3d_20cm.png}
+                \includegraphics[width=4.2cm,height=3.5cm, clip]{figures/precision_plot_3d_20cm.png}
     \caption{\small{3D precision plot}}
         \end{subfigure}
                \begin{subfigure}[c]{0.24\textwidth}
         \centering
-                \includegraphics[width=4cm,height=3cm, clip]{figures/success_plot_3d.png}
+                \includegraphics[width=4.2cm,height=3.5cm, clip]{figures/success_plot_3d.png}
         \caption{\small{3D Success plot}}
         \end{subfigure}
         
