@@ -55,7 +55,7 @@ Shenzhen University\thanks{Shenzhen Key Lab of Advanced Telecommunication and In
 Vision-based deep neural networks are crucial components for autonomous driving in terms of visual understanding and decision making.
 These models need to be temporally consistent and visually interpretable.
 Most recent works focus on using static images for understanding visual semantics, ignoring the temporal consistency of driving conditions; or adopt end-to-end architectures for learning the pilot networks, providing limited interpretability.
-In this paper, we raise the question of ``can we predict the car's future odometry given previous egomotion visual input?".
+In this paper, we raise the question of ``can we predict other traffic participant's future trajectory given previous egomotion visual input?".
 The proposed system stems from the issue of human driver reaction time in the autonomous driving context.
 Our dual-staged model firstly applies modern convolutional object detectors for spotting traffic participants (i.e., cars in this paper) and robustly tracks the targets of interest.
 Then, a novel SEG-LSTM network is incorporated to fuse the multiple-streams from past frames and then predict targets' future trajectories.
@@ -71,7 +71,7 @@ We also show the effectiveness of combining various levels of abstractions(e.g.,
         \centering
         \includegraphics[width=0.45\textwidth]{figures/pull_figure.pdf}
         \caption{ \small{
-        We propose a system to predict future trajectories of vehicles. Given historical information, obtained by detection, tracking and semantic segmentation, a multi-stream Long Short Term Memory (LSTM)  based network is trained to generate future trajectory.}}
+        We propose a system to predict future trajectories of vehicles. Given historical information, obtained by detection, tracking and semantic segmentation, a multi-stream recurrent neural network is trained to generate future trajectory.}}
         \label{fig:pull_figure}
 \end{figure}
 %\textbf{\emph{1.1 What is the problem?}}
@@ -113,7 +113,7 @@ In our approach, there are three key components: traffic participants detection,
 \item We construct a time-series dataset for vehicle trajectory prediction based on the SYNTHIA dataset~\cite{ros2016synthia}\footnote{Dataset will be released upon paper publication.} and verify the feasibility of predicting vehicles' future trajectories for assisting mediated perception.
 
 \item We take advantage of various levels of abstractions from multiple streams via recurrent network based temporal models and demonstrate the effectiveness of using ``auxiliary information"(\emph{e.g.}, scene semantics) further boost the prediction accuracy.
-    
+
 \item Preliminary results by incorporating ``social" factor demonstrate the potential of learning common sense rules with neighboring traffic participants in complex real world  environment.
 
 \end{itemize}
@@ -177,12 +177,12 @@ In the context of autonomous driving, however, we know in advance the classes of
 %\noindent \textbf{RNN for sequence prediction}
 
 %Recently, RNN(recurrent network) and its variant LSTM(long short-term memory) have been successfully used in autonomous driving, due to its advantages for modeling sequential data in vision problems.
-\noindent \textbf{Activity forecasting} Activity forecasting is the task of predicting the motion or the action to be carried out by objects in a video. 
-A body of work~\cite{chalasani2013deep, clark2013whatever, egner2010expectation} explores various hierarchical models in face of different quality of data representation. 
+\noindent \textbf{Activity forecasting} Activity forecasting is the task of predicting the motion or the action to be carried out by objects in a video.
+A body of work~\cite{chalasani2013deep, clark2013whatever, egner2010expectation} explores various hierarchical models in face of different quality of data representation.
  Recently recurrent neural networks (RNN) and their variants including Long Short Term Memory (LSTM)~\cite{hochreiter1997long} and Gated Recurrent Units (GRU)~\cite{chung2014empirical} have proven to be very successful for sequence prediction tasks.
  An action-conditioned video prediction model~\cite{finn2016unsupervised} that explicitly models pixel motion, by predicting a distribution over pixel motion from previous frames is proposed to learn from unsupervised video data.
  %The discrepancy between training and inference can yield errors that can accumulate quickly along the generated sequence when using a recurrent neural network.p
- A curriculum learning strategy is proposed in~\cite{bengio2015scheduled} to gently change the training process from a fully guided scheme using the true previous token, towards a less guided scheme which mostly uses the generated token instead. 
+ A curriculum learning strategy is proposed in~\cite{bengio2015scheduled} to gently change the training process from a fully guided scheme using the true previous token, towards a less guided scheme which mostly uses the generated token instead.
 A combination of a fully-convolutional network and an LSTM is proposed in~\cite{xu2017end} to learn from large-scale vehicle action data and  is trained as a pilot network in the context of behaviour reflex approaches. Their goal is to predict future egomotion including multi-modal discrete and continuous driving behaviors.
 Inverse turning radius is predicted by a LSTM network in~\cite{kim2017interpretable}: a heat map of attention is generated at each time step conditioned on the previous hidden states as a more succinct visual explanations.
 
@@ -229,8 +229,8 @@ Formally, our problem can be defined as a mapping $\mathcal{M}$ between historic
 \mathcal{J_F} \leftarrow \bm{\mathcal{M}}_p(j, a): \mathcal{J_H} \times \mathcal{A}
 \label{eq:mapping}
 \end{equation}
-where the traffic participants $p$ can be vehicles, cyclists, pedestrians, \emph{etc}. In this paper, we focus on vehicle as the sole traffic participant category and ignore the subscript $p$ from now on. 
-$T_F$ is the length of future trajectory to be predicted (corresponding to the total driver reaction time). 
+where the traffic participants $p$ can be vehicles, cyclists, pedestrians, \emph{etc}. In this paper, we focus on vehicle as the sole traffic participant category and ignore the subscript $p$ from now on.
+$T_F$ is the length of future trajectory to be predicted (corresponding to the total driver reaction time).
 Historical and future trajectories are defined in a 3D occupancy grid:
 \begin{equation}
 \mathcal{J_H, J_F} \in \Re^{6} =  \{x, y, w, h, d_{min}, d_{max}\}
@@ -269,11 +269,11 @@ j_{t+1} \leftarrow  \bm{\mathcal{M}}(j_t, j_H): \mathcal{J_H}
 \vspace{\baselineskip}
 \noindent \textbf{Frame-to-Sequence (FtS) model:}
 differs from the FtF model in that instead of sampling frame by frame for predicting future trajectories, FtS model directly predicts a trajectory sequence of length.
-As it pointed out in~\cite{bengio2015scheduled} that FtF training paradigm, predicting one token at a time, conditioned on the state and the previous correct token, is different from how we actually use them during inference and thus is prone to the accumulation of errors along the decision paths. 
+As it pointed out in~\cite{bengio2015scheduled} that FtF training paradigm, predicting one token at a time, conditioned on the state and the previous correct token, is different from how we actually use them during inference and thus is prone to the accumulation of errors along the decision paths.
 Therefore, a curriculum learning approach is proposed to slowly change the training objective from an easy task, where the previous token is known, to a realistic one, where it is provided by the model itself.
 The aforementioned learning strategy applies to inference for time-varying sequence where an \textless EOS\textgreater token is needed to signify the end of the sequence.
 For our continuous prediction task, we stipulate the length of the prediction is predefined as $T_F$.
-Hence we have the assumption that current state is complete, in the sense it contains all historical information required for predicting the future trajectory of the vehicle. 
+Hence we have the assumption that current state is complete, in the sense it contains all historical information required for predicting the future trajectory of the vehicle.
 The whole trajectory  $j_{t+1, \ldots, T_F}$ to be predicted can be estimated as:
 \begin{equation}
 j_{t+1, \ldots, T_F}, \leftarrow  \bm{\mathcal{M}}(j_H): \mathcal{J_H}
@@ -293,7 +293,7 @@ j_{t+1, \ldots, T_F}, \leftarrow  \bm{\mathcal{M}}(j_H, a): \mathcal{J_H} \times
  As described above, the 3D occupancy input  has only six dimensions: $[x, y, w, h, d_{min}, d_{max}]$ encoding the co-ordinates information. So the bottom-most LSTM not only can learn the temporal information between time-varying trajectories,  but also can balance input dimensions of both co-ordinate information and the semantic information.
 %Results show that the SEG-LSTM model performs better than the other two temporal model.
 
-Note that this model differs from the way semantic information is used in~\cite{xu2017end}: instead of using semantic segmentation as a ``privilege information" which is missing at test time, SEG-LSTM directly takes historical scene semantics as input and directs the recurrent net future trajectory prediction. 
+Note that this model differs from the way semantic information is used in~\cite{xu2017end}: instead of using semantic segmentation as a ``privilege information" which is missing at test time, SEG-LSTM directly takes historical scene semantics as input and directs the recurrent net future trajectory prediction.
 
 
 \vspace{\baselineskip}
@@ -302,7 +302,7 @@ Note that this model differs from the way semantic information is used in~\cite{
 s^i_t = \sum_{j \in \mathcal{N}_i} \mathbf{1}_{m,n} [x^j_t - x^i_t, y^j_t - y^i_t] \centerdot  h^j_{t-1}
 \label{eq:social_tensor}
 \end{equation}
-where $\mathbf{1}_{m,n} [x^j_t - x^i_t, y^j_t - y^i_t]$ is an indicator function to check if $(x, y)$ is in the $(m, n)$ cell of the grid, and $\mathcal{N}_i$ is the set of neighbors corresponding to target $i$. 
+where $\mathbf{1}_{m,n} [x^j_t - x^i_t, y^j_t - y^i_t]$ is an indicator function to check if $(x, y)$ is in the $(m, n)$ cell of the grid, and $\mathcal{N}_i$ is the set of neighbors corresponding to target $i$.
 The trajectory  to be predicted can be estimated as:
 \begin{equation}
 j_{t+1, \ldots, T_F}, \leftarrow  \bm{\mathcal{M}}(j_H, s^i_H): \mathcal{J_H}  \times \mathcal{S}
@@ -410,10 +410,10 @@ Allowing larger NMS threshold enables the detector to have slightly higher recal
 \subsubsection{Instance association via tracking}
 
 To associate traffic participants across different frames (\emph{i.e.}, instance association), we creatively combine detecting with tracking.
-%The marriage between DCF~\cite{henriques2015high}, which has the advantage of being efficient in training translational images in the fourier space, and deep features, which excel at image representation, further advances the visual tracking community~\cite{qi2016hedged, danelljan2016eccv, wu2017kernalised, danelljan2017eco}. However, in the pursuit of ever increasing tracking accuracy, their characteristic speed and realtime capability have gradually faded. 
+%The marriage between DCF~\cite{henriques2015high}, which has the advantage of being efficient in training translational images in the fourier space, and deep features, which excel at image representation, further advances the visual tracking community~\cite{qi2016hedged, danelljan2016eccv, wu2017kernalised, danelljan2017eco}. However, in the pursuit of ever increasing tracking accuracy, their characteristic speed and realtime capability have gradually faded.
 %In the context of autonomous driving, accurate scale estimation of a target is also a prerequisite. Most state-of-the-art methods employ an exhaustive scale search to estimate the target size which is computationally expensive and struggles when encountering with large scale variations.
 For this task, we adopt the real-time scale adaptive tracker fDSST~\cite{danelljan2017discriminative} that achieves 50 FPS with scale estimation.
-For every newly detected target whose POR is larger than the predefined threshold of 0.2\%, we initiate the tracker with a unique target ID. 
+For every newly detected target whose POR is larger than the predefined threshold of 0.2\%, we initiate the tracker with a unique target ID.
 
 The tracker's target model is updated every time when there is a detection whose jaccard overlap is larger than 0.3.
 We argue that force update of tracker model via the detection template is essential when the target undergo rapid out of plane rotations.  Trackers~\cite{qi2016hedged, danelljan2016eccv, wu2017kernalised, danelljan2017eco} focus on the ``class-agnostic" settings. In the context of autonomous driving, however, we know in advance the classes of object of interests for tracking. Therefore, with this extra source of information, we propose to use the neural nets object detection result as a more robust template to update the tacker’s model to overcome the problem of model drifting.
@@ -426,7 +426,7 @@ The target's tracker will terminate under either of the following two conditions
 
 For the task of sequential prediction, both FtF and FtS share the same base network structure:
 a 3-layer recurrent net with 100, 300, 300 LSTM cells.
-For SEG-LSTM, since the focus of the scene context is high-way driving, auxiliary information is the scene semantics with number of channels $\mathcal{C}$ sets as 2 (``car" and ``road"). We adopt the state-of-the-art semantic segmentation networks: Dilated Residual Networks (DRN)~\cite{yu2017dilated} and retrain on the SYNTHIA corpus. DRN achieves 68\% and 82\% pixel mAP on the car and road categories. The input semantics $\mathcal{A}$ are one-hot encoded in the dimension of $95\times160\times2$. 
+For SEG-LSTM, since the focus of the scene context is high-way driving, auxiliary information is the scene semantics with number of channels $\mathcal{C}$ sets as 2 (``car" and ``road"). We adopt the state-of-the-art semantic segmentation networks: Dilated Residual Networks (DRN)~\cite{yu2017dilated} and retrain on the SYNTHIA corpus. DRN achieves 68\% and 82\% pixel mAP on the car and road categories. The input semantics $\mathcal{A}$ are one-hot encoded in the dimension of $95\times160\times2$.
 The CNN for learning high level semantics is composed of 4 convolutional blocks. Each block includes a convolutional layer, a ReLU activation layer, a maxpooling layer and a dropout layer (as we have observed overfitting during network training). Each convolutional layer has four channels with kernel of size 3.
 
 For the social tensor configuration, we incorporate all vehicles in the same time-step as their neighbors. In contrast with~\cite{alahi2016social} where a spatial constraint is required in order to be counted as a neighbor, all the vehicles in the same scene are relevant for the social interactions under our high-way driving context.
@@ -483,7 +483,7 @@ The learning is set to 0.001 and RMS-prop~\cite{tieleman2012lecture} with a grad
                 \includegraphics[width=4.2cm,height=3.5cm, clip]{figures/success_plot_3d.png}
         \caption{\small{3D Success plot}}
         \end{subfigure}
-        
+
 \caption{\small{ 2D and 3D space precision plot and success plot. x-axis for (a) to (d) are: pixel, IOU, centimeter and IOU.}}
 \label{fig:precision_plot_and_success_plot}
 \end{figure*}
@@ -593,7 +593,7 @@ Following the evaluation strategy  of~\cite{wu2013online}, all trajectories are 
 %\vspace{\baselineskip}
 \noindent \textbf{Learning with social tensor:}
 On average, there is around 3 cars of interests in a high-way driving scene.
-Tab.~\ref{tab:social_lstm} shows that considering social interactions between cars improves the prediction accuracy than the isolation case. 
+Tab.~\ref{tab:social_lstm} shows that considering social interactions between cars improves the prediction accuracy than the isolation case.
 And we believe that in a more complex social scene such as urban driving, the improvement will be more pronounced.
 
 
