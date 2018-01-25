@@ -34,19 +34,24 @@
 
 %%%%%%%%% BODY TEXT - ENTER YOUR RESPONSE BELOW
 We would first like to thank the reviewers for the supportive comments and the constructive criticism. Your valuable feedbacks help us further improve the analysis of the proposed method and the overall presentation of the paper.
-Due to the significant improvement made to the new version of the paper, we would kindly ask reviewers refer the \href{https://drive.google.com/open?id=18RwGHG-Rbwfv-4bwmjjSfSl9jAHI-vbM}{new version of the paper}.
+Due to the significant improvement made to the new version of the paper, we would kindly ask reviewers refer the \href{https://drive.google.com/open?id=1D18rOofLQqZKBsOwkljSOUF_CqZgGetB}{new version of the paper}.
+% and We would like to address the concerns respectfully as follows.
 
 % Because of the space constraint we address only the major comments below.
 
 \noindent \textbf{Modifications:} In what follows, we give an overview of the main changes made to the manuscript.
 
-\noindent (1) We have implemented SocialLSTM[2] as requested by R2 and preliminary results on 2D space exhibit that the ``social interaction" further improve the prediction accuracy.
+\tcom
+\noindent \textbf{I think the authors should reimplement SocialLSTM for 2D data (Stanford UAV dataset seems to be a 2D standard prediction task -- just throw away images and just use the xy plane coordinates, e.g. center of detected bounding box).}
+
+\noindent (1) We have implemented SocialLSTM [2] as requested by R2 and preliminary results on 2D space exhibit that the inclusion of ``social interaction" further improves the prediction accuracy.
 
 \noindent (2) We have restructured our methodology in section 3 and further explain the intuition behind the chosen architectures.
 
 \noindent (3) We have rewritten our contributions in Section 1 and make our contributions more clearly.
 
-\noindent \textbf{Common issues:} We would like to address the issues that are common to reviewers respectfully as follows:
+%\noindent \textbf{Common issues:} 
+We would like to address the issues that are common to reviewers respectfully as follows:
 
 \tcom 
 \noindent \textbf{R1: Unlike stated in the paper, vehicle tracking in images has been studied for years. There are summary papers (e.g. VEHICLE DETECTION AND TRACKING TECHNIQUES: A CONCISE REVIEW Raad Ahmed Hadi1,2 , Ghazali Sulong1 and Loay Edwar George, SIPIJ). There is no mention of prior art.}
@@ -62,36 +67,30 @@ We found that the first version of the draft is indeed weak in presenting prior 
 \noindent \textbf{R2: Who else has experimented on the SYNTHIA dataset? Or are the authors the first ones? Are the authors releasing a specific publicly-available prediction challenge based on SYNTHIA?}
 
 \noindent \textbf{SYNTHIA and release of the dataset}:
-\noindent Currently, experiments on the SYNTHIA dataset[27, 37] focus on single frame, static images for semantic labeling or scene representation. To our knowledge, our paper is the first attempt to utilize \emph{continuous video streams} for the prediction problem. We would like to release publicly-available dataset for prediction challenge based on SYNTHIA to spur future research upon paper publication.
+\noindent Currently, experiments on the SYNTHIA dataset [27, 37] focus on single frame, static images for semantic labeling or scene representation. To our knowledge, our paper is the first attempt to utilize \emph{continuous video streams} for the prediction problem. We would like to release publicly-available dataset for prediction challenge based on SYNTHIA to spur future research upon paper publication.
 
 \tcom 
 \noindent \textbf{R1: They adopt fDSST[6] and use it to track detections. What is the novelty, except for the implementation with specific parameters?}
 \noindent \textbf{R2: I was a bit confused about why the “tracking-by-detection” framework was novel -- how is it different from “Tracking-learning-detection” (TLD),from Z. Kalal, K. Mikolajczyk, and J. Matas. In TPAMI 2012?}
 \noindent \textbf{R3: Figure 6: It would be nice to have some state-of-the-art tracking results as reference e.g. ECO, STAPLE CA, SiamFC}
 
+\noindent \textbf{Instance association via tracking}:
+\noindent  We would like to clarify the overloaded term ``tracking by detection" used in our paper. Most of the modern trackers focus on the problem of ``class-agnostic" generic object tracking: in order to adapt to temporal changes, a continuous learning strategy is applied, where the model is updated rigorously in every frame. This excessive update strategy cause both lower frame-rates and degradation of robustness due to over-fitting to the recent frames.
+In the context of autonomous driving, however, we know in advance the classes of object of interests for tracking (\emph{e.g.}, cars, pedestrians, cyclists). Therefore, with this extra source of information, we propose to use the neural nets object detection result as a more robust template to update the tacker's model to overcome the problem of model drifting. Hence the tracker is served solely as\emph{ instance associator} for the traffic participant.
 
-\noindent  Most of the modern trackers focus on the problem of ``class-agnostic" generic object tracking. In order to adapt to temporal changes, a continuous learning strategy is applied, where the model is updated rigorously in every frame. Such update is excessive and sensitive to sudden changed caused by, \emph{e.g.}, scale variations, deformations, and out-of-plane rotations. This excessive update strategy cause both lower frame-rates and degradation of robustness due to over-fitting to the recent frames~\cite{danelljan2017eco}.
-In the context of autonomous driving, however, we know in advance the classes of object of interests for tracking (\emph{e.g.}, cars, pedestrians, cyclists). Therefore, with this extra source of information, we propose to use the neural nets object detection result as a more robust template to update the tacker's model to overcome the problem of model drifting. Hence the tracker is served solely as instance associator for the traffic participant.
 
-
-We would like to address the concerns respectfully as follows:
+% We would like to address the concerns respectfully as follows:
 %####################################################################################################################################################################################
-\noindent \textbf{R1}
+\tcom
 \noindent \textbf{3) 3 very similar LSTMs with different input}
 \noindent \textbf{4) The one LSTM with more information performs better. That is not surprising and not a real insight.}
 
-\noindent Explain the intuition....
-
+\noindent \textbf{R1:} Explain the intuition of three LSTMs.
 
 %####################################################################################################################################################################################
+\tcom 
 
-\noindent \textbf{R2}
-
-\noindent \textbf{I think the authors should reimplement SocialLSTM for 2D data (Stanford UAV dataset seems to be a 2D standard prediction task -- just throw away images and just use the xy plane coordinates, e.g. center of detected bounding box).}
-
-\noindent We have re-implemented Social-LSTM for 2D data. blablabla details...
-
-\noindent \textbf{SocialLSTM used ``Avg. disp. Error", ``Avg. non-linear disp. error" , and ``final disp. Error" What was the justification for the metrics the authors chose?}
+\noindent \textbf{R2:}
 
 \noindent The ``average displacement error" is essentially the same as the ``center error" in Tab.3 of our paper and the subtle difference is that the former is in unit space and the latter is in pixel space. Similarly ``Final displacement error" is the last frame's ``center error" is unit space. ``average non-linear displacement error"
 
