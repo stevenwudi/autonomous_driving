@@ -199,7 +199,7 @@ More recently, larger projects are constructed:
 Cityscapes dataset~\cite{Cordts2016Cityscapes} which consists of a collection of images acquired in 50 cities around Germany, Switzerland and France in difference seasons, and having 5,000 images with fine annotations and 20,000 with coarse annotations over a total of 30 classes. Comma.ai~\cite{santana2016learning} provides 7 and a quarter hours of largely highway driving. Udacity~\cite{udacity} dataset includes 65,000 labels across 9,423 frames at full resolution of $1920\times1200$ at 2Hz.
 The use of synthetic data has increased considerably in recent years within computer vision community.
 CARLA~\cite{CARLA} and Sim4CV~\cite{Sim4CV} are two recent endeavours that take advantage of simulated environment to support development, training and validation of autonomous urban driving systems.
-A synthetic dataset named SYNTHIA~\cite{mueller2016benchmark} is collected for investigating how useful synthetic images can be for semantic segmentation.
+A synthetic dataset named SYNTHIA~\cite{mueller2016benchmark, HernandezBMVC17} is collected for investigating how useful synthetic images can be for semantic segmentation.
 %In~\cite{kaneva2011evaluation}, the authors used a photorealistic virtual world to evaluate the performance of image features under scene changes and image transformations. Synthetic data has also been used for skeleton joints estimation~\cite{shotton2013real}, allowing the classifier invariant to pose, body shape, clothing, etc.
 Synthetic dataset has an obvious advantage: a fine annotated image in Cityscape dataset requires on average 1.5 hours which is very labor intensive. Thus, the cost of scaling large project would require a prohibitive economic investment in order to capture images from a larger variety of countries, in different seasons and different traffic conditions.
 %For these reasons, a novel synthetic dataset of urban scene called SYNTHIA~\cite{ros2016synthia} is proposed to use synthetic imagery that simulate real urban scenes in a vast variety of conditions and produce the appropriate annotations.
@@ -308,7 +308,7 @@ The trajectory  to be predicted can be estimated as:
 j_{t+1, \ldots, T_F}, \leftarrow  \bm{\mathcal{M}}(j_H, s^i_H): \mathcal{J_H}  \times \mathcal{S}
 \label{eq:FtS}
 \end{equation}
-This social pooling layer does not introduce any additional parameters and can be inserted in to the hidden layer of LSTM and training can be formulated as a neighboring batch update scheme. An important distinction from the vanilla LSTM is that the hidden states of multiple LSTMs are coupled by the social pooling layer. At every time-step, the update are jointly back-propagated through multiple LSTMs in a scene.
+This social pooling layer does not introduce any additional parameters and can be inserted in to the hidden layer of LSTM. An important distinction from the vanilla LSTM is that the hidden states of multiple LSTMs are coupled by the social pooling layer. At every time-step, the update are jointly back-propagated through multiple LSTMs in a scene as a neighboring batch update scheme.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Experiments}
@@ -573,8 +573,8 @@ Following the evaluation strategy  of~\cite{wu2013online}, all trajectories are 
         \begin{tabu}{@{}ccc@{}}\toprule
         [-1pt] \tabucline[1pt]{1-3}
                                                     &   Ave. disp. error      & Final disp. error   \\ \hline
-            {\small Vanilla LSTM }                 &    0.0257                &  0.0440   \\
-            {\small \textbf{Social LSTM} }         &  \textbf{0.0247}         & \textbf{0.0418}   \\
+            {\small Vanilla LSTM }                 &     0.0514              &  0.0880   \\
+            {\small \textbf{Social LSTM} }         &  \textbf{0.0494 }         & \textbf{0.0837}   \\
           [-1pt] \tabucline[1pt]{1-3}
         \end{tabu}
         %\end{tabular}
@@ -619,61 +619,27 @@ Future works include incorporating vehicle pose from the RGB/depth input as extr
 
 \section{Traffic participants detection}
 
-\begin{table*}\centering
-\small{
-\ra{1.}
-%\begin{tabular}{@{}llllllllllll@{}}\toprule
-\begin{tabu}{@{}llllllllllll@{}}\toprule
-[-1pt] \tabucline[1pt]{1-12}
-\multicolumn{2}{c}{conf}  & 0.5  & 0.55 & 0.6 &  0.65 & 0.7  & 0.75 & 0.8 &  0.85 & 0.9  & 0.95\\
-\hline
-\multirow{3}{*}{Faster-RCNN}
-                    &   precision & 81.2  & 81.2  & 81.1 & 81.1 & 81.1 & 81.0 & 81.0 & 80.7 & 80.5 & 80.0 \\
-                    &   recall    & 91.4  & 91.4  & 91.3 & 91.3 & 91.3 & 91.3 & 91.3 & 90.9 & 90.7 & 90.2\\
-                    &   f-score   & 86.0  & 86.0  & 86.0 & 86.0 & 86.0 & 86.0 & 86.0 & 85.5 & 85.3 & 84.8\\
-                    \cline{2-12}
-\multirow{3}{*}{SSD (NMS:0.60)}&   precision &  82.1  & 81.9  & 81.8  & 81.8  & 81.6  & 81.1 & 80.9  & 80.4 & 80.0  & 79.2\\
-                            &    recall   & \textbf{92.7} & 92.5 & 92.3  & 92.3 & 92.0 & 91.5 & 91.3 & 90.7  & 90.2 & 89.4\\
-                            &    f-score  & 87.1  & 86.9  & 86.7   &86.7&86.5& 86.0  & 85.8 &85.2 & 84.8 &84.0\\
-                    \cline{2-12}
-\multirow{3 }{*}{SSD (NMS:0.45)}&   precision & \textbf{92.0 } & 91.8 & 91.7 & 91.4 & 91.1 & 91.0 & 90.5 & 90.2 & 89.4 & 87.4\\
-                                &    recall  & 92.3  & 92.1 & 92.0 & 91.8 & 91.4 & 91.3 & 90.8 & 90.5 & 89.7 & 87.7\\
-                                &    f-score  & \textbf{92.2 } & 92.0 & 91.8 & 91.6 & 91.3 & 91.1 & 91.1 & 90.4 & 89.6 & 87.6\\
-
-\bottomrule
-\end{tabu}
-%\end{tabular}
-\caption{
-Comparison of SSD and Faster-RCNN for vehicle detection on the collected SYNTHIA dataset.
-It can be seen that:
-(1) both meta-architectures are robust to the cut-off confident thresholds.
-(2) SSD is more competitive in the collected dataset when targets of interest are large.
-}
-\label{tab:ssd_fasterrcnn}
-}
-\end{table*}
-
-
-%
-%\begin{table}[H]\centering
+%\begin{table*}[H]\centering
 %\small{
 %\ra{1.}
 %%\begin{tabular}{@{}llllllllllll@{}}\toprule
-%\begin{tabu}{@{}lllll@{}}\toprule
-%[-1pt] \tabucline[1pt]{1-5}
-%\multicolumn{2}{c}{conf}                       & 0.50    &0.70   & 0.95\\ \hline
+%\begin{tabu}{@{}llllllllllll@{}}\toprule
+%[-1pt] \tabucline[1pt]{1-12}
+%\multicolumn{2}{c}{conf}  & 0.5  & 0.55 & 0.6 &  0.65 & 0.7  & 0.75 & 0.8 &  0.85 & 0.9  & 0.95\\
+%\hline
 %\multirow{3}{*}{Faster-RCNN}
-%                                &   precision & 81.2    & 81.1  & 80.0\\
-%                                &   recall    & 91.4    & 91.3  & 90.2\\
-%                                &   f-score   & 86.0    & 86.0  & 84.8\\
-%                                    \cline{2-5}
-%\multirow{3}{*}{SSD (NMS:0.60)} &   precision &  82.1   & 81.6  & 79.2 \\
-%                                &   recall    & \textbf{92.7} & 92.0 & 89.4 \\
-%                                &   f-score   & 87.1 &86.5  &84.0\\
-%                                    \cline{2-5}
-%\multirow{3 }{*}{SSD (NMS:0.45)}&   precision & \textbf{92.0} & 91.1 & 87.4\\
-%                                &   recall  & 92.3 & 91.4 & 87.7\\
-%                                &   f-score  & \textbf{92.2}& 91.3 & 87.6\\
+%                    &   precision & 81.2  & 81.2  & 81.1 & 81.1 & 81.1 & 81.0 & 81.0 & 80.7 & 80.5 & 80.0 \\
+%                    &   recall    & 91.4  & 91.4  & 91.3 & 91.3 & 91.3 & 91.3 & 91.3 & 90.9 & 90.7 & 90.2\\
+%                    &   f-score   & 86.0  & 86.0  & 86.0 & 86.0 & 86.0 & 86.0 & 86.0 & 85.5 & 85.3 & 84.8\\
+%                    \cline{2-12}
+%\multirow{3}{*}{SSD (NMS:0.60)}&   precision &  82.1  & 81.9  & 81.8  & 81.8  & 81.6  & 81.1 & 80.9  & 80.4 & 80.0  & 79.2\\
+%                            &    recall   & \textbf{92.7} & 92.5 & 92.3  & 92.3 & 92.0 & 91.5 & 91.3 & 90.7  & 90.2 & 89.4\\
+%                            &    f-score  & 87.1  & 86.9  & 86.7   &86.7&86.5& 86.0  & 85.8 &85.2 & 84.8 &84.0\\
+%                    \cline{2-12}
+%\multirow{3 }{*}{SSD (NMS:0.45)}&   precision & \textbf{92.0 } & 91.8 & 91.7 & 91.4 & 91.1 & 91.0 & 90.5 & 90.2 & 89.4 & 87.4\\
+%                                &    recall  & 92.3  & 92.1 & 92.0 & 91.8 & 91.4 & 91.3 & 90.8 & 90.5 & 89.7 & 87.7\\
+%                                &    f-score  & \textbf{92.2 } & 92.0 & 91.8 & 91.6 & 91.3 & 91.1 & 91.1 & 90.4 & 89.6 & 87.6\\
+%
 %\bottomrule
 %\end{tabu}
 %%\end{tabular}
@@ -681,11 +647,45 @@ It can be seen that:
 %Comparison of SSD and Faster-RCNN for vehicle detection on the collected SYNTHIA dataset.
 %It can be seen that:
 %(1) both meta-architectures are robust to the cut-off confident thresholds.
-%(2) SSD is more competitive in the collected dataset when targets of interest are comparatively plarge.
+%(2) SSD is more competitive in the collected dataset when targets of interest are large.
 %}
 %\label{tab:ssd_fasterrcnn}
 %}
-%\end{table}
+%\end{table*}
+
+
+
+\begin{table}[H]\centering
+\small{
+\ra{1.}
+%\begin{tabular}{@{}llllllllllll@{}}\toprule
+\begin{tabu}{@{}lllll@{}}\toprule
+[-1pt] \tabucline[1pt]{1-5}
+\multicolumn{2}{c}{conf}                       & 0.50    &0.70   & 0.95\\ \hline
+\multirow{3}{*}{Faster-RCNN}
+                                &   precision & 81.2    & 81.1  & 80.0\\
+                                &   recall    & 91.4    & 91.3  & 90.2\\
+                                &   f-score   & 86.0    & 86.0  & 84.8\\
+                                    \cline{2-5}
+\multirow{3}{*}{SSD (NMS:0.60)} &   precision &  82.1   & 81.6  & 79.2 \\
+                                &   recall    & \textbf{92.7} & 92.0 & 89.4 \\
+                                &   f-score   & 87.1 &86.5  &84.0\\
+                                    \cline{2-5}
+\multirow{3 }{*}{SSD (NMS:0.45)}&   precision & \textbf{92.0} & 91.1 & 87.4\\
+                                &   recall  & 92.3 & 91.4 & 87.7\\
+                                &   f-score  & \textbf{92.2}& 91.3 & 87.6\\
+\bottomrule
+\end{tabu}
+%\end{tabular}
+\caption{
+Comparison of SSD and Faster-RCNN for vehicle detection on the collected SYNTHIA dataset.
+It can be seen that:
+(1) both meta-architectures are robust to the cut-off confident thresholds.
+(2) SSD is more competitive in the collected dataset when targets of interest are comparatively plarge.
+}
+\label{tab:ssd_fasterrcnn}
+}
+\end{table}
 
 \section{Instance association via tracking}
 \begin{figure}[h]
@@ -698,7 +698,7 @@ It can be seen that:
 \end{figure}
 
 \section{2D and 3D occupancy grid}
-\begin{figure}[h]
+\begin{figure}[t]
         \centering
         \includegraphics[width=0.5\textwidth]{figures/evaluation.pdf}
         \caption{
