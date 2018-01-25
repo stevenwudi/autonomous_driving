@@ -215,7 +215,7 @@ Our goal is via collecting visual information from the past frames to predict th
         \centering
         \includegraphics[width=0.45\textwidth]{figures/network_detail.pdf}
         \caption{
-        \small{Illustrations of three temporal networks. $\mathcal{J_H}$ represents historical trajectories, $\mathcal{J_F}$ is the $T$ time step future trajectories to be predicted.  Left: Frame-to-Frame (FtF); Middle: Frame-to-Sequence (FtS); Right: SEG-LSTM, with extra auxiliary information as input $\mathcal{A}$. $\mathcal{S}$ is the social tensor that can be inserted into existing recurrent networks.}
+        \small{Illustrations of three temporal networks. $\mathcal{J_H}$ represents historical trajectories, $\mathcal{J_F}$ is the $T$ time step future trajectories to be predicted.  Left: Frame-to-Frame (FtF); Middle: Frame-to-Sequence (FtS); Right: SEG-LSTM, with auxiliary information as input $\mathcal{A}$. The social tensor $\mathcal{S}$ can be inserted into existing recurrent networks .}
         }
         \label{fig:lstm}
 \end{figure}
@@ -248,9 +248,9 @@ where $d$ is distance between  the center of the camera lens and the center of t
 
 \begin{figure}[t]
         \centering
-        \includegraphics[width=0.45\textwidth]{figures/network_detail.pdf}
+        \includegraphics[width=0.45\textwidth]{figures/SEGLSTM.pdf}
         \caption{
-        \small{TODO: SEGLSTM HERE!}
+        \small{Diagram of SEG-LSTM model: semantic inputs are one-hot encoded images with channel number $\mathcal{C}$ as the number of semantic categories (we used only ``car" and ``road" as the two semantics used under the context of high-way driving). The higher level semantics are extracted through a four-layer CNN, producing a joint representation of the auxiliary semantic information and the co-ordinate trajectory information.}
         }
         \label{fig:SEGLSTM}
 \end{figure}
@@ -281,39 +281,34 @@ j_{t+1, \ldots, T_F}, \leftarrow  \bm{\mathcal{M}}(j_H): \mathcal{J_H}
 \end{equation}
 The whole sequence inference paradigm is more stable than the first FtF approach because of the elimination of the dependency of previous token. Such dependency will introduce the discrepancy between how the model is used at training and inference. Inference with the whole sequence will generate smoother predictions.
 
-
-
-
-
-
 \vspace{\baselineskip}
 \noindent \textbf{SEG-LSTM model:}
- takes advantages of scene semantics from  historical frames as auxiliary information $\mathcal{A}$. The second LSTM layer fuses the output from the bottom-most LSTM that encodes co-ordinates embeddings with higher level semantic information. Semantic inputs are one-hot encoded images with channel number $\mathcal{C}$ as the number of semantic categories  as in Fig.~\ref{fig:SEGLSTM}. The higher level semantic is extracted from the semantic input through a four-layer CNN, producing a joint representation of the semantic auxiliary information and the historical trajectory.
- 
- As described above, the input in the form of 3D occupancy has only six dimensions: $[x, y, w, h, d_{min}, d_{max}]$ encoding the co-ordinates information. So the bottom-most LSTM not only can learn the temporal information between time-varying trajectories,  but also can balance input dimensions of both trajectory information and the semantic information.
-%Results show that the SEG-LSTM model performs better than the other two temporal model.
-
-Note that this model differs from the way semantic information is used in~\cite{xu2017end}: instead of using semantic segmentation as a ``privilege information" which is missing at test time, SEG-LSTM directly takes historical scene semantics as input and directs the recurrent net future trajectory prediction. With auxiliary $\mathcal{A}$, the trajectory  $j_{t+1, \ldots, T_F}$  to be predicted can be estimated as:
-
+ takes advantages of scene semantics from  historical frames as auxiliary information $\mathcal{A}$. The second LSTM layer fuses the output from the bottom-most LSTM that encodes co-ordinates embedding with higher level semantic information.
+With auxiliary $\mathcal{A}$, the trajectory  $j_{t+1, \ldots, T_F}$  to be predicted can be estimated as:
 \begin{equation}
 j_{t+1, \ldots, T_F}, \leftarrow  \bm{\mathcal{M}}(j_H, a): \mathcal{J_H} \times \mathcal{A}
 \label{eq:SEG-LSTM}
 \end{equation}
+ Semantic inputs are one-hot encoded images with channel number $\mathcal{C}$ as the number of semantic categories  as in Fig.~\ref{fig:SEGLSTM}. The higher level semantic is extracted through a four-layer CNN, producing a joint representation of the semantic auxiliary information and the co-ordinate trajectory information.
+ As described above, the 3D occupancy input  has only six dimensions: $[x, y, w, h, d_{min}, d_{max}]$ encoding the co-ordinates information. So the bottom-most LSTM not only can learn the temporal information between time-varying trajectories,  but also can balance input dimensions of both co-ordinate information and the semantic information.
+%Results show that the SEG-LSTM model performs better than the other two temporal model.
+
+Note that this model differs from the way semantic information is used in~\cite{xu2017end}: instead of using semantic segmentation as a ``privilege information" which is missing at test time, SEG-LSTM directly takes historical scene semantics as input and directs the recurrent net future trajectory prediction. 
 
 
 \vspace{\baselineskip}
-\noindent \textbf{Social tensor:} is firstly introduced in~\cite{alahi2016social} by observing the ``common sense" rules and social conventions from pedestrians in crowded public space. Naturally, in the context of high-way driving, such observation is also complied: when there are multiple cars occupying on-going lanes, the social interactions between traffic participants confine the space for their possible trajectories. The social interactions can be encoded implicitly by using a social pooling layer: at every time-step, the LSTM cell receives pooled hidden-state information from the LSTM cells of neighbors. While pooling the information, the spatial information is preserved by grid based pooling. The hidden state $h^t_i$ of the LSTM at time $t$ captures the latent representation of the $i^{th}$ target in the scene. This representation can be shared with neighbors by building a social hidden tensor $s^i_t$:
+\noindent \textbf{Social tensor:} was firstly introduced in~\cite{alahi2016social} by observing the ``common sense" rules and social conventions from pedestrians in crowded public space. Naturally, in the context of autonomous driving, such observation is also complied: when there are multiple cars occupying on-going lanes, the social interactions between traffic participants confine the space for their possible trajectories. The social interactions can be encoded implicitly by using a social pooling layer: at every time-step, the LSTM cell receives pooled hidden-state information from the LSTM cells of neighbors. While pooling the information, the spatial information is preserved by grid based pooling. The hidden state $h^t_i$ of the LSTM at time $t$ captures the latent representation of the $i^{th}$ target in the scene. This representation can be shared with neighbors by building a social hidden tensor $s^i_t$:
 \begin{equation}
 s^i_t = \sum_{j \in \mathcal{N}_i} \mathbf{1}_{m,n} [x^j_t - x^i_t, y^j_t - y^i_t] \centerdot  h^j_{t-1}
 \label{eq:social_tensor}
 \end{equation}
-where $\mathbf{1}_{m,n} [x^j_t - x^i_t, y^j_t - y^i_t]$ is an indicator function to check if $(x, y)$ is in the $(m, n)$ cell of the grid, and $\mathcal{N}_i$ is the set of neighbors corresponding to person $i$. This social tensor can be inserted in to the hidden layer of LSTM and update can be formulated as a neighboring batch update scheme. 
+where $\mathbf{1}_{m,n} [x^j_t - x^i_t, y^j_t - y^i_t]$ is an indicator function to check if $(x, y)$ is in the $(m, n)$ cell of the grid, and $\mathcal{N}_i$ is the set of neighbors corresponding to target $i$. 
 The trajectory  to be predicted can be estimated as:
 \begin{equation}
 j_{t+1, \ldots, T_F}, \leftarrow  \bm{\mathcal{M}}(j_H, s^i_H): \mathcal{J_H}  \times \mathcal{S}
 \label{eq:FtS}
 \end{equation}
-
+This social pooling layer does not introduce any additional parameters and can be inserted in to the hidden layer of LSTM and training can be formulated as a neighboring batch update scheme. An important distinction from the vanilla LSTM is that the hidden states of multiple LSTMs are coupled by the social pooling layer. At every time-step, the update are jointly back-propagated through multiple LSTMs in a scene.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Experiments}
@@ -321,6 +316,16 @@ j_{t+1, \ldots, T_F}, \leftarrow  \bm{\mathcal{M}}(j_H, s^i_H): \mathcal{J_H}  \
 We first provide the data collection procedure for vehicle trajectory prediction. And then we present the implementation details with performance analysis of individual modules. Quantitatively examination of SEG-LSTM architecture is also presented showing the advantages of using semantics directly as input can better assist the neural net's trajectory prediction.
 
 \subsection{Dataset collection}
+
+
+Currently, most public datasets with semantic labeling are single frame, static images. Continuous video streams are required for the purpose of car trajectory prediction.
+We collect a car trajectory prediction dataset based on the SYNTHIA~\cite{ros2016synthia} dataset.
+SYNTHIA dataset is a large corpus of synthetic images originally collected for the purpose of semantic segmentation of urban scenes generated by rendering a virtual city created with the Unity development platform.
+The potential of this virtual world includes extension capabilities: new parts of the cities and road conditions can be easily generated by adding different setups. The major features of the collected dataset include: scene diversity (European style town, modern city, highway and green areas), variety of dynamic objects (cars, pedestrians and cyclists), multiple seasons (dedicated themes for winter, fall, spring and summer), lighting conditions and weather (dynamic lights and shadows, several day-time modes, rain mode and night mode).
+There are more than 200,000 HD ($760\times1280$) photo-realistic frames from video streams.
+Frames are acquired from multiple view-points (up to eight views per location), and each of the frames also contains an associated depth map. In our experiment, we used only left front camera view data.
+
+
 \begin{algorithm}[t]
 \begin{algorithmic}
 \caption*{\textbf{Ground truth collection for car trajectory prediction}}\label{list:dataset_collection}
@@ -349,25 +354,6 @@ We first provide the data collection procedure for vehicle trajectory prediction
 \end{algorithmic}
 \end{algorithm}
 
-
-
-\begin{figure}[t]
-        \centering
-        \includegraphics[width=0.5\textwidth]{figures/dataset.pdf}
-        \caption{
-        \small{Examples of collected dataset for vehicle trajectory prediction. From top to bottom: RGB, semantic labeling, depth maps for three continuous frames under two dynamic light conditions.}
-        }
-        \label{fig:dataset}
-\end{figure}
-
-
-Currently, most public datasets with semantic labeling are single frame, static images. Continuous video streams are required for the purpose of car trajectory prediction.
-We collect a car trajectory prediction dataset based on the SYNTHIA~\cite{ros2016synthia} dataset.
-SYNTHIA dataset is a large corpus of synthetic images originally collected for the purpose of semantic segmentation of urban scenes generated by rendering a virtual city created with the Unity development platform.
-The potential of this virtual world includes extension capabilities: new parts of the cities and road conditions can be easily generated by adding different setups. The major features of the collected dataset include: scene diversity (European style town, modern city, highway and green areas), variety of dynamic objects (cars, pedestrians and cyclists), multiple seasons (dedicated themes for winter, fall, spring and summer), lighting conditions and weather (dynamic lights and shadows, several day-time modes, rain mode and night mode).
-There are more than 200,000 HD ($760\times1280$) photo-realistic frames from video streams.
-Frames are acquired from multiple view-points (up to eight views per location), and each of the frames also contains an associated depth map. In our experiment, we used only left front camera view data.
-
 The focus of this paper is on car trajectory prediction on highways which corresponds to sequence number 1 in the SYNTHIA dataset. We are especially concerned about the cars that are relatively close to the driver.
 In order to decide quantitatively which vehicles are close to the host car, we define pixel occupancy ratio \emph{(POR)} as the ratio between the total number of pixels of the tracking vehicle and the total number of pixels of the camera input.
 As in accordance with~\cite{chen2015deepdriving}, we set the reliable car perception as 30 meters so as to guarantee satisfactory control quality when the speed of the host car does not exceed 72km/h.
@@ -380,8 +366,16 @@ We follow the traditional paradigm for visual tracking to collect target's bound
 %We list our logic for collecting continuous car tracking in List~\ref{list:dataset_collection}.
 Some sample frames with semantic labels and depth information is shown in Fig.~\ref{fig:dataset}.
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Implementation Details}\label{sec:Implementations}
+
+\begin{figure}[t]
+        \centering
+        \includegraphics[width=0.5\textwidth]{figures/dataset.pdf}
+        \caption{
+        \small{Examples of collected dataset for vehicle trajectory prediction. From top to bottom: RGB, semantic labeling, depth maps for three continuous frames under two dynamic light conditions.}
+        }
+        \label{fig:dataset}
+\end{figure}
+
 \begin{table}[t]\centering
 \ra{1.}
 \begin{tabu}{@{}llll@{}}\toprule
@@ -396,6 +390,8 @@ Some sample frames with semantic labels and depth information is shown in Fig.~\
 \caption{\small{Dataset statistics}}
 \label{tab:dataset}
 \end{table}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Implementation Details}\label{sec:Implementations}
 
 \subsubsection{Traffic participants detection}
 
@@ -403,64 +399,39 @@ To reliably detect traffic participants, we compared two state-of-the-art approa
 We use the pretrained network on the PASCAL VOC detection dataset~\cite{everingham2015pascal} which has 20 classes and fine-tune the network on the SYNTHIA with two classes: cars \emph{v.s.} background.
 A comprehensive survey of trade-offs for modern convolutional object detectors is presented in~\cite{huang2017speed} and we refer keen readers to the aforementioned paper for a more complete comparison to achieve the right speed/memeory/accuracy balance for a given application and platform.
 
-As is also pointed out in the paper~\cite{huang2017speed} that SSD, albeit is less advantageous in detecting small objects, it's very competitive for detecting larger objects. In this paper, we are mostly concerned about cars that are close to the driver. Hence, given 0.1\% POR as the the cut-off threshold, the presented problem favors detectors that are robust in detecting larger objects.
-Tab.~\ref{tab:ssd_fasterrcnn} also verifies that SSD is indeed more competitive when objects of interest are large in our problem set.
-We also compare the influence of the cut-off threshold for various confident scores and non-maximum suppression (NMS) threshold. It can been seen that both meta-architectures are robust to the cut-off confident scores.
-In terms of the effect of NMS cut-off threshold, allowing larger threshold enables the detector to have slightly higher recall, it comes at a cost of multiple redundant overlapping detections and much lower f-score overall. In the following experiment, we adopt SSD with confident score of 0.5 as the cut-off threshold and 0.45 as the default jaccard overlap for NMS.
+As is also pointed out in the paper~\cite{huang2017speed} that SSD, albeit is less advantageous in detecting small objects, it's very competitive for detecting larger objects. In this paper, we are mostly concerned about cars that are close to the driver. Hence, given 0.1\% POR as the cut-off threshold, the presented problem favors detectors that are robust in detecting larger objects.
+Tab.~\ref{tab:ssd_fasterrcnn} verifies that SSD is indeed more competitive when objects of interests are large in our problem set.
+We also compare the influence of the cut-off threshold for various confident scores and non-maximum suppression (NMS) thresholds. It can been seen that both meta-architectures are robust to cut-off confident scores.
+Allowing larger NMS threshold enables the detector to have slightly higher recall, it comes at a cost of multiple redundant overlapping detections and much lower f-score overall. In the following experiment, we adopt SSD with a confident score of 0.5 as the cut-off threshold and 0.45 as the default jaccard overlap for NMS.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+
 \subsubsection{Instance association via tracking}
 
-To associate traffic participants across different frames (\emph{i.e.}, instance tracking), we creatively combine detecting with tracking.
-The marriage between DCF~\cite{henriques2015high}, which has the advantage of being efficient in training translational images in the fourier space, and deep features, which excel at image representation, further advances the visual tracking community~\cite{qi2016hedged, danelljan2016eccv, wu2017kernalised, danelljan2017eco}. However, in the pursuit of ever increasing tracking accuracy, their characteristic speed and realtime capability have gradually faded. In the context of autonomous driving, accurate scale estimation of a target is also a prerequisite. Most state-of-the-art methods employ an exhaustive scale search to estimate the target size which is computationally expensive and struggles when encountering with large scale variations.
+To associate traffic participants across different frames (\emph{i.e.}, instance association), we creatively combine detecting with tracking.
+%The marriage between DCF~\cite{henriques2015high}, which has the advantage of being efficient in training translational images in the fourier space, and deep features, which excel at image representation, further advances the visual tracking community~\cite{qi2016hedged, danelljan2016eccv, wu2017kernalised, danelljan2017eco}. However, in the pursuit of ever increasing tracking accuracy, their characteristic speed and realtime capability have gradually faded. 
+%In the context of autonomous driving, accurate scale estimation of a target is also a prerequisite. Most state-of-the-art methods employ an exhaustive scale search to estimate the target size which is computationally expensive and struggles when encountering with large scale variations.
 For this task, we adopt the real-time scale adaptive tracker fDSST~\cite{danelljan2017discriminative} that achieves 50 FPS with scale estimation.
-For every newly detected target whose POR is larger than the predefined threshold of 0.2\%, we initiate the tracker with a unique target ID. The tracker's target model is updated every time when there is a detection whose jaccard overlap is larger than 0.3. We argue that this ``tracking by detection" framework is essential for robust object tracking, especially when the objects undergo rapid out of plane rotations. In return, the instance association scheme helps to alleviate the problem of false positive detection (\emph{c.f.} Fig.~\ref{fig:Instance_association}).
+For every newly detected target whose POR is larger than the predefined threshold of 0.2\%, we initiate the tracker with a unique target ID. 
+
+The tracker's target model is updated every time when there is a detection whose jaccard overlap is larger than 0.3.
+We argue that force update of tracker model via the detection template is essential when the target undergo rapid out of plane rotations.  Trackers~\cite{qi2016hedged, danelljan2016eccv, wu2017kernalised, danelljan2017eco} focus on the ``class-agnostic" settings. In the context of autonomous driving, however, we know in advance the classes of object of interests for tracking. Therefore, with this extra source of information, we propose to use the neural nets object detection result as a more robust template to update the tacker’s model to overcome the problem of model drifting.
+Hence the tracker is served solely as instance associator for the traffic participant.
+In return, the instance association scheme helps to alleviate the problem of false positive detection (\emph{c.f.} Fig.~\ref{fig:Instance_association}) from the detection result.
 The target's tracker will terminate under either of the following two conditions: if the target's POR is smaller than 0.1\% (\emph{i.e.}, the vehicle is too far way from the host car); or if there are more than 5 frames of detection absence  (\emph{i.e.}, the target could be one false positive detection from the vehicle detector).
 
 
 \subsubsection{Trajectory prediction}
-%\begin{table*}\centering
-%\small{
-%\ra{1.}
-%%\begin{tabular}{@{}llllllllllll@{}}\toprule
-%\begin{tabu}{@{}llllllllllll@{}}\toprule
-%[-1pt] \tabucline[1pt]{1-12}
-%\multicolumn{2}{c}{conf}  & 0.5  & 0.55 & 0.6 &  0.65 & 0.7  & 0.75 & 0.8 &  0.85 & 0.9  & 0.95\\
-%\hline
-%\multirow{3}{*}{Faster-RCNN}
-%                    &   precision & 81.2  & 81.2  & 81.1 & 81.1 & 81.1 & 81.0 & 81.0 & 80.7 & 80.5 & 80.0 \\
-%                    &   recall    & 91.4  & 91.4  & 91.3 & 91.3 & 91.3 & 91.3 & 91.3 & 90.9 & 90.7 & 90.2\\
-%                    &   f-score   & 86.0  & 86.0  & 86.0 & 86.0 & 86.0 & 86.0 & 86.0 & 85.5 & 85.3 & 84.8\\
-%                    \cline{2-12}
-%\multirow{3}{*}{SSD (NMS:0.60)}&   precision &  82.1  & 81.9  & 81.8  & 81.8  & 81.6  & 81.1 & 80.9  & 80.4 & 80.0  & 79.2\\
-%                            &    recall   & \textbf{92.7} & 92.5 & 92.3  & 92.3 & 92.0 & 91.5 & 91.3 & 90.7  & 90.2 & 89.4\\
-%                            &    f-score  & 87.1  & 86.9  & 86.7   &86.7&86.5& 86.0  & 85.8 &85.2 & 84.8 &84.0\\
-%                    \cline{2-12}
-%\multirow{3 }{*}{SSD (NMS:0.45)}&   precision & \textbf{92.0 } & 91.8 & 91.7 & 91.4 & 91.1 & 91.0 & 90.5 & 90.2 & 89.4 & 87.4\\
-%                                &    recall  & 92.3  & 92.1 & 92.0 & 91.8 & 91.4 & 91.3 & 90.8 & 90.5 & 89.7 & 87.7\\
-%                                &    f-score  & \textbf{92.2 } & 92.0 & 91.8 & 91.6 & 91.3 & 91.1 & 91.1 & 90.4 & 89.6 & 87.6\\
-%
-%\bottomrule
-%\end{tabu}
-%%\end{tabular}
-%\caption{
-%Comparison of SSD and Faster-RCNN for vehicle detection on the collected SYNTHIA dataset.
-%It can be seen that:
-%(1) both meta-architectures are robust to the cut-off confident thresholds.
-%(2) SSD is more competitive in the collected dataset when targets of interest are large.
-%}
-%\label{tab:ssd_fasterrcnn}
-%}
-%\end{table*}
-
 
 For the task of sequential prediction, both FtF and FtS share the same base network structure:
 a 3-layer recurrent net with 100, 300, 300 LSTM cells.
-For SEG-LSTM, since the focus of the scene context is high-way driving, auxiliary information is the scene semantics with only ``car" and ``road". The input semantics are one-hot encoded in the dimension of $95\times160\times2$. The CNN for learning high level semantics is composed of 4 convolutional blocks. Each block includes a convolutional layer, a ReLU activation layer, a maxpooling layer and a dropout layer (as we have observed overfitting during network training). Each convolutional layer has four channels with kernel of size 3.
-We adopt the state-of-the-art semantic segmentation networks: Dilated Residual Networks (DRN)~\cite{yu2017dilated} and retrain on the SYNTHIA corpus. DRN achieves 68\% and 82\% pixel mAP on the car and road categories.
+For SEG-LSTM, since the focus of the scene context is high-way driving, auxiliary information is the scene semantics with number of channels $\mathcal{C}$ sets as 2 (``car" and ``road"). We adopt the state-of-the-art semantic segmentation networks: Dilated Residual Networks (DRN)~\cite{yu2017dilated} and retrain on the SYNTHIA corpus. DRN achieves 68\% and 82\% pixel mAP on the car and road categories. The input semantics $\mathcal{A}$ are one-hot encoded in the dimension of $95\times160\times2$. 
+The CNN for learning high level semantics is composed of 4 convolutional blocks. Each block includes a convolutional layer, a ReLU activation layer, a maxpooling layer and a dropout layer (as we have observed overfitting during network training). Each convolutional layer has four channels with kernel of size 3.
 
-
+For the social tensor configuration, we incorporate all vehicles in the same time-step as their neighbors. In contrast with~\cite{alahi2016social} where a spatial constraint is required in order to be counted as a neighbor, all the vehicles in the same scene are relevant for the social interactions under our high-way driving context.
+Grid size is set as 4 and the embedding size is 64 so the social tensor $\mathcal{S}$ is a $4\times 4\times 64$ matrix.
+The learning is set to 0.001 and RMS-prop~\cite{tieleman2012lecture} with a gradient clipping of 3 to avoid divergence.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %\begin{figure*}[t]
 %   \centering
@@ -513,7 +484,7 @@ We adopt the state-of-the-art semantic segmentation networks: Dilated Residual N
         \caption{\small{3D Success plot}}
         \end{subfigure}
         
-\caption{\small{ 2D and 3D space precision plot and success plot. x-axis for (a) to (d) are: pixel, IOU, centimeter and IOU as x-axis.}}
+\caption{\small{ 2D and 3D space precision plot and success plot. x-axis for (a) to (d) are: pixel, IOU, centimeter and IOU.}}
 \label{fig:precision_plot_and_success_plot}
 \end{figure*}
 
@@ -529,32 +500,6 @@ We adopt the state-of-the-art semantic segmentation networks: Dilated Residual N
                 }
         \label{fig:final}
 \end{figure*}
-
-\vspace{\baselineskip}
-\noindent \textbf{Baseline: Kalman filter}, also known as linear quadratic estimation, is a popular technique for estimating the state of a system~\cite{Thrun2016}. For the task of trajectory prediction, Kalman filters estimates a continuous state and gives a uni-modal distribution. The Kalman filter represents all distributions of the Gaussians and iterates two states: (1) measurement updates; (2) motion updates. In the baseline, we set
-the initial uncertainly covariance as 1e4, measurement noise and motion noise are all set with unit value.
-
-%We evaluation the trajectory both in 2D space (using pixel as unit distance) and 3D space (using meter as unit distance) as shown in Fig.~\ref{fig:evaluation}.
-
-\noindent \textbf{2D Evaluation Methodology:}
-Following the evaluation strategy  of~\cite{wu2013online}, all trajectories are compared using two measures: precision and success. Precision is measured as the distance between the centers of the ground truth bounding box and the corresponding tracker generated bounding box. The precision plot shows the percentage of tracker bounding boxed within a given threshold distance in pixels of the ground truth. To rank the prediction performance, the conventional threshold of 20 pixels (\emph{P20}) is adopted. Success is measured as the intersection over union of pixels. The success plot shows the percentage of tracker bounding boxes whose overlap score is larger than a given threshold and the trackers are ranked according to the Area Under Curve (\emph{AUC}) criteria.
-% The 2D space evaluation result is shown in Fig.~\ref{fig:precision_plot_and_success_plot}(top) and Tab.~\ref{table_baseline_2d}.
-
-\vspace{\baselineskip}
-\noindent \textbf{3D Evaluation Methodology:} Given depth map and the parameter of camera focal lens, we can formalize the problem into a 3D occupancy grid estimation. The real world coordinates $[x_r, y_r, w_r, h_r]$ can be obtained according to Eq.~\ref{eq:focal_length_1}~\ref{eq:focal_length_2}. The 3D jaccard index can be similarly formalized as the volume intersection over union: $\frac{V_g \cap V_p}{V_g \cup V_p}$, where $V_g, V_p$ are the ground truth and predicted space occupancy. 3D center error correspondingly is defined as the mean square root in 3D space.
-%The 3D space evaluation result is shown in Fig.~\ref{fig:precision_plot_and_success_plot}(bottom) and Tab.~\ref{table_baseline_3d}.
-
-
-\vspace{\baselineskip}
-\noindent \textbf{Learning with auxiliary information:}
- The 2D and 3D evaluation results in Fig.~\ref{fig:precision_plot_and_success_plot} and Tab.~\ref{table_baseline_2d}  show that our proposed system consistently outperforms the baseline Kalman filter. Kalman filter is intrinsically a linear model and it's difficult to handle highly nonlinear driving trajectories in a relative coordinate.
- The auxiliary learning with semantic information in SEG-LSTM also consistently outperforms other two temporal models.
- Fig.~\ref{fig:final} shows the advantage of using SEG-LSTM: by utilizing the scene semantics (\emph{e.g.}, road, cars), it's able to direct the recurrent net to output the most plausible path for vehicles and avoid collision with neighboring vehicles.
-
-\vspace{\baselineskip}
-\noindent \textbf{Learning with social tensor:}
-Tab.~\ref{tab:social_lstm}
-
 
 
 \begin{table}[t]
@@ -604,6 +549,21 @@ Tab.~\ref{tab:social_lstm}
     Results of 3D performance evaluation (centimeter as unit) on mean coverage (higher is better) and center error (lower is better).
      }} \label{table_baseline_3d}
 \end{table}
+
+
+%\vspace{\baselineskip}
+\noindent \textbf{Baseline: Kalman filter}, also known as linear quadratic estimation, is a popular technique for estimating the state of a system~\cite{Thrun2016}. For the task of trajectory prediction, Kalman filters estimates a continuous state and gives a uni-modal distribution. The Kalman filter represents all distributions of the Gaussians and iterates two states: (1) measurement updates; (2) motion updates. In the baseline, we set
+the initial uncertainly covariance as 1e4, measurement noise and motion noise are all set with unit value.
+%We evaluation the trajectory both in 2D space (using pixel as unit distance) and 3D space (using meter as unit distance) as shown in Fig.~\ref{fig:evaluation}.
+
+\noindent \textbf{2D Evaluation Methodology:}
+Following the evaluation strategy  of~\cite{wu2013online}, all trajectories are compared using two measures: precision and success. Precision is measured as the distance between the centers of the ground truth bounding box and the corresponding tracker generated bounding box. The precision plot shows the percentage of tracker bounding boxed within a given threshold distance in pixels of the ground truth. To rank the prediction performance, the conventional threshold of 20 pixels (\emph{P20}) is adopted. Success is measured as the intersection over union of pixels. The success plot shows the percentage of tracker bounding boxes whose overlap score is larger than a given threshold and the trackers are ranked according to the Area Under Curve (\emph{AUC}) criteria.
+% The 2D space evaluation result is shown in Fig.~\ref{fig:precision_plot_and_success_plot}(top) and Tab.~\ref{table_baseline_2d}.
+%\vspace{\baselineskip}
+
+\noindent \textbf{3D Evaluation Methodology:} Given depth map and the parameter of camera focal lens, we can formalize the problem into a 3D occupancy grid estimation. The real world coordinates $[x_r, y_r, w_r, h_r]$ can be obtained according to Eq.~\ref{eq:focal_length_1}~\ref{eq:focal_length_2}. The 3D jaccard index can be similarly formalized as the volume intersection over union: $\frac{V_g \cap V_p}{V_g \cup V_p}$, where $V_g, V_p$ are the ground truth and predicted space occupancy. 3D center error correspondingly is defined as the mean square root in 3D space.
+%The 3D space evaluation result is shown in Fig.~\ref{fig:precision_plot_and_success_plot}(bottom) and Tab.~\ref{table_baseline_3d}.
+
 %%%%%%%%%%%%%%%%%
 \begin{table}[t]
 \small
@@ -612,21 +572,35 @@ Tab.~\ref{tab:social_lstm}
         %\begin{tabu}{|l *{2}{c}|}
         \begin{tabu}{@{}ccc@{}}\toprule
         [-1pt] \tabucline[1pt]{1-3}
-                                                    &   ave. disp. error      & final disp. error   \\ \hline
+                                                    &   Ave. disp. error      & Final disp. error   \\ \hline
             {\small Vanilla LSTM }                 &    0.0257                &  0.0440   \\
             {\small \textbf{Social LSTM} }         &  \textbf{0.0247}         & \textbf{0.0418}   \\
           [-1pt] \tabucline[1pt]{1-3}
         \end{tabu}
         %\end{tabular}
 
-    \caption{ {\small Results of 3D performance evaluation on mean coverage (higher is better) and center error (lower is better).
-     }} \label{tab:social_lstm}
+    \caption{ {\small Results comparing vanilla LSTM and social LSTM in  unit space. \emph{Ave. disp. error} is the mean square error over all estimated points of a trajectory and the true points. \emph{Final disp. error} is the distance beween the predicted final destination and the true final destination at the end of the prediction period $T_F$.
+     }
+    } \label{tab:social_lstm}
 \end{table}
+
+%\vspace{\baselineskip}
+\noindent \textbf{Learning with auxiliary information:}
+ The 2D and 3D evaluation results in Fig.~\ref{fig:precision_plot_and_success_plot} and Tab.~\ref{table_baseline_2d}  show that our proposed system consistently outperforms the baseline Kalman filter. Kalman filter is intrinsically a linear model and it's difficult to handle highly nonlinear driving trajectories in a relative coordinate.
+ The auxiliary learning with semantic information in SEG-LSTM also consistently outperforms other two temporal models.
+ Fig.~\ref{fig:final} shows the advantage of using SEG-LSTM: by utilizing the scene semantics (\emph{e.g.}, road, cars), it's able to direct the recurrent net to output the most plausible path for vehicles and avoid collision with neighboring vehicles.
+
+%\vspace{\baselineskip}
+\noindent \textbf{Learning with social tensor:}
+On average, there is around 3 cars of interests in a high-way driving scene.
+Tab.~\ref{tab:social_lstm} shows that considering social interactions between cars improves the prediction accuracy than the isolation case. 
+And we believe that in a more complex social scene such as urban driving, the improvement will be more pronounced.
+
 
 
 \section{Conclusions}
 In this paper, mimicking the human driver reaction time, we advocate to solve the problem of predicting traffic participants future trajectory given historical information.
-We propose a two-staged system incorporating various visual inputs with a temporally recurrent neural network. The recurrent network takes semantic information as an auxiliary input and further improve the predicting accuracy.
+We propose a two-staged system incorporating various visual inputs with a temporally recurrent neural network. The recurrent network takes semantic information as an auxiliary input and further improve the predicting accuracy with the incorporation of social factor.
 Future works include incorporating vehicle pose from the RGB/depth input as extra source of ``auxiliary information" and conducting experiments on the real-world images.
 
 
@@ -644,25 +618,28 @@ Future works include incorporating vehicle pose from the RGB/depth input as extr
 \begin{appendices}
 
 \section{Traffic participants detection}
-\begin{table}[H]\centering
+
+\begin{table*}\centering
 \small{
 \ra{1.}
 %\begin{tabular}{@{}llllllllllll@{}}\toprule
-\begin{tabu}{@{}lllll@{}}\toprule
-[-1pt] \tabucline[1pt]{1-5}
-\multicolumn{2}{c}{conf}                       & 0.50    &0.70   & 0.95\\ \hline
+\begin{tabu}{@{}llllllllllll@{}}\toprule
+[-1pt] \tabucline[1pt]{1-12}
+\multicolumn{2}{c}{conf}  & 0.5  & 0.55 & 0.6 &  0.65 & 0.7  & 0.75 & 0.8 &  0.85 & 0.9  & 0.95\\
+\hline
 \multirow{3}{*}{Faster-RCNN}
-                                &   precision & 81.2    & 81.1  & 80.0\\
-                                &   recall    & 91.4    & 91.3  & 90.2\\
-                                &   f-score   & 86.0    & 86.0  & 84.8\\
-                                    \cline{2-5}
-\multirow{3}{*}{SSD (NMS:0.60)} &   precision &  82.1   & 81.6  & 79.2 \\
-                                &   recall    & \textbf{92.7} & 92.0 & 89.4 \\
-                                &   f-score   & 87.1 &86.5  &84.0\\
-                                    \cline{2-5}
-\multirow{3 }{*}{SSD (NMS:0.45)}&   precision & \textbf{92.0} & 91.1 & 87.4\\
-                                &   recall  & 92.3 & 91.4 & 87.7\\
-                                &   f-score  & \textbf{92.2}& 91.3 & 87.6\\
+                    &   precision & 81.2  & 81.2  & 81.1 & 81.1 & 81.1 & 81.0 & 81.0 & 80.7 & 80.5 & 80.0 \\
+                    &   recall    & 91.4  & 91.4  & 91.3 & 91.3 & 91.3 & 91.3 & 91.3 & 90.9 & 90.7 & 90.2\\
+                    &   f-score   & 86.0  & 86.0  & 86.0 & 86.0 & 86.0 & 86.0 & 86.0 & 85.5 & 85.3 & 84.8\\
+                    \cline{2-12}
+\multirow{3}{*}{SSD (NMS:0.60)}&   precision &  82.1  & 81.9  & 81.8  & 81.8  & 81.6  & 81.1 & 80.9  & 80.4 & 80.0  & 79.2\\
+                            &    recall   & \textbf{92.7} & 92.5 & 92.3  & 92.3 & 92.0 & 91.5 & 91.3 & 90.7  & 90.2 & 89.4\\
+                            &    f-score  & 87.1  & 86.9  & 86.7   &86.7&86.5& 86.0  & 85.8 &85.2 & 84.8 &84.0\\
+                    \cline{2-12}
+\multirow{3 }{*}{SSD (NMS:0.45)}&   precision & \textbf{92.0 } & 91.8 & 91.7 & 91.4 & 91.1 & 91.0 & 90.5 & 90.2 & 89.4 & 87.4\\
+                                &    recall  & 92.3  & 92.1 & 92.0 & 91.8 & 91.4 & 91.3 & 90.8 & 90.5 & 89.7 & 87.7\\
+                                &    f-score  & \textbf{92.2 } & 92.0 & 91.8 & 91.6 & 91.3 & 91.1 & 91.1 & 90.4 & 89.6 & 87.6\\
+
 \bottomrule
 \end{tabu}
 %\end{tabular}
@@ -670,18 +647,52 @@ Future works include incorporating vehicle pose from the RGB/depth input as extr
 Comparison of SSD and Faster-RCNN for vehicle detection on the collected SYNTHIA dataset.
 It can be seen that:
 (1) both meta-architectures are robust to the cut-off confident thresholds.
-(2) SSD is more competitive in the collected dataset when targets of interest are comparatively plarge.
+(2) SSD is more competitive in the collected dataset when targets of interest are large.
 }
 \label{tab:ssd_fasterrcnn}
 }
-\end{table}
+\end{table*}
+
+
+%
+%\begin{table}[H]\centering
+%\small{
+%\ra{1.}
+%%\begin{tabular}{@{}llllllllllll@{}}\toprule
+%\begin{tabu}{@{}lllll@{}}\toprule
+%[-1pt] \tabucline[1pt]{1-5}
+%\multicolumn{2}{c}{conf}                       & 0.50    &0.70   & 0.95\\ \hline
+%\multirow{3}{*}{Faster-RCNN}
+%                                &   precision & 81.2    & 81.1  & 80.0\\
+%                                &   recall    & 91.4    & 91.3  & 90.2\\
+%                                &   f-score   & 86.0    & 86.0  & 84.8\\
+%                                    \cline{2-5}
+%\multirow{3}{*}{SSD (NMS:0.60)} &   precision &  82.1   & 81.6  & 79.2 \\
+%                                &   recall    & \textbf{92.7} & 92.0 & 89.4 \\
+%                                &   f-score   & 87.1 &86.5  &84.0\\
+%                                    \cline{2-5}
+%\multirow{3 }{*}{SSD (NMS:0.45)}&   precision & \textbf{92.0} & 91.1 & 87.4\\
+%                                &   recall  & 92.3 & 91.4 & 87.7\\
+%                                &   f-score  & \textbf{92.2}& 91.3 & 87.6\\
+%\bottomrule
+%\end{tabu}
+%%\end{tabular}
+%\caption{
+%Comparison of SSD and Faster-RCNN for vehicle detection on the collected SYNTHIA dataset.
+%It can be seen that:
+%(1) both meta-architectures are robust to the cut-off confident thresholds.
+%(2) SSD is more competitive in the collected dataset when targets of interest are comparatively plarge.
+%}
+%\label{tab:ssd_fasterrcnn}
+%}
+%\end{table}
 
 \section{Instance association via tracking}
 \begin{figure}[h]
         \centering
         \includegraphics[width=0.4\textwidth]{figures/double_detection.png}
         \caption{
-        \small{Instance association can help to disambiguate the false positive by enforcing temporal consistency requirement. Due to the high recall requirement for vehicle detection, there could be correspondingly higher false positive rate (\emph{e.g.}, double detection of red boxed in the far left). Instance association across multiple frames will discard the spurious detection.}
+        \small{Instance association can help to disambiguate the false positive by enforcing temporal consistency requirement. Due to the high recall requirement for vehicle detection, there could be correspondingly higher false positive rate (\emph{e.g.}, double detection of red boxed in the far left). Instance association across multiple frames will discard the spurious detection while remain temporal consistency.}
         }
         \label{fig:Instance_association}
 \end{figure}
@@ -691,7 +702,7 @@ It can be seen that:
         \centering
         \includegraphics[width=0.5\textwidth]{figures/evaluation.pdf}
         \caption{
-        \small{The evaluation of 2D and 3D prediction. 2D: It is the bounding box to cover the whole vehicle. 3D: The depth channel is combined with 2D bounding box to predict trajectory.}
+        \small{The evaluation of 2D and 3D prediction. 2D: The bounding box is set to cover the whole vehicle. 3D: The depth channel is combined with 2D bounding box to predict 3D occupancy.}
         }
         \label{fig:evaluation}
 \end{figure}
