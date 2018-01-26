@@ -35,20 +35,19 @@
 %%%%%%%%% BODY TEXT - ENTER YOUR RESPONSE BELOW
 We would first like to thank the reviewers for the supportive comments and the constructive criticisms. Your valuable feedbacks help us further improve the analysis and the overall presentation of the paper.
 Because of the significant improvement made to the new version of the paper, we would kindly ask reviewers refer to the \href{https://www.jianguoyun.com/p/De5QypAQ9cyhBhjb10E}{new version of the paper}.
-Due to space constraint, we address only the major
-criticisms below.
+We address only the major criticisms below.
 % and We would like to address the concerns respectfully as follows.
 
 % Because of the space constraint we address only the major comments below.
 
-\noindent \textbf{Modifications:} (1) We have implemented SocialLSTM [2] as requested by R2 and preliminary results on 2D space exhibit that the inclusion of ``social interaction" further improves the prediction accuracy. (2) We have restructured our methodology in Sec. 3 and further explain the intuition behind the chosen architectures.
+\noindent \textbf{Modifications:} (1) We have implemented SocialLSTM [2] as requested by R2 and preliminary results on 2D space show that the inclusion of ``social interaction" further improves the prediction accuracy. (2) We have restructured our methodology in Sec. 3 and further explain the intuition behind the chosen architectures.
 
 % In what follows, we give an overview of the main changes made to the manuscript.
 \tcom
 \noindent \textbf{I think the authors should reimplement SocialLSTM for 2D data (Stanford UAV dataset seems to be a 2D standard prediction task -- just throw away images and just use the xy plane coordinates, e.g. center of detected bounding box).}
 \noindent \textbf{The details about the fusion of location” and semantic” information into the LSTM hidden state seemed missing (was a bit vague). A figure of the architecture of the SEG-LSTM would go a long way in clarifying this (or are the authors using Xu et al.'s "End-to-end Learning of Driving Models from Large-scale Video Datasets" FCN-LSTM from Trevor Darrell's group?).}
 
-\noindent 
+\noindent
 \tcom
 \noindent \textbf{I felt like the detection/tracking theme slightly bogs down the main focus of prediction in the paper. I think refocusing it on prediction would strengthen the argument.}
 \noindent \textbf{There are too many contributions. For example, I would combine 1 and 3 and maybe also 2 and 4. In general, it is better to have a few strong contributions than many weak ones.}
@@ -67,7 +66,7 @@ criticisms below.
 \noindent \textbf{R2: Where are comparisons with other activity forecasting/trajectory prediction works?}
 
 \noindent \textbf{Prior works on sequence prediction}:
-We agree that the first version of the draft is indeed weak in presenting prior works on sequence prediction. We have restructured our related works. Specifically, we have supplemented works on activity forecasting/trajectory prediction works in the ``Activity forecasting" part in Sec 2.
+We agree that the first version of the draft is indeed weak in presenting prior works on sequence prediction. We have restructured our related works. Specifically, we have supplemented prior works on activity forecasting/trajectory prediction in Sec 2.
 
 \tcom
 \noindent \textbf{R1: It is not clear if the dataset is released with the paper.}
@@ -85,7 +84,7 @@ We agree that the first version of the draft is indeed weak in presenting prior 
 
 \noindent \textbf{Instance association via tracking}:
 \noindent  We would like to clarify the overloaded term ``tracking by detection" used in the first version of our manuscript. Most of the modern trackers focus on the problem of ``class-agnostic" generic object tracking\footnote{In order to adapt to temporal changes, a continuous learning strategy is applied, where the model is updated rigorously in every frame. This excessive update strategy causes both lower frame-rates and degradation of robustness due to model drifting caused by scale variations, deformations, and out-of-plane rotations.}.
-In the context of autonomous driving, however, we know in advance the classes of object of interests for tracking (\emph{e.g.}, cars, pedestrians, cyclists). Therefore, with this extra source of information, we propose to use the neural nets object detection template to forcibly update the tacker's model to overcome the problem of model drifting. Hence the tracker is served solely as\emph{ instance associator} for the traffic participant. During our qualitative examination, we find out that this simple combination achieves more robust result for instance association than those of state-of-the-art ``class-agnostic" trackers.
+In the context of autonomous driving, however, we know in advance the classes of object of interests for tracking (\emph{e.g.}, cars, pedestrians, cyclists). Therefore, with this extra source of information, we propose to use the neural nets object detection template to forcibly update the tacker's model to overcome the problem of model drifting. Hence the tracker is served solely as\emph{ instance associator}. During our qualitative examination, we find out that this combination achieves more robust result for instance association than using ``class-agnostic" tracker alone.
 
 
 % We would like to address the concerns respectfully as follows:
@@ -94,15 +93,16 @@ In the context of autonomous driving, however, we know in advance the classes of
 \noindent \textbf{3) 3 very similar LSTMs with different input}
 \noindent \textbf{4) The one LSTM with more information performs better. That is not surprising and not a real insight.}
 
-\noindent \textbf{R1:}
-Explain the intuition of three LSTMs.
+\noindent \textbf{R1:} To our knowledge, our paper is the first attempt to take advantage of different level of abstractions from multiple streams to tackle the trajectory predictions with the practical use-case in mind (e.g. reaction time of humans). The limit of FtF temporal model shares the similarity mentioned in [4]: sampling frame by frame conditioned on the state and the previous correct token with an \textless EOS\textgreater token as a prerequisite.
+We stipulate the length of the prediction fixed as T. Hence we have the assumption that current state is complete (Markovian), in the sense it contains all historical information required for predicting the future trajectory and the experimental results verify our intuition. 
+Hence, we believe our paper serves as a good proof-of-concept and opens the doors for this challenging yet practical trajectory problem in the context of autonomous driving.
 
 %####################################################################################################################################################################################
 \tcom
 \noindent \textbf{Line 124 - The authors discuss a "lack of proper metrics for evaluating the temporal prediction result." How are the current metrics poorly suited to the task? What would be better?}
 
-\noindent \textbf{R2:} Our preliminary result using 2D information shows that social tensor generates slightly better prediction than the isolation case (Tab.4, Fig.7, bottom row). Note that our mean error in unit space is much lower than the pedestrian trajectory prediction in Social-LSTM[2] (0.049 vs. 0.27). We analyze the following two factors:  car trajectory is a simpler case: both in time (prediction frame is 8 in our case and 12 in [2]) and in space (car trajectory is more linear and confined in our problem setting). 
-However, the relevant improvement using social tensor is lower for the car trajectory prediction (4\% vs. 38\%). We reckon it's due to  only around 3 cars of interests on average appearing in our high-way driving scene.
+\noindent \textbf{R2:} Our preliminary result using 2D information shows that social tensor generates slightly better prediction than the isolation case (Tab.4, Fig.7, bottom row). Note that our mean error in unit space is much lower than the pedestrian trajectory prediction in Social-LSTM[2] (0.049 vs. 0.27). We analyze the following two factors:  car trajectory is a simpler case: both in time (prediction frame is 8 in our case and 12 in [2]) and in space (car trajectory is more linear and confined in our problem setting).
+However, the relevant improvement using social tensor is lower for the car trajectory prediction (4\% vs. 38\%). We reckon it's due to  only around 3 cars of interests on average appearing in our high-way driving scenario.
 And we believe in a more complex social scene such as urban driving, the improvement will be more pronounced.
 
 \tcom
@@ -115,8 +115,8 @@ And we believe in a more complex social scene such as urban driving, the improve
 \noindent \textbf{Why are scene semantics privileged (which you also call auxiliary”) information? If the pipeline relies on fusing the location” and semantic” stream, if privileged information is missing at test time, then wont the pipeline break? (privileged information is usually present at train time, but absent at test time).}
  \noindent \textbf{Can multiple objects be tracked at once, or just one? The video in the supplementary material only showed one object being tracked. What was the average number of objects in each SYNTHIA scene frame?}
   \noindent \textbf{The focus of the paper seems a bit unclear: apparently, the goal is to predict cars future odometry given previous egomotion visual input”. But the paper is about prediction of other vehicles’ trajectories, not about predicting one own car odometry (which is different).}
-  
- \noindent \textbf{R2:} Semantics in our paper are presented both in the training and the test time and we rectified them as as ``auxiliary" information. They are used directly as a tensor embedding for the recurrent network.
+
+ \noindent \textbf{R2:} Semantics in our paper are presented both in the training and the test time and we rectified them as as ``auxiliary" information. They are used directly as a tensor embedding via a convnet.
  In the supplementary material we try to avoid extra cluttering, hence we visualized only one object being tracked. Nonetheless, multiple objects are detected and tracked simultaneously in our system and we redraw the figures to make multiple tracking more conspicuous.
 
 
@@ -136,7 +136,7 @@ And we believe in a more complex social scene such as urban driving, the improve
 \noindent \textbf{Not exactly a request, but maybe something to consider for future work: There are photo-realistic simulators available now (CARLA, Sim4CV, etc.) which allow simulation of autonomous driving with real’ physics and photo-realism similar to Synthia. It would be interesting to implement this system and evaluate real-world’ performance.}
 
 \noindent \textbf{R3:} We thank the reviewer for the very meticulous review.  We have indeed noticed the recently released photo-realistic simulators CARLA and Sim4CV. And we found that CARLA is especially suited as a further extension to verify our proposed system due to the availability of continuous video streams and ground truth segmentation.
-%In terms of transferring to real-world data, 
+%In terms of transferring to real-world data,
 From the semantic segmentation results of Synthia, we have observed that model trained on synthetic dataset produced good segmentations by itself on real datasets, and dramatically boosted accuracy in combination with real data. Hence, we believe the hybrid of synthetic data and real-world data would be the most data efficient and promising way for the model generalization. %Model verification on public real-world datasets, e.g., Comma.ai~\cite{santana2016learning} Udacity~\cite{udacity} dataset would be our forthcoming imminent works.
 
 %
