@@ -155,17 +155,6 @@ Typical algorithms output bounding boxes on detected objects for a static image.
 
 %With the modification of neural network, conditional random field (CRF) is employed into refining the output of network in \cite{chen2016deeplab}. After that, CRF is merged into neural network to become an end-to-end architecture \cite{liu2015semantic,zheng2015conditional,arnab2016higher}
 
-
-\noindent \textbf{Instance association} Instance association between frames is a prerequisite to solve the proposed intrinsically temporal problems.  3D scene flow is estimated in~\cite{behl2017bounding} by exploiting recognition to overcome the challenging scenarios in the presence of large displacement or local ambiguities.
-%Their method achieve state-of-the-art performance on the KITTI2015 scene flow benchmark.
-However, a total runtime of 10 minutes per frame is computationally prohibitive for the real-time deployment.
-To accomplish the task of instance association between frames, we resort to the well studied field of visual tracking.
-Discriminative Correlation Filters (DCF)~\cite{henriques2015high} have demonstrated excellent performance for high-speed generic visual object tracking.
-Built upon their seminal work, there has been a plethora of recent improvements~\cite{hong2015online, ma2015hierarchical,danelljan2016beyond,held2016learning, wu2017kernalised,danelljan2017eco} relying on convolutional neural network (CNN) pretrained on ImageNet as a feature extractor for visual tracking.
-
-Most of the modern trackers focus on the problem of ``class-agnostic" generic object tracking. In order to adapt to temporal changes, a continuous learning strategy is applied, where the model is updated rigorously in every frame. Such update is excessive and sensitive to sudden changed caused by, \emph{e.g.}, scale variations, deformations, and out-of-plane rotations. This excessive update strategy cause both lower frame-rates and degradation of robustness due to over-fitting to the recent frames~\cite{danelljan2017eco}.
-In the context of autonomous driving, however, we know in advance the classes of object of interests for tracking (\emph{e.g.}, cars, pedestrians, cyclists). Therefore, with this extra source of information, we propose to use the neural nets object detection result as a more robust template to update the tacker's model to overcome the problem of model drifting. Hence the tracker is served solely as instance associator for the traffic participant.
-
 \begin{figure*}[t]
         \centering
         \includegraphics[width=0.90\textwidth]{figures/framework.pdf}
@@ -174,6 +163,18 @@ In the context of autonomous driving, however, we know in advance the classes of
         }
         \label{fig:framework}
 \end{figure*}
+\noindent \textbf{Instance association} Instance association between frames is a prerequisite to solve the proposed intrinsically temporal problems.  3D scene flow is estimated in~\cite{behl2017bounding} by exploiting recognition to overcome the challenging scenarios in the presence of large displacement or local ambiguities.
+%Their method achieve state-of-the-art performance on the KITTI2015 scene flow benchmark.
+However, a total runtime of 10 minutes per frame is computationally prohibitive for the real-time deployment.
+To accomplish the task of instance association between frames, we resort to the well studied field of visual tracking.
+Discriminative Correlation Filters (DCF)~\cite{henriques2015high} have demonstrated excellent performance for high-speed generic visual object tracking.
+Built upon their seminal work, there has been a plethora of recent improvements~\cite{hong2015online, ma2015hierarchical,danelljan2016beyond,held2016learning, wu2017kernalised,danelljan2017eco} relying on convolutional neural network (CNN) pretrained on ImageNet as a feature extractor for visual tracking.
+
+Most of the modern trackers focus on the problem of ``class-agnostic" generic object tracking. In order to adapt to temporal changes, a continuous learning strategy is applied, where the model is updated rigorously in every frame. Such update is excessive and sensitive to sudden changed caused by, \emph{e.g.}, scale variations, deformations, and out-of-plane rotations. This excessive update strategy cause both lower frame-rates and degradation of robustness due to over-fitting to the recent frames~\cite{danelljan2017eco}.
+
+%In the context of autonomous driving, however, we know in advance the classes of object of interests for tracking (\emph{e.g.}, cars, pedestrians, cyclists). Therefore, with this extra source of information, we propose to use the neural nets object detection result as a more robust template to update the tacker's model to overcome the problem of model drifting. Hence the tracker is served solely as instance associator for the traffic participant.
+
+
 %\noindent \textbf{RNN for sequence prediction}
 
 %Recently, RNN(recurrent network) and its variant LSTM(long short-term memory) have been successfully used in autonomous driving, due to its advantages for modeling sequential data in vision problems.
@@ -186,7 +187,7 @@ A body of work~\cite{chalasani2013deep, clark2013whatever, egner2010expectation}
 A combination of a fully-convolutional network and an LSTM is proposed in~\cite{xu2017end} to learn from large-scale vehicle action data and  is trained as a pilot network in the context of behaviour reflex approaches. Their goal is to predict future egomotion including multi-modal discrete and continuous driving behaviors.
 Inverse turning radius is predicted by a LSTM network in~\cite{kim2017interpretable}: a heat map of attention is generated at each time step conditioned on the previous hidden states as a more succinct visual explanations.
 
-More recent works also attempt to take the ``social factor" into consideration. Social-LSTM~\cite{alahi2016social} focus on modeling dynamics crowd interactions for path prediction by introducing a ``social tensor" from a spatial-temporal neighborhood. Based on the social-LSTM, an attention mechanism is introduced in ~\cite{social_lstm_2018} built upon the high-level spatio-temporal graphs proposed in~\cite{jain2016structural}.
+More recent works also attempt to take the ``social factor" into consideration. Social-LSTM~\cite{alahi2016social} focus on modeling dynamics crowd interactions for path prediction by introducing a ``social tensor" from a spatial-temporal neighborhood. Based on the Social-LSTM, an attention mechanism is introduced in ~\cite{social_lstm_2018} built upon the high-level spatio-temporal graphs proposed in~\cite{jain2016structural}.
 %~\cite{duself} used 3D convolutional layers to extract visual features, then fed them into LSTM layers to capture the sequential relation. In addition to using deep features, ~\cite{koutnik2013evolving} trained a large recurrent neural network using a reinforcement learning approach to map images directly to steering angles, with the purpose to keep the car on track.
 
 
@@ -210,19 +211,12 @@ Synthetic dataset has an obvious advantage: a fine annotated image in Cityscape 
 We first formalized the proposed problem and describe the overall framework as shown in Fig.~\ref{fig:framework}.
 
 \subsection{Problem formulation}
-\begin{figure}[t]
-        \centering
-        \includegraphics[width=0.45\textwidth]{figures/network_detail.pdf}
-        \caption{
-        \small{Illustrations of three temporal networks. $\mathcal{J_H}$ represents historical trajectories, $\mathcal{J_F}$ is the $T$ time step future trajectories to be predicted.  Left: Frame-to-Frame (FtF); Middle: Frame-to-Sequence (FtS); Right: SEG-LSTM, with auxiliary information as input $\mathcal{A}$. The social tensor $\mathcal{S}$ can be inserted into existing recurrent networks .}
-        }
-        \label{fig:lstm}
-\end{figure}
+
 
 We propose to learn a generic approach from history information and formulate the problem as predicting future traffic participants' trajectories.
 %Our work is most related to~\cite{xu2017end} where their problem was to predict future (next 1/3rd second) feasible actions of egomotion from a motion reflex perspective.
 %We, instead,  predict other traffic participants' future trajectories in a longer time span (next 1.6 second).
-Formally, our problem can be defined as a mapping $\mathcal{M}$ between historical trajectory $\mathcal{J_H}=\{j_p^t\}, t=1,\dots, T $ with auxiliary information $ \mathcal{A}=\{a_p^t\},t=1,\dots, T $ for traffic participant $p$ and the future trajectory $\mathcal{J_F}=\{j_p^t\}, t={T+1}, \ldots, T_F$:
+Formally, our problem can be defined as a mapping $\mathcal{M}$ from historical trajectory $\mathcal{J_H}=\{j_p^t\}, t=1,\dots, T $ with auxiliary information $ \mathcal{A}=\{a_p^t\},t=1,\dots, T $ for traffic participant $p$ to the future trajectory $\mathcal{J_F}=\{j_p^t\}, t={T+1}, \ldots, T_F$:
 
 \begin{equation}
 \mathcal{J_F} \leftarrow \bm{\mathcal{M}}_p(j, a): \mathcal{J_H} \times \mathcal{A}
@@ -244,22 +238,24 @@ where $\{x,y,w,h\}$ define target's 2D boundingbox in image pixel space and $\{d
 where $d$ is distance between  the center of the camera lens and the center of target. We use the minimum relative distance $d_{min}$ as a close approximation.
 
 %Auxiliary information $\mathcal{A}$ could be scene semantics to regularize the path of future trajectory or car pose information to decide whether it's an approaching car or a parallel driving car.
-
 \begin{figure}[t]
         \centering
-        \includegraphics[width=0.42\textwidth]{figures/SEGLSTM.pdf}
+        \includegraphics[width=0.45\textwidth]{figures/network_detail.pdf}
         \caption{
-        \small{Diagram of SEG-LSTM model: semantic inputs are one-hot encoded images with channel number $\mathcal{C}$ as the number of semantic categories (we used only ``car" and ``road" as the two semantics used under the context of high-way driving). The higher level semantics are extracted through a four-layer CNN, producing a joint representation of the auxiliary semantic information and the co-ordinate trajectory information.}
+        \small{Illustrations of three temporal networks. $\mathcal{J_H}$ represents historical trajectories, $\mathcal{J_F}$ is the $T$ time step future trajectories to be predicted.  Left: Frame-to-Frame (FtF); Middle: Frame-to-Sequence (FtS); Right: SEG-LSTM, with auxiliary information as input $\mathcal{A}$. The social tensor $\mathcal{S}$ can be inserted into existing recurrent networks .}
         }
-        \label{fig:SEGLSTM}
+        \label{fig:lstm}
 \end{figure}
+
+
+
 \subsection{Sequence modeling}
 
-For predicting the vehicle's future trajectory, we compare three temporal models based on LSTM cells. A ``social pooling tensor" that implicitly reasons about the motion of neighboring traffic participants can be inserted into existing recurrent network architectures without any extra training supervision or modification to the optimization process as shown in Fig.~\ref{fig:lstm}. The first two models take sequential 3D occupancy as input. In the third model, we  explore using semantic segmentation as a side ``auxiliary" information $\mathcal{A}$ to better guide the trajectory prediction.
+For predicting the vehicle's future trajectory, we compare three temporal models based on LSTM cells. A ``social pooling tensor" that implicitly reasons the motion of neighboring traffic participants can be inserted into existing recurrent network architectures without any extra training supervision or modification to the optimization process as shown in Fig.~\ref{fig:lstm}. The first two models take sequential 3D occupancy as input. In the third model, we  explore using semantic segmentation as a side ``auxiliary" information $\mathcal{A}$ to better guide the trajectory prediction.
 
 \vspace{\baselineskip}
 \noindent \textbf{Frame-to-Frame (FtF) model:}
-is akin to  sequence generation model from Graves~\cite{graves2013generating}.  At test-time $t$, it samples current predicted 3D occupancy as feedback to the model for predicting next frame occupancy grid. The model is frame to frame Markovian and the next frame trajectory $j_{t+1}$ can be estimated as:
+is akin to  sequence generation model from Graves~\cite{graves2013generating}.  At test-time $t$, it samples current predicted 3D occupancy as feedback to the model for predicting next frame occupancy grid. The model is frame-to-frame Markovian and the next frame trajectory $j_{t+1}$ can be estimated as:
 \begin{equation}
 j_{t+1} \leftarrow  \bm{\mathcal{M}}(j_t, j_H): \mathcal{J_H}
 \label{eq:FtF}
@@ -280,23 +276,34 @@ j_{t+1, \ldots, T_F}, \leftarrow  \bm{\mathcal{M}}(j_H): \mathcal{J_H}
 \end{equation}
 The whole sequence inference paradigm is more stable than the first FtF approach because of the elimination of the dependency of previous token. Such dependency will introduce the discrepancy between how the model is used at training and inference. Inference with the whole sequence will generate smoother predictions.
 
+
+\begin{figure}[t]
+        \centering
+        \includegraphics[width=0.42\textwidth]{figures/SEGLSTM.pdf}
+        \caption{
+        \small{Diagram of SEG-LSTM model: semantic inputs are one-hot encoded images with channel number $\mathcal{C}$ as the number of semantic categories (we used only ``car" and ``road" as the two semantics  under the context of high-way driving). The higher level semantics are extracted through a four-layer CNN. A joint representation is produced by the auxiliary semantic information and the coordinates trajectory information.}
+        }
+        \label{fig:SEGLSTM}
+\end{figure}
 \vspace{\baselineskip}
 \noindent \textbf{SEG-LSTM model:}
- takes advantages of scene semantics from  historical frames as auxiliary information $\mathcal{A}$. The second LSTM layer fuses the output from the bottom-most LSTM that encodes co-ordinates embedding with higher level semantic information.
+ takes advantages of scene semantics from  historical frames as auxiliary information $\mathcal{A}$. The second LSTM layer fuses the output from the bottom-most LSTM that encodes coordinates embedding with higher level semantic information.
 With auxiliary $\mathcal{A}$, the trajectory  $j_{t+1, \ldots, T_F}$  to be predicted can be estimated as:
 \begin{equation}
-j_{t+1, \ldots, T_F}, \leftarrow  \bm{\mathcal{M}}(j_H, a): \mathcal{J_H} \times convnet(\mathcal{A})
+j_{t+1, \ldots, T_F}, \leftarrow  \bm{\mathcal{M}}(j_H, a): \mathcal{J_H} \times \mathcal{A}
 \label{eq:SEG-LSTM}
 \end{equation}
- Semantic inputs are one-hot encoded images with channel number $\mathcal{C}$ as the number of semantic categories  as in Fig.~\ref{fig:SEGLSTM}. The higher level semantic is extracted through a four-layer CNN, producing a joint representation of the semantic auxiliary information and the co-ordinate trajectory information.
- As described above, the 3D occupancy input  has only six dimensions: $[x, y, w, h, d_{min}, d_{max}]$ encoding the co-ordinates information. So the bottom-most LSTM not only can learn the temporal information between time-varying trajectories,  but also can balance input dimensions of both co-ordinate information and the semantic information.
+ Semantic inputs are one-hot encoded images with channel number $\mathcal{C}$ as the number of semantic categories  as in Fig.~\ref{fig:SEGLSTM}. The higher level semantic is extracted through a four-layer CNN. A joint representation is produced  by the semantic auxiliary information and the coordinates trajectory information.
+ As described above, the 3D occupancy input  has only six dimensions: $[x, y, w, h, d_{min}, d_{max}]$ encoding the coordinates information. So the bottom-most LSTM not only can learn the temporal information between time-varying trajectories,  but also can balance input dimensions of both coordinates information and the semantic information.
 %Results show that the SEG-LSTM model performs better than the other two temporal model.
 
-Note that this model differs from the way semantic information is used in~\cite{xu2017end}: instead of using semantic segmentation as a ``privilege information" which is missing at test time, SEG-LSTM directly takes historical scene semantics as input and directs the recurrent net future trajectory prediction.
+Note that this model differs from the way semantic information is used in~\cite{xu2017end}: instead of using semantic segmentation as a ``privilege information" which is missing at test time, SEG-LSTM directly takes historical scene semantics as input and embeds them to a hidden-state tensor by a convolutional neural network.
 
 
 \vspace{\baselineskip}
-\noindent \textbf{Social tensor:} was firstly introduced in~\cite{alahi2016social} by observing the ``common sense" rules and social conventions from pedestrians in crowded public space. Naturally, in the context of autonomous driving, such observation is also complied: when there are multiple cars occupying on-going lanes, the social interactions between traffic participants confine the space for their possible trajectories. The social interactions can be encoded implicitly by using a social pooling layer: at every time-step, the LSTM cell receives pooled hidden-state information from the LSTM cells of neighbors. While pooling the information, the spatial information is preserved by grid based pooling. The hidden state $h^t_i$ of the LSTM at time $t$ captures the latent representation of the $i^{th}$ target in the scene. This representation can be shared with neighbors by building a social hidden tensor $s^i_t$:
+\noindent \textbf{Social tensor:} was firstly introduced in~\cite{alahi2016social} by observing the ``common sense" rules and social conventions from pedestrians in crowded public space. Naturally, in the context of autonomous driving, such observation is also complied: when there are multiple cars occupying on-going lanes, the social interactions between traffic participants confine the space for their possible trajectories. The social interactions can be encoded implicitly by using a social pooling layer: at every time-step, the LSTM cell receives pooled hidden-state information from the LSTM cells of neighbors. While pooling the information, the spatial information is preserved by grid based pooling. 
+
+The hidden state $h^t_i$ of the LSTM at time $t$ captures the latent representation of the $i^{th}$ target in the scene. This representation can be shared with neighbors by building a social hidden tensor $s^i_t$:
 \begin{equation}
 s^i_t = \sum_{j \in \mathcal{N}_i} \mathbf{1}_{m,n} [x^j_t - x^i_t, y^j_t - y^i_t] \centerdot  h^j_{t-1}
 \label{eq:social_tensor}
@@ -307,7 +314,7 @@ The trajectory  to be predicted can be estimated as:
 j_{t+1, \ldots, T_F}, \leftarrow  \bm{\mathcal{M}}(j_H, s^i_H): \mathcal{J_H}  \times \mathcal{S}
 \label{eq:FtS}
 \end{equation}
-This social pooling layer does not introduce any additional parameters and can be inserted in to the hidden layer of LSTM. An important distinction from the vanilla LSTM is that the hidden states of multiple LSTMs are coupled by the social pooling layer. At every time-step, the update are jointly back-propagated through multiple LSTMs in a scene as a neighboring batch update scheme.
+This social pooling layer does not introduce any additional parameters and can be inserted into the hidden layer of LSTM. An important distinction from the vanilla LSTM is that the hidden states of multiple LSTMs are coupled by the social pooling layer. At every time-step, the updates are jointly back-propagated through multiple LSTMs in a scene as a neighboring batch update scheme.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Experiments}
@@ -430,7 +437,7 @@ The CNN for learning high level semantics is composed of 4 convolutional blocks.
 
 For the social tensor configuration, we incorporate all vehicles in the same time-step as their neighbors. In contrast with~\cite{alahi2016social} where a spatial constraint is required in order to be counted as a neighbor, all the vehicles in the same scene are relevant for the social interactions under our high-way driving context.
 Grid size is set as 4 and the embedding size is 64 so the social tensor $\mathcal{S}$ is a $4\times 4\times 64$ matrix.
-The learning is set to 0.001 and RMS-prop~\cite{tieleman2012lecture} with a gradient clipping of 3 to avoid divergence.
+The learning rate is set to 0.001 with RMS-prop~\cite{tieleman2012lecture} with a gradient clipping of 3 to avoid divergence.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %\begin{figure*}[t]
 %   \centering
@@ -495,9 +502,10 @@ The learning is set to 0.001 and RMS-prop~\cite{tieleman2012lecture} with a grad
         \includegraphics[width=0.95\textwidth]{figures/prediction_2.pdf}
         \caption{
         \small{Visualization of prediction results. Top two rows show the advantage of using semantics in temporal model: {\color{red}Red: ground truth}; {\color{blue}Blue: SEG-LSTM}; {\color{green}Green: FtS}; {\color{yellow}Yellow: FtF}.
-        SEG-LSTM can help detecting neighboring vehicles and restricts the viable path outside the space occupied by other vehicles (row 1) and confines the plausible car trajectory along the space above road (row 2).
+        SEG-LSTM can help detecting neighboring vehicles and restrict the viable path outside the space occupied by other vehicles (row 1); and confine the plausible car trajectory along the space above road (row 2).
         Row 3 and 4 show the benefit  of incorporating social factors.
-        Row 3 is the visualization for vanilla LSTM. The bottom left car prediction (denoted by red dots) is considered in isolation and could surpass the host car, moving dangerously close to the two front cars. Row 4 is the visualization of social LSTM: by considering two front cars in the scene, the predicted keeps the red dot car in a safer distance from two front cars.
+        Row 3 is the visualization of vanilla LSTM: the bottom left car predictions (denoted by red dots) are considered in isolation, moving dangerously close to the two front cars.
+        Row 4 is the visualization of Social-LSTM: by considering two front cars in the scene, the prediction keeps the red dot car in a safer distance from the two front cars.
         }
         }
         \label{fig:final}
@@ -576,26 +584,26 @@ Following the evaluation strategy  of~\cite{wu2013online}, all trajectories are 
         [-1pt] \tabucline[1pt]{1-3}
                                                     &   Ave. disp. error      & Final disp. error   \\ \hline
             {\small Vanilla LSTM }                 &     0.0514              &  0.0880   \\
-            {\small \textbf{Social LSTM} }         &  \textbf{0.0494 }         & \textbf{0.0837}   \\
+            {\small \textbf{Social-LSTM} }         &  \textbf{0.0494 }         & \textbf{0.0837}   \\
           [-1pt] \tabucline[1pt]{1-3}
         \end{tabu}
         %\end{tabular}
 
-    \caption{ {\small Results comparing vanilla LSTM and social LSTM in  unit space. \emph{Ave. disp. error} is the mean square error over all estimated points of a trajectory and the true points. \emph{Final disp. error} is the distance beween the predicted final destination and the true final destination at the end of the prediction period $T_F$.
+    \caption{ {\small Results comparing vanilla LSTM and Social-LSTM in  unit space. \emph{Ave. disp. error} is the mean square error over all estimated points of a trajectory and the true points. \emph{Final disp. error} is the distance beween the predicted final destination and the true final destination at the end of the prediction period $T_F$.
      }
     } \label{tab:social_lstm}
 \end{table}
 
 %\vspace{\baselineskip}
 \noindent \textbf{Learning with auxiliary information:}
- The 2D and 3D evaluation results in Fig.~\ref{fig:precision_plot_and_success_plot} and Tab.~\ref{table_baseline_2d}  show that our proposed system consistently outperforms the baseline Kalman filter. Kalman filter is intrinsically a linear model and it's difficult to handle highly nonlinear driving trajectories in a relative coordinate.
+ The 2D and 3D evaluation results in Fig.~\ref{fig:precision_plot_and_success_plot} and Tab.~\ref{table_baseline_2d}  show that our proposed system consistently outperforms the baseline Kalman filter. Kalman filter is intrinsically a linear model and it's difficult to handle highly nonlinear driving trajectories in a relative coordinates.
  The auxiliary learning with semantic information in SEG-LSTM also consistently outperforms other two temporal models.
  Fig.~\ref{fig:final} shows the advantage of using SEG-LSTM: by utilizing the scene semantics (\emph{e.g.}, road, cars), it's able to direct the recurrent net to output the most plausible path for vehicles and avoid collision with neighboring vehicles.
 
 %\vspace{\baselineskip}
 \noindent \textbf{Learning with social tensor:}
 On average, there is around 3 cars of interests in a high-way driving scene.
-Tab.~\ref{tab:social_lstm} shows that considering social interactions between cars improves the prediction accuracy than the isolation case.
+Tab.~\ref{tab:social_lstm} shows that considering social interactions between cars improves the prediction accuracy over the isolation case.
 And we believe that in a more complex social scene such as urban driving, the improvement will be more pronounced.
 
 
