@@ -69,7 +69,7 @@ We also show the effectiveness of combining various levels of abstractions(e.g.,
 \section{Introduction}
 \begin{figure}[t]
         \centering
-        \includegraphics[width=0.45\textwidth]{figures/pull_figure.pdf}
+        \includegraphics[width=0.42\textwidth]{figures/pull_figure.pdf}
         \caption{ \small{
         We propose a system to predict future trajectories of vehicles. Given historical information, obtained by detection, tracking and semantic segmentation, a multi-stream recurrent neural network is trained to generate future trajectory.}}
         \label{fig:pull_figure}
@@ -168,7 +168,7 @@ In the context of autonomous driving, however, we know in advance the classes of
 
 \begin{figure*}[t]
         \centering
-        \includegraphics[width=0.95\textwidth]{figures/framework.pdf}
+        \includegraphics[width=0.90\textwidth]{figures/framework.pdf}
         \caption{
         \small{The framework for the proposed vehicle future trajectory prediction system. The input is the sequential data (RGB and/or depth maps) up to the current time step obtained from the host car. Target vehicles' sequential bounding boxes are extracted by detection \& tracking module. Along with scene semantics as an auxiliary information, multi-stream inputs are fed into an LSTM to predict future trajectories taking advantages of various levels of abstractions.}
         }
@@ -207,8 +207,7 @@ Synthetic dataset has an obvious advantage: a fine annotated image in Cityscape 
 
 \section{Proposed Algorithm}
 
-We first describe the overall framework for vehicle trajectory prediction and the details of implementation are presented in Sec~\ref{sec:Implementations}.
-Our goal is via collecting visual information from the past frames to predict the traffic participants future trajectory. Fig.~\ref{fig:framework} shows the overall architecture of the proposed framework.
+We first formalized the proposed problem and describe the overall framework as shown in Fig.~\ref{fig:framework}.
 
 \subsection{Problem formulation}
 \begin{figure}[t]
@@ -248,7 +247,7 @@ where $d$ is distance between  the center of the camera lens and the center of t
 
 \begin{figure}[t]
         \centering
-        \includegraphics[width=0.45\textwidth]{figures/SEGLSTM.pdf}
+        \includegraphics[width=0.42\textwidth]{figures/SEGLSTM.pdf}
         \caption{
         \small{Diagram of SEG-LSTM model: semantic inputs are one-hot encoded images with channel number $\mathcal{C}$ as the number of semantic categories (we used only ``car" and ``road" as the two semantics used under the context of high-way driving). The higher level semantics are extracted through a four-layer CNN, producing a joint representation of the auxiliary semantic information and the co-ordinate trajectory information.}
         }
@@ -286,7 +285,7 @@ The whole sequence inference paradigm is more stable than the first FtF approach
  takes advantages of scene semantics from  historical frames as auxiliary information $\mathcal{A}$. The second LSTM layer fuses the output from the bottom-most LSTM that encodes co-ordinates embedding with higher level semantic information.
 With auxiliary $\mathcal{A}$, the trajectory  $j_{t+1, \ldots, T_F}$  to be predicted can be estimated as:
 \begin{equation}
-j_{t+1, \ldots, T_F}, \leftarrow  \bm{\mathcal{M}}(j_H, a): \mathcal{J_H} \times \mathcal{A}
+j_{t+1, \ldots, T_F}, \leftarrow  \bm{\mathcal{M}}(j_H, a): \mathcal{J_H} \times convnet(\mathcal{A})
 \label{eq:SEG-LSTM}
 \end{equation}
  Semantic inputs are one-hot encoded images with channel number $\mathcal{C}$ as the number of semantic categories  as in Fig.~\ref{fig:SEGLSTM}. The higher level semantic is extracted through a four-layer CNN, producing a joint representation of the semantic auxiliary information and the co-ordinate trajectory information.
@@ -493,11 +492,14 @@ The learning is set to 0.001 and RMS-prop~\cite{tieleman2012lecture} with a grad
 
 \begin{figure*}[t]
         \centering
-        \includegraphics[width=0.95\textwidth]{figures/prediction.pdf}
+        \includegraphics[width=0.95\textwidth]{figures/prediction_2.pdf}
         \caption{
-        \small{The prediction results in SYNTHIA dataset. {\color{red}Red: ground truth}; {\color{blue}Blue: SEG-LSTM}; {\color{green}Green: FtS}; {\color{yellow}Yellow: FtF}.
-        The results using SEG-LSTM network show that by utilizing the scene semantics (\emph{e.g.}, road, cars), it's able to direct the predicted trajectory from the recurrent net within the most plausible path. Top: SEG-LSTM can help detecting neighboring vehicles and restricts the viable path outside the space occupied by other vehicles. Bottom:  SEG-LSTM confines the possible car trajectories along the space above road.}
-                }
+        \small{Visualization of prediction results. Top two rows show the advantage of using semantics in temporal model: {\color{red}Red: ground truth}; {\color{blue}Blue: SEG-LSTM}; {\color{green}Green: FtS}; {\color{yellow}Yellow: FtF}.
+        SEG-LSTM can help detecting neighboring vehicles and restricts the viable path outside the space occupied by other vehicles (row 1) and confines the plausible car trajectory along the space above road (row 2).
+        Row 3 and 4 show the benefit  of incorporating social factors.
+        Row 3 is the visualization for vanilla LSTM. The bottom left car prediction (denoted by red dots) is considered in isolation and could surpass the host car, moving dangerously close to the two front cars. Row 4 is the visualization of social LSTM: by considering two front cars in the scene, the predicted keeps the red dot car in a safer distance from two front cars.
+        }
+        }
         \label{fig:final}
 \end{figure*}
 
