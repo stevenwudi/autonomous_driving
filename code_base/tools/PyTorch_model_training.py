@@ -25,6 +25,7 @@ def normalise_data(train_data, valid_data, test_data):
     test_data /= data_std
     return train_data, valid_data, test_data, data_mean, data_std
 
+
 def restore_normalised_Data(train_data, valid_data, test_data, data_mean,data_std):
     train_data *= data_std
     train_data += data_mean
@@ -34,6 +35,7 @@ def restore_normalised_Data(train_data, valid_data, test_data, data_mean,data_st
     test_data += data_mean
 
     return train_data, valid_data, test_data
+
 
 def prepare_data(cf):
     save_dir = os.path.join(cf.shared_path, cf.problem_type)
@@ -123,6 +125,7 @@ def get_img_list(train_data, valid_data, test_data):
         test_img_list.append(item_list)
 
     return train_img_list, valid_img_list, test_img_list
+
 
 def get_img_resized_list(cf, train_data, valid_data, test_data):
 

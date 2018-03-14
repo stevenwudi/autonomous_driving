@@ -335,7 +335,7 @@ class ImageDataGenerator_Synthia_Car_trajectory_segmantic_video(Dataset):
             if dataset_split == 'train':
                 self.image_files += [os.path.join(image_dir, x) for x in image_files[:train_num]]
                 self.depth_files += [os.path.join(depth_dir, x) for x in image_files[:train_num]]
-                self.label_files+= [os.path.join(label_dir, x) for x in image_files[:train_num]]
+                self.label_files += [os.path.join(label_dir, x) for x in image_files[:train_num]]
                 self.image_num += train_num
 
             elif dataset_split == 'valid':

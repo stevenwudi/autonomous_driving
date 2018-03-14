@@ -13,7 +13,7 @@ def main():
     test_data_array = (test_data_array * data_std) + data_mean
 
     item_data = test_data_array[693]
-    img_path ='/media/samsumg_1tb/synthia/Final_VISUAL'
+    img_path ='/media/samsumg_1tb/synthia/FinalVisual'
     img_list = sorted(os.listdir(img_path))
 
     fig = plt.figure(1)
@@ -21,7 +21,7 @@ def main():
     tracking_figure_axes = fig.add_subplot(111, aspect='equal')
     #tracking_figure_axes.set_title('Green: detecion; Red: tracking. Image: %s' % img_name)
 
-    for i,item in enumerate(item_data[:10]):
+    for i, item in enumerate(item_data[:10]):
         rect = item[:4]
         im = Image.open(os.path.join(img_path, img_list[i]))
         tracking_figure_axes.imshow(im)

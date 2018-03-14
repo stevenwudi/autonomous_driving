@@ -24,8 +24,7 @@ def configurationPATH(cf):
 
     print("\n###########################")
     print(' > Conf File Path = "%s"' % (cf.config_path))
-    print(' > Save Path = "%s"' % (cf.savepath))
-    print(' > Dataset PATH = "%s"' % (os.path.join(cf.dataroot_dir)))
+    print(' > Dataset PATH = "%s"' % (cf.dataset_path))
     print("###########################\n")
 
 

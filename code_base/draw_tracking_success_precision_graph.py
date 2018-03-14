@@ -1,4 +1,5 @@
 import numpy as np
+import os
 import matplotlib.pyplot as plt
 import pickle
 
@@ -7,15 +8,19 @@ thresholdSetError = range(0, 51)
 thresholdSetError_RW = [x/float(51) for x in range(51)]
 LINE_COLORS = ['b','g','c','m','y','k', '#880015', '#FF7F27', '#00A2E8', '#880015', '#FF7F27', '#00A2E8']
 
+font = {'size': 20}
+import matplotlib
+matplotlib.rc('font', **font)
 
 def main():
-    with open(r'C:\Users\steve\Desktop\Figures\tracking_plot\SEG-LSTM_Shuffle\test-2.pickle', 'rb') as f:
+    result_dir ='/media/samsumg_1tb/cvpr_DTA_Results'
+    with open(os.path.join(result_dir, 'SEG-LSTM_Shuffle/test-2.pickle'), 'rb') as f:
         SEG_LSTM_dict = pickle.load(f)
 
-    with open(r'C:\Users\steve\Desktop\Figures\tracking_plot\FrameToSequence_Shuffle\test-2.pickle', 'rb') as f:
+    with open(os.path.join(result_dir, 'FrameToSequence_Shuffle/test-2.pickle'), 'rb') as f:
         FrameToSequence_dict = pickle.load(f)
 
-    with open(r'C:\Users\steve\Desktop\Figures\tracking_plot\FrameToFrame_Shuffle\test-2.pickle', 'rb') as f:
+    with open(os.path.join(result_dir, 'FrameToFrame_Shuffle/test-2.pickle'), 'rb') as f:
         FrameToFrame_dict = pickle.load(f)
 
     scoreList = {}
@@ -36,7 +41,8 @@ def main():
         scoreList[seq_name] = {}
         scoreList[seq_name]['successRateList'] = [np.mean(x) for x in successRateList]
         scoreList[seq_name]['AUC'] = np.sum(scoreList[seq_name]['successRateList']) / len(thresholdSetOverlap)
-    plot_graph_success(scoreList)
+    title = 'success_3d'
+    plot_graph_success(scoreList, title)
 
     ################################################################
     threshold_cm = 20
@@ -52,13 +58,15 @@ def main():
         scoreList[seq_name] = {}
         scoreList[seq_name]['precisionRateList'] = [np.mean(x) for x in precisionRateList_plot]
         scoreList[seq_name]['p20'] = scoreList[seq_name]['precisionRateList'][threshold_cm]
-    plot_graph_precision(scoreList, threshold_cm, x_label='centimeter_threshold')
+    title = 'precision_3d'
+    plot_graph_precision(scoreList, title, threshold_cm)
     plt.show()
 
-
+    plt.close('all')
     ###################### 2D plot ###################
-    Kalman_test_errCenter = np.load(r'C:\Users\steve\Desktop\Figures\tracking_plot\Kalman_valid_errCenter.npy')
-    Kalman_test_iou_2d = np.load(r'C:\Users\steve\Desktop\Figures\tracking_plot\KKalman_valid_iou_2d.npy')
+    result_dir = '/media/samsumg_1tb/cvpr_DTA_Results/kalman_filter'
+    Kalman_test_errCenter = np.load(os.path.join(result_dir, 'Kalman_valid_errCenter.npy'))
+    Kalman_test_iou_2d = np.load(os.path.join(result_dir, 'Kalman_valid_iou_2d.npy'))
     ################################################################
     ErrCenter_List = {'Kalman Filter':Kalman_test_errCenter, 'FtF': np.vstack(FrameToFrame_dict['errCoverage']),
                       'FtS':np.vstack(FrameToSequence_dict['errCoverage']), 'SEG-LSTM': np.vstack(SEG_LSTM_dict['errCoverage'])}
@@ -76,7 +84,8 @@ def main():
         scoreList[seq_name] = {}
         scoreList[seq_name]['successRateList'] = [np.mean(x) for x in successRateList]
         scoreList[seq_name]['AUC'] = np.sum(scoreList[seq_name]['successRateList'])/len(thresholdSetOverlap)
-    plot_graph_success(scoreList)
+    title = 'success_2d'
+    plot_graph_success(scoreList, title)
 
     ################################################################
     for seq_name in ['Kalman Filter', 'FtF', 'FtS', 'SEG-LSTM']:
@@ -91,11 +100,12 @@ def main():
         scoreList[seq_name] = {}
         scoreList[seq_name]['precisionRateList'] = [np.mean(x) for x in precisionRateList_plot]
         scoreList[seq_name]['p20'] = scoreList[seq_name]['precisionRateList'][20]
-    plot_graph_precision(scoreList)
+    title = 'precision_2d'
+    plot_graph_precision(scoreList, title)
     plt.show()
 
 
-def plot_graph_success(scoreList):
+def plot_graph_success(scoreList, title):
     plt.figure(num=0, figsize=(9, 6), dpi=70)
     figManager = plt.get_current_fig_manager()
     figManager.window.showMaximized()
@@ -117,11 +127,11 @@ def plot_graph_success(scoreList):
         plt.xticks(np.arange(thresholdSetOverlap[0], thresholdSetOverlap[len(thresholdSetOverlap)-1]+0.1, 0.1))
         plt.grid(color='#101010', alpha=0.5, ls=':')
         plt.legend(fontsize='medium')
-        #plt.savefig(BENCHMARK_SRC + 'graph/{0}_sq.png'.format(evalType), dpi=74, bbox_inches='tight')
+        plt.savefig(os.path.join('../Experiments/figures', title+'.png'), dpi=140, bbox_inches='tight')
     return plt
 
 
-def plot_graph_precision(scoreList, threshold_cm=20, x_label='pixel thresholds'):
+def plot_graph_precision(scoreList, title, threshold_cm=20):
     plt.figure(num=1, figsize=(9, 6), dpi=70)
     figManager = plt.get_current_fig_manager()
     figManager.window.showMaximized()
@@ -139,13 +149,10 @@ def plot_graph_precision(scoreList, threshold_cm=20, x_label='pixel thresholds')
 
         #plt.title('Precision plots')
         plt.rcParams.update({'axes.titlesize': 'large'})
-        #plt.xlabel(x_label)
         plt.xticks(np.arange(thresholdSetError[0], thresholdSetError[len(thresholdSetError) - 1], 10))
         plt.grid(color='#101010', alpha=0.5, ls=':')
         plt.legend(fontsize='medium')
-        plt.show()
-        # plt.savefig(BENCHMARK_SRC + 'graph/{0}_sq.png'.format(evalType), dpi=74, bbox_inches='tight')
-    # some don't have precison list--> we will delete them?
+        plt.savefig(os.path.join('../Experiments/figures', title+'.png'), dpi=140, bbox_inches='tight')
 
     return plt
 

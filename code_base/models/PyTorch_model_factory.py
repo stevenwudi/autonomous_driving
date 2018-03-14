@@ -1,5 +1,5 @@
 from code_base.models.PyTorch_fcn import FeatureResNet, SegResNet, iou
-from code_base.models.PyTorch_drn import drn_c_26, drn_d_22, DRNSeg, DRNSegF
+from code_base.models.PyTorch_drn import DRNSeg
 from code_base.models.PyTorch_PredictModels import *
 from code_base.tools.PyTorch_model_training import calc_seq_err_robust
 import torch
@@ -14,18 +14,15 @@ from datetime import datetime
 from matplotlib import pyplot as plt
 import os
 import sys
-<<<<<<< HEAD
-=======
 import pickle
 import json
->>>>>>> aa394631a69cc73a02b97cd2050a9a93064283aa
 import numpy as np
 
 
 def adjust_learning_rate(lr, optimizer, epoch, lastupdate_epoch, train_losses, decrease_epoch=10):
     """Sets the learning rate to the initial LR decayed by 10 every 30 epochs"""
 
-    if epoch > 0 and epoch%decrease_epoch == 0:
+    if epoch > 0 and epoch % decrease_epoch == 0:
         lr = lr * (0.1 ** (epoch // decrease_epoch))
         if lr >= 1.0e-6:
             for param_group in optimizer.param_groups:
@@ -64,7 +61,7 @@ def load_net_synthia(state_dict, net):
             v.copy_(pre_param)
 
         else:
-            print (k)
+            print(k)
 
 
 # Build the model
@@ -85,20 +82,15 @@ class Model_Factory_semantic_seg():
             pretrained_net.load_state_dict(models.resnet34(pretrained=True).state_dict())
             self.net = SegResNet(cf.num_classes, pretrained_net).cuda()
         elif cf.model_name == 'drn_c_26':
-            self.net = DRNSeg('drn_c_26', cf.num_classes, pretrained=True, linear_up=True)
+            self.net = DRNSeg('drn_c_26', cf.num_classes, pretrained_model=None, pretrained=True)
         elif cf.model_name == 'drn_d_22':
-            self.net = DRNSeg('drn_d_22', cf.num_classes, pretrained=True, linear_up=False)
+            self.net = DRNSeg('drn_d_22', cf.num_classes, pretrained_model=None, pretrained=True)
         elif cf.model_name == 'drn_d_38':
-            self.net = DRNSeg('drn_d_38', cf.num_classes, pretrained=True, linear_up=False)
+            self.net = DRNSeg('drn_d_38', cf.num_classes, pretrained_model=None, pretrained=True)
         # Set the loss criterion
         if cf.cb_weights_method == 'rare_freq_cost':
-<<<<<<< HEAD
-            print('Use ' + cf.cb_weights_method+', loss weight method!')
-            loss_weight = torch.Tensor([0]+cf.cb_weights)
-=======
             print('Use ' + cf.cb_weights_method + ', loss weight method!')
             loss_weight = torch.Tensor([0] + cf.cb_weights)
->>>>>>> aa394631a69cc73a02b97cd2050a9a93064283aa
             self.crit = nn.NLLLoss2d(weight=loss_weight, ignore_index=cf.ignore_index).cuda()
         else:
             self.crit = nn.NLLLoss2d(ignore_index=cf.ignore_index).cuda()
@@ -112,26 +104,14 @@ class Model_Factory_semantic_seg():
             print("Load from pretrained_model weight: " + cf.train_model_path)
             self.net.load_state_dict(torch.load(cf.train_model_path))
 
-
-        # self.net = DRNSegF(self.net, 20)
-        params_dict = dict(self.net.named_parameters())
-        params = []
-        for key, value in params_dict.items():
-            if 'bn' in key:
-                # No weight decay on batch norm
-                params += [{'params': [value], 'weight_decay': 0}]
-            elif '.bias' in key:
-                # No weight decay plus double learning rate on biases
-                params += [{'params': [value], 'lr': 2 * cf.learning_rate, 'weight_decay': 0}]
-            else:
-                params += [{'params': [value]}]
         if cf.optimizer == 'rmsprop':
-            self.optimiser = optim.RMSprop(params, lr=cf.learning_rate, momentum=cf.momentum,
+            self.optimiser = optim.RMSprop(self.net.optim_parameters(), lr=cf.learning_rate, momentum=cf.momentum,
                                            weight_decay=cf.weight_decay)
         elif cf.optimizer == 'sgd':
-            self.optimiser = optim.SGD(params, lr=cf.learning_rate, momentum=cf.momentum, weight_decay=cf.weight_decay)
+            self.optimiser = optim.SGD(self.net.optim_parameters(), lr=cf.learning_rate, momentum=cf.momentum,
+                                       weight_decay=cf.weight_decay)
         elif cf.optimizer == 'adam':
-            self.optimiser = optim.Adam(params, lr=cf.learning_rate, weight_decay=cf.weight_decay)
+            self.optimiser = optim.Adam(self.net.optim_parameters(), lr=cf.learning_rate, weight_decay=cf.weight_decay)
 
         self.scores, self.mean_scores = [], []
 
@@ -144,13 +124,13 @@ class Model_Factory_semantic_seg():
         self.net.train()
         for i, (input, target) in enumerate(train_loader):
             self.optimiser.zero_grad()
-            input, target = Variable(input.cuda(async=True), requires_grad=False), Variable(target.cuda(async=True), requires_grad=False)
+            input, target = Variable(input.cuda(async=True), requires_grad=False), Variable(target.cuda(async=True),
+                                                                                            requires_grad=False)
             output = F.log_softmax(self.net(input))
             self.loss = self.crit(output, target)
             print(epoch, i, self.loss.data[0])
             self.loss.backward()
             self.optimiser.step()
-
 
     def train_synthia(self, train_loader, epoch):
         lr = adjust_learning_rate(self.cf.learning_rate, self.optimiser, epoch)
@@ -165,7 +145,6 @@ class Model_Factory_semantic_seg():
             self.loss.backward()
             self.optimiser.step()
 
-
     def test(self, val_loader, epoch, cf):
         self.net.eval()
         total_ious = []
@@ -177,8 +156,6 @@ class Model_Factory_semantic_seg():
             pred = output.permute(0, 2, 3, 1).contiguous().view(-1, self.num_classes).max(1)[1].view(b, h, w)
             total_ious.append(iou(pred, target, self.num_classes))
 
-
-<<<<<<< HEAD
         if False:
             image = np.squeeze(input.data.cpu().numpy())
             image[0, :, :] = image[0, :, :] * cf.rgb_std[0] + cf.rgb_mean[0]
@@ -187,26 +164,17 @@ class Model_Factory_semantic_seg():
             pred_image = np.squeeze(pred.data.cpu().numpy())
             class_image = np.squeeze(target.data.cpu().numpy())
             plt.figure()
-            plt.subplot(1,3,1);plt.imshow(image.transpose(1, 2, 0));plt.title('RGB')
-            plt.subplot(1,3,2);plt.imshow(pred_image);plt.title('Prediction')
-            plt.subplot(1,3,3);plt.imshow(class_image);plt.title('GT')
+            plt.subplot(1, 3, 1);
+            plt.imshow(image.transpose(1, 2, 0));
+            plt.title('RGB')
+            plt.subplot(1, 3, 2);
+            plt.imshow(pred_image);
+            plt.title('Prediction')
+            plt.subplot(1, 3, 3);
+            plt.imshow(class_image);
+            plt.title('GT')
             plt.waitforbuttonpress(1)
             print('Training testing')
-=======
-            # image = np.squeeze(input.data.cpu().numpy())
-            # image[0, :, :] = image[0, :, :] * cf.rgb_std[0] + cf.rgb_mean[0]
-            # image[1, :, :] = image[1, :, :] * cf.rgb_std[1] + cf.rgb_mean[1]
-            # image[2, :, :] = image[2, :, :] * cf.rgb_std[2] + cf.rgb_mean[2]
-            # pred_image = np.squeeze(pred.data.cpu().numpy())
-            # class_image = np.squeeze(target.data.cpu().numpy())
-            # plt.figure()
-            # plt.subplot(1,3,1);plt.imshow(image.transpose(1, 2, 0));plt.title('RGB')
-            # plt.subplot(1,3,2);plt.imshow(pred_image);plt.title('Prediction')
-            # plt.subplot(1,3,3);plt.imshow(class_image);plt.title('GT')
-            # plt.waitforbuttonpress(1)
-            # print('Training testing')
-
->>>>>>> aa394631a69cc73a02b97cd2050a9a93064283aa
 
         # Calculate average IoU
         total_ious_t = torch.Tensor(total_ious).transpose(0, 1)
@@ -242,7 +210,7 @@ class Model_Factory_semantic_seg():
             if i_batch % 100 == 0:
                 print("Processing batch: %d" % i_batch)
 
-            #input = sample_batched['image']
+            # input = sample_batched['image']
             input = sample_batched['input_t']
             image = np.squeeze(input.numpy())
             image[0, :, :] = image[0, :, :] * cf.rgb_std[0] + cf.rgb_mean[0]
@@ -257,21 +225,25 @@ class Model_Factory_semantic_seg():
             pred_image = np.squeeze(pred.data.cpu().numpy())
             class_image = np.squeeze(sample_batched['classes'].numpy())
             plt.figure()
-            plt.subplot(1,3,1);plt.imshow(image.transpose(1, 2, 0))
-            plt.subplot(1,3,2);plt.imshow(pred_image)
-            plt.subplot(1,3,3);plt.imshow(class_image)
+            plt.subplot(1, 3, 1);
+            plt.imshow(image.transpose(1, 2, 0))
+            plt.subplot(1, 3, 2);
+            plt.imshow(pred_image)
+            plt.subplot(1, 3, 3);
+            plt.imshow(class_image)
             plt.waitforbuttonpress(1)
-
 
     def test_and_save(self, val_loader):
         self.net.eval()
         for i, (input, _, target, filename) in enumerate(val_loader):
-            input, target = Variable(input.cuda(async=True), volatile=True), Variable(target.cuda(async=True), volatile=True)
+            input, target = Variable(input.cuda(async=True), volatile=True), Variable(target.cuda(async=True),
+                                                                                      volatile=True)
             output = F.log_softmax(self.net(input))
             b, _, h, w = output.size()
             pred = output.permute(0, 2, 3, 1).contiguous().view(-1, self.num_classes).max(1)[1].view(b, h, w)
             pred = pred.cpu().data.numpy()
-            save_output_images(pred, filename, '/home/ty/code/autonomous_driving/Experiments/CityScape_semantic_segmentation')
+            save_output_images(pred, filename,
+                               '/home/ty/code/autonomous_driving/Experiments/CityScape_semantic_segmentation')
 
     def test_synthia(self, epoch):
         torch.save(self.net.state_dict(), os.path.join(self.exp_dir, str(epoch) + '_net.pth'))
@@ -293,7 +265,7 @@ class Model_Factory_semantic_seg():
         predict_list = []
         for i, key in enumerate(keys):
             image = io.imread(key)
-            print (i, '----', key)
+            print(i, '----', key)
             folder = key.split('/')[-5]
             image_name = os.path.basename(key)
             image = image.transpose((2, 0, 1))
@@ -323,7 +295,8 @@ class Model_Factory_semantic_seg():
             if not os.path.exists(save_path):
                 os.makedirs(os.path.join(save_root, folder))
             save_image(pred_colour[0].float().div(255), os.path.join(save_path, image_name))
-            car_dict = {'image_path': key, 'boundingbox': predict_dict[key], 'segment_path': os.path.join(save_path, image_name), }
+            car_dict = {'image_path': key, 'boundingbox': predict_dict[key],
+                        'segment_path': os.path.join(save_path, image_name), }
             predict_list.append(car_dict)
 
         json_bbox_seg_path = os.path.join('/home/public/synthia', 'car_test_bbox_seg-shuffle.json')
@@ -335,7 +308,8 @@ class Model_Factory_semantic_seg():
         self.net.eval()
         from skimage import io
 
-        img_name = os.path.join('/home/stevenwudi/PycharmProjects/autonomous_driving/Datasets/segmentation/SYNTHIA_RAND_CVPR16/RGB/ap_000_02-11-2015_18-02-19_000157_0_Rand_10.png')
+        img_name = os.path.join(
+            '/home/stevenwudi/PycharmProjects/autonomous_driving/Datasets/segmentation/SYNTHIA_RAND_CVPR16/RGB/ap_000_02-11-2015_18-02-19_000157_0_Rand_10.png')
         image = io.imread(img_name)
 
         image = image.transpose((2, 0, 1))
@@ -363,7 +337,6 @@ class Model_Factory_semantic_seg():
             pred_b = torch.zeros(b, 1, h, w)
             pred_b[(pred == k)] = v[2]
             pred_colour.add_(torch.cat((pred_r, pred_g, pred_b), 1))
-
 
         save_image(pred_colour[0].float().div(255), os.path.join(self.exp_dir, 'a.png'))
 
@@ -554,14 +527,12 @@ class Model_Factory_LSTM():
         path = '/media/samsumg_1tb/cvpr_trajectory_data_final/FrameToFrame_Shuffle/predicted_trajectory.npy'
         np.save(path, np.array(predicted_trajectory))
 
-
         # loss mean
         track_plot = {}
         track_plot['errCoverage'] = errCoverage
         track_plot['iou_2d'] = iou_2d
         track_plot['errCenter_realworld'] = errCenter_realworld
         track_plot['iou_3d'] = iou_3d
-
 
         self.loss = np.array(valid_losses).mean()
         # print('Valid Loss', epoch, self.loss)
@@ -604,14 +575,14 @@ class Model_Factory_LSTM():
             with open(os.path.join(self.exp_dir, 'test.pickle'), 'wb') as handle:
                 pickle.dump(track_plot, handle, protocol=2)
 
-            # Plot scores
-            # self.aveErrCoverage.append(aveErrCoverage.mean())
-            # es = list(range(len(self.aveErrCoverage)))
-            # plt.plot(es, self.aveErrCoverage, 'b-')
-            # plt.xlabel('aveErrCoverage')
-            # plt.ylabel('Mean IoU')
-            # plt.savefig(os.path.join(self.exp_dir, 'ious.png'))
-            # plt.close()
+                # Plot scores
+                # self.aveErrCoverage.append(aveErrCoverage.mean())
+                # es = list(range(len(self.aveErrCoverage)))
+                # plt.plot(es, self.aveErrCoverage, 'b-')
+                # plt.xlabel('aveErrCoverage')
+                # plt.ylabel('Mean IoU')
+                # plt.savefig(os.path.join(self.exp_dir, 'ious.png'))
+                # plt.close()
         torch.save(self.net.state_dict(), os.path.join(self.exp_dir, model_checkpoint))
         # if cf.cuda:
         #     return self.loss.data.cpu().numpy()[0]

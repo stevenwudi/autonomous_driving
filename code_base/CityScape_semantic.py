@@ -6,9 +6,8 @@ import sys
 sys.path.append(os.getcwd())
 import time
 from datetime import datetime
-
-from code_base.tools.PyTorch_data_generator import Dataset_Generators_Cityscape, Dataset_Generators_Synthia
-from code_base.models.PyTorch_model_factory import Model_Factory
+from code_base.tools.PyTorch_data_generator import Dataset_Generators_Cityscape
+from code_base.models.PyTorch_model_factory import Model_Factory_semantic_seg
 from code_base.config.configuration import Configuration
 from code_base.tools.utils import HMS, configurationPATH
 
@@ -19,12 +18,11 @@ def process(cf):
     print(' ---> Init experiment: ' + cf.exp_name + ' <---')
     # Create the data generators
     DG = Dataset_Generators_Cityscape(cf)
-    # DG = Dataset_Generators_Synthia(cf)
-    #show_DG(DG, 'train')  # this script will draw an image
+    # show_DG(DG, 'train')  # this script will draw an image
 
     # Build model
     print('\n > Building model...')
-    model = Model_Factory(cf)
+    model = Model_Factory_semantic_seg(cf)
     # model.test_and_save(DG.val_loader)
 
     # model.test(DG.val_loader, 0)
@@ -44,13 +42,13 @@ def main():
     # Get parameters from arguments
     parser = argparse.ArgumentParser(description='Semantic segmentation')
     parser.add_argument('-c', '--config_path', type=str,
-                        default='/home/ty/code/autonomous_driving/code_base/config/cityscapes_segmentation.py', help='Configuration file')
+                        default='./config/cityscapes_segmentation.py', help='Configuration file')
     parser.add_argument('-e', '--exp_name', type=str,
                         default='cityscape_segmentation', help='Name of the experiment')
     parser.add_argument('-s', '--shared_path', type=str,
                         default='/home/public', help='Path to shared data folder')
     parser.add_argument('-l', '--local_path', type=str,
-                        default='/home/ty/code/autonomous_driving', help='Path to local data folder')
+                        default='./', help='Path to local data folder')
 
     arguments = parser.parse_args()
 
@@ -61,14 +59,6 @@ def main():
     print('\n > Start Time:')
     print('   ' + datetime.now().strftime('%a, %d %b %Y-%m-%d %H:%M:%S'))
     start_time = time.time()
-
-    # Define the user paths
-    shared_path = arguments.shared_path
-    local_path = arguments.local_path
-    dataset_path = os.path.join(local_path, 'Datasets')
-    shared_dataset_path = os.path.join(shared_path)
-    experiments_path = os.path.join(local_path, 'Experiments')
-    shared_experiments_path = os.path.join(shared_path, 'Experiments')
 
     # Load configuration files
     configuration = Configuration(arguments.config_path)

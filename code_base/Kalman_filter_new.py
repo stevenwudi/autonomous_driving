@@ -74,7 +74,7 @@ def calc_rect_int_2d(A, B):
 
 def demo_kalman_xy():
 
-    data_array = np.load(r'C:\Users\steve\Desktop\cvpr_figure\Kalman_filter\prepared_data_shuffle.npy')
+    data_array = np.load('/media/samsumg_1tb/synthia/prepared_data_shuffle.npy')
     test_data_array = data_array[2]
     data_mean = data_array[3]
     data_std = data_array[4]
@@ -82,14 +82,12 @@ def demo_kalman_xy():
 
     print('Finish Loading. Test array shape: ' + str(test_data_array.shape))
     test_pred = np.zeros(shape=(len(test_data_array), 8, 6))
-    test_pred[:, :, 5:] = test_data_array[:, -8:, 5:]
-    # Query the figure's on-screen size and DPI. Note that when saving the figure to
-    # a file, we need to provide a DPI for that separately.
+    test_pred[:, :, 4:] = test_data_array[:, -8:, 4:]
 
     x = np.matrix('0. 0. 0. 0.').T
     P = np.matrix(np.eye(4))*1000  # initial uncertainty
     for f, data in enumerate(test_data_array):
-        if f%100 == 0:
+        if f % 100 == 0:
             print("process batch %d" %f)
         observed_x = np.array([d[0] for d in data])
         observed_y = np.array([d[1] for d in data])
@@ -102,6 +100,8 @@ def demo_kalman_xy():
         result_new.append([result[-1][0], result[-1][1]])
         test_pred[f, 0, 0] = result[-1][0][0]
         test_pred[f, 0, 1] = result[-1][1][0]
+        test_pred[f, 0, 2] = test_data_array[f, 14, 2]
+        test_pred[f, 0, 3] = test_data_array[f, 14, 3]
         for t in range(7):
             x_pred = result_new[-1][0] + x[2]
             y_pred = result_new[-1][1] + x[3]
@@ -130,11 +130,12 @@ def demo_kalman_xy():
 
     aveErrCoverage = totalerrCoverage / (len(Kalman_valid_errCenter) * float(seq_length))
     aveErrCenter = totalerrCenter / (len(Kalman_valid_errCenter) * float(seq_length))
-    print('aveErrCoverage: %0.4f, aveErrCenter: %0.3f ' %(aveErrCoverage, aveErrCenter))
-    # P: 1 -->aveErrCoverage: 0.5431, aveErrCenter: 24.841
+    print('aveErrCoverage: %.4f, aveErrCenter: %.2f  ' %(aveErrCoverage, aveErrCenter))
+    # 'aveErrCoverage: 0.6525, aveErrCenter: 24.841
 
-    np.save(r'C:\Users\steve\Desktop\Figures\tracking_plot\Kalman_valid_errCenter', Kalman_valid_errCenter)
-    np.save(r'C:\Users\steve\Desktop\Figures\tracking_plot\KKalman_valid_iou_2d', Kalman_valid_iou_2d)
+    result_dir = '/media/samsumg_1tb/cvpr_DTA_Results/kalman_filter'
+    np.save(os.path.join(result_dir, 'Kalman_valid_errCenter.npy'), Kalman_valid_errCenter)
+    np.save(os.path.join(result_dir, 'Kalman_valid_iou_2d.npy'), Kalman_valid_iou_2d)
 
 
 # Entry point of the script

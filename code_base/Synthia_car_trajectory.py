@@ -31,8 +31,8 @@ def process(cf):
     model = Model_Factory_LSTM(cf)
 
     # for experimentt
-    model.test(cf, DG.test_loader, DG.data_mean, DG.data_std)
-'''
+    # model.test(cf, DG.test_loader, DG.data_mean, DG.data_std)
+
     if cf.train_model:
         train_losses = []
         valid_losses = []
@@ -65,19 +65,17 @@ def process(cf):
         print('---> Test losses:')
         print(test_loss)
     print(' ---> Finish experiment: ' + cf.exp_name + ' <---')
-'''
+
 
 def main():
     # Get parameters from arguments
     parser = argparse.ArgumentParser(description='Model training')
-    #parser.add_argument('-c', '--config_path', type=str, default='/home/stevenwudi/PycharmProjects/autonomous_driving/code_base/config/synthia_car_trajectory.py', help='Configuration file')
     parser.add_argument('-c', '--config_path', type=str, default='/home/stevenwudi/PycharmProjects/autonomous_driving/code_base/config/synthia_complete_pipeline.py', help='Configuration file')
     arguments = parser.parse_args()
     assert arguments.config_path is not None, 'Please provide a path using -c config/pathname in the command line'
     print('\n > Start Time:')
     print('   ' + datetime.now().strftime('%a, %d %b %Y-%m-%d %H:%M:%S'))
     start_time = time.time()
-    # Define the user paths
 
     # Load configuration files
     configuration = Configuration(arguments.config_path)

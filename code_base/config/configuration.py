@@ -3,29 +3,22 @@ import time
 import os
 from distutils.dir_util import copy_tree
 import shutil
+import importlib.machinery
 
 
-class Configuration():
+class Configuration:
     def __init__(self, config_path):
-
         self.config_path = config_path
 
     def load(self):
         # Load configuration file...
         print(self.config_path)
-        cf = imp.load_source('config', self.config_path)
+        # Load configuration
+        loader = importlib.machinery.SourceFileLoader('cf', self.config_path)
+        cf = loader.load_module()
 
-        dataset_path = os.path.join('/home/stevenwudi/PycharmProjects/autonomous_driving', 'Datasets')
-
-        if cf.data_path:
-            dataset_path = os.path.join(cf.data_path)
-        else:
-            dataset_path = os.path.join(cf.local_path, 'Datasets')
         # shared_dataset_path = os.path.join(cf.shared_path)
-
-
         experiments_path = os.path.join(cf.local_path, 'Experiments')
-        shared_experiments_path = os.path.join(cf.shared_path, 'Experiments')
 
         # Save extra parameter
         cf.config_path = self.config_path
@@ -42,17 +35,17 @@ class Configuration():
             cf.n_epochs = cf.debug_n_epochs
 
         # Plot metrics
-        if cf.class_mode == 'segmentation':
+        if cf.problem_type == 'segmentation':
             cf.train_metrics = ['loss', 'acc', 'jaccard']
             cf.valid_metrics = ['val_loss', 'val_acc', 'val_jaccard']
             cf.best_metric = 'val_jaccard'
             cf.best_type = 'max'
-        elif cf.class_mode == 'car_trajectory_prediction':
+        elif cf.problem_type == 'car_trajectory_prediction':
             cf.train_metrics = ['loss', 'acc', 'jaccard']
             cf.valid_metrics = ['val_loss', 'val_acc', 'val_jaccard']
             cf.best_metric = 'val_jaccard'
             cf.best_type = 'max'
-        elif cf.class_mode == 'detection':
+        elif cf.problem_type == 'detection':
             # TODO detection : different nets may have other metrics
             cf.train_metrics = ['loss', 'avg_recall', 'avg_iou']
             cf.valid_metrics = ['val_loss', 'val_avg_recall', 'val_avg_iou']
@@ -65,10 +58,10 @@ class Configuration():
             cf.best_type = 'max'
 
         self.configuration = cf
-        if cf.sequence_name:
+        if hasattr(cf, 'sequence_name'):
             if len(cf.sequence_name) == 15:
                 # it means we take the SYNTHIA-SEQS-0* as the sequence_name
-                cf.dataset_path = [os.path.join(dataset_path, x) for x in os.listdir(dataset_path) if x[:15]==cf.sequence_name]
+                cf.dataset_path = [os.path.join(cf.dataset_path, x) for x in os.listdir(cf.dataset_path) if x[:15]==cf.sequence_name]
                 cf.savepath = os.path.join(experiments_path, cf.exp_name, cf.sequence_name)
                 if not os.path.exists(experiments_path):
                     os.mkdir(experiments_path)
@@ -82,24 +75,15 @@ class Configuration():
                     cf.seg_img_path = os.path.join(cf.shared_path, cf.sequence_name)
                     if not os.path.exists(cf.seg_img_path):
                         os.mkdir(cf.seg_img_path)
-
             else:
-
-                cf.dataset_path = os.path.join(dataset_path, cf.problem_type, cf.sequence_name)
-
+                cf.dataset_path = os.path.join(cf.dataset_path, cf.problem_type, cf.sequence_name)
                 # Create output folders
-                cf.savepath = os.path.join(experiments_path, cf.exp_name, cf.dataset_name)
-
-                cf.final_savepath = os.path.join(shared_experiments_path, cf.dataset_name, cf.exp_name)
-                # cf.log_file = os.path.join(cf.savepath, "logfile.log")
+                cf.savepath = os.path.join(experiments_path, cf.exp_name, cf.sequence_name)
                 if not os.path.exists(experiments_path):
                     os.mkdir(experiments_path)
                 if not os.path.exists(os.path.join(experiments_path, cf.exp_name)):
                     os.mkdir(os.path.join(experiments_path, cf.exp_name))
-                # if not os.path.exists(cf.savepath):
-                #     os.mkdir(cf.savepath)
-        else:
-            cf.dataset_path = os.path.join(dataset_path, cf.problem_type, cf.dataset_name)
+
         return cf
 
     # Load the configuration file of the dataset
@@ -114,7 +98,6 @@ class Configuration():
             print('Done.')
 
         # Load dataset config file
-        #dataset_config_path = os.path.join(savepath, 'config.py')
         dataset_config_path = self.config_path
 
         print('dataset_config_path', dataset_config_path)
@@ -123,7 +106,7 @@ class Configuration():
 
         # Compose dataset paths
         dataset_conf.path = dataset_path
-        if dataset_conf.class_mode == 'segmentation':
+        if dataset_conf.problem_type == 'segmentation':
             dataset_conf.path_train_img = os.path.join(dataset_conf.path, 'train', 'images')
             dataset_conf.path_train_mask = os.path.join(dataset_conf.path, 'train', 'masks')
             dataset_conf.path_valid_img = os.path.join(dataset_conf.path, 'valid', 'images')

@@ -86,49 +86,13 @@ def demo_kalman_xy():
     np.save(os.path.join(cf['trajectory_path'], 'test_data_array'), test_data_array)
     x = np.matrix('0. 0. 0. 0.').T
     P = np.matrix(np.eye(4))*1000  # initial uncertainty
-<<<<<<< HEAD
 
-    for f, data in enumerate(test_data_array[50:100]):
-        plt.cla()
-        observed_x = np.array([x[0] for x in data])
-        observed_y = np.array([x[1] for x in data])
-        color = [str(item/len(observed_y)) for item in range(len(observed_y))]
-        plt.scatter(observed_x, observed_y, c=color)
-        plt.gray()
-        #plt.plot(observed_x, observed_y, 'ro')
-        result = []
-        R = 1**2
-        #R = 0.01 ** 2
-        for meas in zip(observed_x[:15], observed_y[:15]):
-            x, P = kalman_xy(x, P, meas, R)
-            result.append((x[:2]).tolist())
-        kalman_x, kalman_y = zip(*result)
-        plt.plot(kalman_x, kalman_y, 'g-')
-
-        result_new = []
-        result_new.append([result[-1][0], result[-1][1]])
-        for t in range(8):
-            x_pred = result_new[-1][0] + x[2]
-            y_pred = result_new[-1][1] + x[3]
-            result_new.append([x_pred, y_pred])
-        kalman_x, kalman_y = zip(*result_new)
-
-
-    for f, data in enumerate(test_data_array[50:100]):
-        plt.cla()
-        observed_x = np.array([x[0] for x in data])
-        observed_y = np.array([x[1] for x in data])
-        color = [str(item/len(observed_y)) for item in range(len(observed_y))]
-        plt.scatter(observed_x, observed_y, c=color)
-        plt.gray()
-        #plt.plot(observed_x, observed_y, 'ro')
-=======
     for f, data in enumerate(valid_data_array):
         if f%100 == 0:
             print("process batch %d" %f)
         observed_x = np.array([d[0] for d in data])
         observed_y = np.array([d[1] for d in data])
->>>>>>> bac3650787fa901d3ea55130b488b4f9f3a5f0e8
+
         result = []
         R = 1**2
         for meas in zip(observed_x[:15], observed_y[:15]):
@@ -176,6 +140,6 @@ def demo_kalman_xy():
 
 
 
-# Entry point of the script
 if __name__ == "__main__":
+    # Entry point of the script
     demo_kalman_xy()

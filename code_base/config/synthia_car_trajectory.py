@@ -108,8 +108,8 @@ lstm_input_frame                        = 15
 lstm_predict_frame                      = 8
 
 # Parameters
-train_model                  = True            # Train the model
-valid_model                  = True           # Test the model
+train_model                  = False            # Train the model
+valid_model                  = False           # Test the model
 test_model                   = True           # Predict using the model
 
 # camera intrinsics

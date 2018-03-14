@@ -397,10 +397,6 @@ class Dataset_Generators_Cityscape():
 
         # Load training set
         print('\n > Loading training, valid, test set')
-        # train_dataset = CityscapesDataset(cf=cf, split='train', transform=T.Compose([RandomCrop(cf.random_size_crop),
-        #                                                                              RandomHorizontalFlip(),
-        #                                                                              ToTensor(),
-        #                                                                              T.Normalize(mean=cf.mean, std=cf.std)]))
         train_dataset = CityscapesDataset(cf=cf, split='train', crop=True, flip=True)
         val_dataset = CityscapesDataset(cf=cf, split='val', crop=False, flip=False)
         test_dataset = CityscapesDataset(cf=cf, split='test', crop=False, flip=False)
@@ -423,7 +419,6 @@ class CityscapesDataset(Dataset):
         self.full_to_colour = cf.full_to_colour
         self.mean = cf.mean
         self.std = cf.std
-        #self.transform = transform
 
         for root, _, filenames in os.walk(os.path.join(cf.dataroot_dir, 'leftImg8bit', split)):
             for filename in filenames:
